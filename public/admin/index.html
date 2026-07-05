@@ -369,39 +369,6 @@
     </div>
   </div>
 
-  <!-- Generated Reports Archive -->
-  <div class="panel" style="margin-bottom:20px">
-    <div class="panel-header" style="background:rgba(252,128,25,.06)">
-      <h2 style="color:var(--accent)">&#128196; Generated Reports Archive</h2>
-      <span style="font-size:11px;color:var(--muted);font-style:italic">&#9203; Auto-generates daily at 6:30 PM (IST) — no manual action needed</span>
-    </div>
-    <div class="panel-body">
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-        <label style="font-size:12px;color:var(--muted);font-weight:600">From</label>
-        <input type="date" id="reportFromDate" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
-        <input type="date" id="reportToDate" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
-        <button onclick="searchReports()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">&#128269; Search</button>
-        <button onclick="clearReportSearch()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer">Clear</button>
-      </div>
-      <div id="reportsList" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto">
-        <div class="empty">No reports generated yet</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- System Controls Panel -->
-  <div class="panel" style="margin-bottom:20px">
-    <div class="panel-header">
-      <h2>System Controls</h2>
-    </div>
-    <div class="panel-body">
-      <div class="btn-row">
-        <button class="btn btn-danger" onclick="clearAll()">&#128465; Clear All Numbers</button>
-        <button class="btn btn-danger" onclick="hardReset()" style="background:rgba(244,67,54,.25);border:2px solid var(--danger);font-weight:800;letter-spacing:.5px">&#128163; HARD RESET (Factory Reset)</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Recruited Riders Panel (Delivery Tracking) -->
   <div class="panel panel-interested">
     <div class="panel-header">
@@ -493,6 +460,26 @@
           <tr><td colspan="9" class="empty">No failed riders yet</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Generated Reports Archive -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header" style="background:rgba(252,128,25,.06)">
+      <h2 style="color:var(--accent)">&#128196; Generated Reports Archive</h2>
+      <span style="font-size:11px;color:var(--muted);font-style:italic">&#9203; Auto-generates daily at 6:30 PM (IST) — no manual action needed</span>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <label style="font-size:12px;color:var(--muted);font-weight:600">From</label>
+        <input type="date" id="reportFromDate" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
+        <input type="date" id="reportToDate" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
+        <button onclick="searchReports()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">&#128269; Search</button>
+        <button onclick="clearReportSearch()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer">Clear</button>
+      </div>
+      <div id="reportsList" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto">
+        <div class="empty">No reports generated yet</div>
+      </div>
     </div>
   </div>
 
@@ -596,6 +583,19 @@
         <input type="file"   id="newEidPhoto" accept="image/*" style="font-size:12px;max-width:180px;">
         <button class="btn-add-eid" onclick="addEid()">+ Add User</button>
         <div class="eid-err" id="eidErr"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- System Controls Panel -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header">
+      <h2>System Controls</h2>
+    </div>
+    <div class="panel-body">
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="clearAll()">&#128465; Clear All Numbers</button>
+        <button class="btn btn-danger" onclick="hardReset()" style="background:rgba(244,67,54,.25);border:2px solid var(--danger);font-weight:800;letter-spacing:.5px">&#128163; HARD RESET (Factory Reset)</button>
       </div>
     </div>
   </div>
