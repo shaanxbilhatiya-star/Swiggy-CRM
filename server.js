@@ -770,6 +770,68 @@ function getAdminStats() {
 
 // ─── Express Setup ─────────────────────────────────────────────────────────────
 app.use(express.json());
+
+// ─── Password Protection Middleware (Admin & Client) ──────────────────────────
+const PANEL_PASSWORD = process.env.PANEL_PASSWORD || 'Jaimatadi02"';
+
+function getPanelAuthCookie(req) {
+  const cookies = (req.headers.cookie || '').split(';').reduce((acc, c) => {
+    const [k, ...v] = c.trim().split('=');
+    if (k) acc[k.trim()] = v.join('=');
+    return acc;
+  }, {});
+  return cookies['panel_auth'] || '';
+}
+
+function isAuthenticated(req) {
+  const token = Buffer.from(PANEL_PASSWORD).toString('base64');
+  return getPanelAuthCookie(req) === token;
+}
+
+function sendPasswordPage(res) {
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Access Protected</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.card{background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:90%;max-width:380px;text-align:center}
+.card h2{font-size:20px;margin-bottom:6px;color:#1a1a2e}.card p{font-size:13px;color:#6b7280;margin-bottom:24px}
+input{width:100%;padding:14px 18px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:16px;outline:none;margin-bottom:16px;transition:border-color .2s}
+input:focus{border-color:#FC8019}
+button{width:100%;padding:14px;border-radius:10px;border:none;background:#FC8019;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}
+button:hover{background:#e8720f;transform:translateY(-1px)}
+.err{color:#ef4444;font-size:13px;margin-top:12px;display:none}</style></head>
+<body><div class="card"><h2>🔒 Access Protected</h2><p>Enter the panel password to continue</p>
+<form method="POST" action="/auth/panel-login"><input type="password" name="password" id="pwd" placeholder="Enter password" autofocus>
+<button type="submit">Enter →</button></form><div class="err" id="err"></div></div>
+<script>const u=new URLSearchParams(window.location.search);if(u.get('err')==='1'){document.getElementById('err').style.display='block';document.getElementById('err').textContent='Incorrect password. Try again.'}</script></body></html>`);
+}
+
+// Block static access to /admin/ and /client/ folders without auth
+app.use('/admin', (req, res, next) => {
+  if (isAuthenticated(req)) return next();
+  sendPasswordPage(res);
+});
+app.use('/client', (req, res, next) => {
+  if (isAuthenticated(req)) return next();
+  sendPasswordPage(res);
+});
+
+// Password login endpoint
+app.use(require('express').urlencoded({ extended: false }));
+app.post('/auth/panel-login', (req, res) => {
+  const { password } = req.body;
+  if (password === PANEL_PASSWORD) {
+    const token = Buffer.from(PANEL_PASSWORD).toString('base64');
+    res.setHeader('Set-Cookie', 'panel_auth=' + token + '; Path=/; HttpOnly; Max-Age=86400; SameSite=Lax');
+    // Redirect back to referrer or admin
+    const ref = req.headers.referer || '/admin';
+    const target = ref.includes('/client') ? '/client' : '/admin';
+    return res.redirect(302, target);
+  }
+  // Wrong password — redirect back with error
+  const ref = req.headers.referer || '/admin';
+  const target = ref.includes('/client') ? '/client' : '/admin';
+  res.redirect(302, target + '?err=1');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Multer for number file uploads — keep the ORIGINAL file permanently (no longer
@@ -2782,45 +2844,16 @@ app.get('/api/reports/:id/download', (req, res) => {
   res.download(filePath, entry.originalName || (entry.title + '.pdf'));
 });
 
-// ─── Password Protection for Admin & Client ──────────────────────────────────
-const PANEL_PASSWORD = process.env.PANEL_PASSWORD || 'Jaimatadi02';
-
-function checkPanelAuth(req, res, next) {
-  // Check cookie
-  const cookies = (req.headers.cookie || '').split(';').reduce((acc, c) => {
-    const [k, v] = c.trim().split('=');
-    if (k) acc[k] = v;
-    return acc;
-  }, {});
-  if (cookies['panel_auth'] === Buffer.from(PANEL_PASSWORD).toString('base64')) {
-    return next();
-  }
-  // Check query param (for direct login)
-  if (req.query.pwd === PANEL_PASSWORD) {
-    res.setHeader('Set-Cookie', 'panel_auth=' + Buffer.from(PANEL_PASSWORD).toString('base64') + '; Path=/; HttpOnly; Max-Age=86400');
-    return next();
-  }
-  // Show password page
-  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Access Protected</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-.card{background:#fff;border-radius:16px;padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.08);width:90%;max-width:380px;text-align:center}
-.card h2{font-size:20px;margin-bottom:6px;color:#1a1a2e}.card p{font-size:13px;color:#6b7280;margin-bottom:24px}
-input{width:100%;padding:14px 18px;border-radius:10px;border:1.5px solid #e5e7eb;font-size:16px;outline:none;margin-bottom:16px;transition:border-color .2s}
-input:focus{border-color:#FC8019}
-button{width:100%;padding:14px;border-radius:10px;border:none;background:#FC8019;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s}
-button:hover{background:#e8720f;transform:translateY(-1px)}
-.err{color:#ef4444;font-size:13px;margin-top:8px;display:none}</style></head>
-<body><div class="card"><h2>🔒 Access Protected</h2><p>Enter the panel password to continue</p>
-<form onsubmit="return tryLogin()"><input type="password" id="pwd" placeholder="Enter password" autofocus>
-<button type="submit">Enter →</button></form><div class="err" id="err">Incorrect password</div></div>
-<script>function tryLogin(){var p=document.getElementById('pwd').value;if(!p){document.getElementById('err').style.display='block';document.getElementById('err').textContent='Please enter password';return false}
-window.location.href=window.location.pathname+'?pwd='+encodeURIComponent(p);return false}</script></body></html>`);
-}
-
 // ─── Page Routes ──────────────────────────────────────────────────────────────
-app.get('/admin', checkPanelAuth, (req, res) => res.sendFile(path.join(__dirname, 'public/admin/index.html')));
+app.get('/admin', (req, res) => {
+  if (!isAuthenticated(req)) return sendPasswordPage(res);
+  res.sendFile(path.join(__dirname, 'public/admin/index.html'));
+});
 app.get('/agent', (req, res) => res.sendFile(path.join(__dirname, 'public/agent/index.html')));
-app.get('/client', checkPanelAuth, (req, res) => res.sendFile(path.join(__dirname, 'public/client/index.html')));
+app.get('/client', (req, res) => {
+  if (!isAuthenticated(req)) return sendPasswordPage(res);
+  res.sendFile(path.join(__dirname, 'public/client/index.html'));
+});
 // Backward-compatible alias for old bookmarks/links pointing at the previous TL panel URL.
 app.get('/tl', (req, res) => res.redirect(301, '/client'));
 
