@@ -292,6 +292,35 @@
     </div>
   </div>
 
+  <!-- RECRUITED RIDERS (Delivery Tracking) - View Only -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header" style="background:rgba(252,128,25,.06)">
+      <h2 style="color:var(--accent)">🚲 Recruited Riders (Delivery Tracking)</h2>
+      <span style="font-size:12px;color:var(--muted)" id="recruitedCountBadge">0 riders</span>
+    </div>
+    <div class="panel-body" style="padding:0;overflow-x:auto">
+      <p style="margin:14px 20px 10px;font-size:13px;color:var(--muted);line-height:1.6">
+        जिन राइडर्स को रिक्रूट किया गया है और अभी 7 दिन में 31 डिलीवरी पूरी करनी है — उनकी लाइव प्रोग्रेस यहाँ दिखती है।
+      </p>
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Phone</th>
+            <th>Rider Name</th>
+            <th>Vehicle Type</th>
+            <th>Area</th>
+            <th>Agent</th>
+            <th>Deliveries</th>
+            <th>Days Left</th>
+          </tr>
+        </thead>
+        <tbody id="recruitedTable">
+          <tr><td colspan="7" class="empty">No recruited riders yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- DELIVERY COMPLETED (31/31) -->
   <div class="panel panel-completed">
     <div class="panel-header" style="flex-wrap:wrap;gap:10px">
@@ -534,6 +563,7 @@ function initDashboard() {
   _dashboardInitialized = true;
 
   fetchTopStats();
+  fetchRecruitedRiders();
   fetchFollowups();
   fetchCompletedLeads();
   fetchDispoStats();
@@ -542,6 +572,7 @@ function initDashboard() {
   tickLiveClock();
 
   setInterval(fetchTopStats, 5000);
+  setInterval(fetchRecruitedRiders, 5000);
   setInterval(fetchFollowups, 5000);
   setInterval(fetchCompletedLeads, 5000);
   setInterval(fetchDispoStats, 5000);
@@ -567,6 +598,57 @@ function formatDateBadge(isoDate) {
   const [y, m, day] = isoDate.split('-');
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return day + ' ' + months[parseInt(m, 10) - 1] + ' ' + y;
+}
+
+// ── Recruited Riders (View Only) ──────────────────────────────────────────────
+async function fetchRecruitedRiders() {
+  try {
+    const r = await fetch('/api/admin/interested');
+    const riders = await r.json();
+    renderRecruitedRiders(riders);
+  } catch (e) { /* silent */ }
+}
+
+function renderRecruitedRiders(riders) {
+  const tbody = document.getElementById('recruitedTable');
+  const badge = document.getElementById('recruitedCountBadge');
+  badge.textContent = (riders || []).length + ' rider' + ((riders || []).length !== 1 ? 's' : '');
+  if (!riders || riders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No recruited riders yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = riders.map(r => {
+    const deliveryCount = r.deliveryCount || 0;
+    const deliveryTarget = r.deliveryTarget || 31;
+    const pct = Math.round((deliveryCount / deliveryTarget) * 100);
+    const progressColor = deliveryCount >= 31 ? '#10b981' : '#FC8019';
+
+    // Days left
+    let daysLeftHtml = '\u2014';
+    const recruitedAt = r.recruitedAt || r.interestedAt;
+    if (recruitedAt) {
+      const elapsed = Date.now() - new Date(recruitedAt).getTime();
+      const totalMs = 7 * 24 * 60 * 60 * 1000;
+      const remaining = totalMs - elapsed;
+      if (remaining <= 0) {
+        daysLeftHtml = '<span style="color:#ef4444;font-weight:700;font-size:12px">OVERDUE</span>';
+      } else {
+        const d = Math.floor(remaining / (24*60*60*1000));
+        const h = Math.floor((remaining % (24*60*60*1000)) / (60*60*1000));
+        daysLeftHtml = '<span style="font-family:var(--mono);font-size:12px;font-weight:700">' + d + 'd ' + h + 'h</span>';
+      }
+    }
+
+    return '<tr>' +
+      '<td><span class="phone-number">' + escapeHtml(formatPhone(r.phone)) + '</span></td>' +
+      '<td style="font-weight:600">' + escapeHtml(r.riderName || r.name || '\u2014') + '</td>' +
+      '<td>' + escapeHtml(r.vehicleType || '\u2014') + '</td>' +
+      '<td>' + escapeHtml(r.area || '\u2014') + '</td>' +
+      '<td style="font-weight:500">' + escapeHtml(r.interestedBy || '\u2014') + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:6px"><div style="width:60px;height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + progressColor + ';border-radius:3px"></div></div><span style="font-family:var(--mono);font-size:12px;font-weight:700;color:' + progressColor + '">' + deliveryCount + '/' + deliveryTarget + '</span></div></td>' +
+      '<td>' + daysLeftHtml + '</td>' +
+    '</tr>';
+  }).join('');
 }
 
 // ── Month filter for Delivery Completed ───────────────────────────────────────
