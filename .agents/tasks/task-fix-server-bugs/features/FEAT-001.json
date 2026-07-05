@@ -1,0 +1,22 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix four confirmed bugs in server.js: (1) add num.permanent = true in /api/agent/remove-interested, (2) add num.permanent = true in /api/admin/remove-interested, (3) remove unused const now in getNextNumber, (4) trim dialedLog entries older than 90 days in checkDailyReset",
+  "status": "completed",
+  "steps": [
+    "In /api/agent/remove-interested handler, add num.permanent = true after num.disposition = 'dead'",
+    "In /api/admin/remove-interested handler, add num.permanent = true after num.disposition = 'dead'",
+    "In getNextNumber(), remove the unused 'const now = new Date();' line",
+    "In checkDailyReset(), add dialedLog trimming to remove entries older than 90 days"
+  ],
+  "acceptance_criteria": [
+    "Both remove-interested endpoints set num.permanent = true",
+    "getNextNumber has no unused variables",
+    "checkDailyReset trims dialedLog to only keep entries from the last 90 days"
+  ],
+  "verification": [
+    "node -c server.js"
+  ],
+  "blocked_reason": null,
+  "findings": "All 4 fixes applied cleanly. node -c server.js passes syntax check. Changes are minimal and targeted."
+}

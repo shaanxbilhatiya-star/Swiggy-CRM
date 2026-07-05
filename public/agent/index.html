@@ -1,0 +1,2907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingfisher x Ruralift CRM — Agent Dialer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* AGENT theme: bright Kingfisher x TaskUs — colorful light */
+    --bg: #eef4fc;
+    --surface: #ffffff;
+    --surface2: #f2f8ff;
+    --border: #d5e6f5;
+    --border-strong: #b9d2ea;
+    --accent: #0aa6c2;
+    --accent2: #1668d6;
+    --accent-glow: rgba(10,166,194,.12);
+    --magenta: #e6157b;
+    --orange: #ff7a18;
+    --text: #12293f;
+    --muted: #5b7488;
+    --green: #10b981;
+    --green-bg: #ecfdf5;
+    --green-border: #a7f3d0;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --warn-bg: #fffbeb;
+    --warn-border: #fcd34d;
+    --blue: #1668d6;
+    --sans: 'DM Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(120deg, #0aa6c2 0%, #1668d6 42%, #7b2ff7 70%, #e6157b 100%);
+    border-bottom: 3px solid var(--orange);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 6px 24px rgba(22,104,214,.30);
+  }
+  /* Colorful header: keep text readable on the gradient */
+  header .header-brand { color: #ffffff; text-shadow: 0 1px 8px rgba(0,0,0,.28); }
+  header .today-badge { background: rgba(255,255,255,.20); color: #ffffff; border: 1px solid rgba(255,255,255,.45); }
+  header .badge { background: #ffffff; color: var(--magenta); box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+  header .logo-img {
+    border: 2px solid rgba(255,255,255,.55); background: rgba(255,255,255,.14);
+    filter: drop-shadow(0 0 12px rgba(255,255,255,.55)); animation: none;
+    box-shadow: 0 4px 18px rgba(0,0,0,.22);
+  }
+  .header-center { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+  .logo-img {
+    width: 272px; height: 70px; object-fit: contain; padding: 10px 18px; border-radius: 14px;
+    border: 2px solid rgba(37,99,235,.3); background: #fff;
+    filter: drop-shadow(0 0 10px rgba(37,99,235,.55)) drop-shadow(0 0 22px rgba(37,99,235,.25));
+    animation: logo-glow-agent 2.5s ease-in-out infinite;
+    box-shadow: 0 4px 16px rgba(37,99,235,.12), 0 1px 4px rgba(0,0,0,.06);
+  }
+  @keyframes logo-glow-agent {
+    0%,100% { filter: drop-shadow(0 0 7px rgba(37,99,235,.5)) drop-shadow(0 0 14px rgba(37,99,235,.2)); }
+    50%      { filter: drop-shadow(0 0 16px rgba(37,99,235,.85)) drop-shadow(0 0 32px rgba(37,99,235,.45)); }
+  }
+  .header-brand { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: -.3px; }
+  .header-left { display: flex; align-items: center; min-width: 80px; }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+  .badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px; }
+  .today-badge { background: rgba(37,99,235,.08); color: var(--accent); border: 1px solid rgba(37,99,235,.15); border-radius: 6px; padding: 4px 12px; font-size: 12px; font-family: var(--mono); }
+
+  /* ── Connection banner ── */
+  #connBanner { display: none; padding: 8px 20px; font-size: 13px; font-weight: 600; text-align: center; }
+  #connBanner.disconnected { background: #fef2f2; color: var(--danger); border-bottom: 1px solid #fecaca; display: block; }
+  #connBanner.reconnecting { background: var(--warn-bg); color: var(--warn); border-bottom: 1px solid var(--warn-border); display: block; }
+  #connBanner.reconnected  { background: var(--green-bg); color: var(--green); border-bottom: 1px solid var(--green-border); display: block; }
+
+  /* ── Login screen ── */
+  #loginScreen {
+    min-height: calc(100vh - 58px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 24px;
+  }
+  .login-wrap { width: 100%; max-width: 420px; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px; box-shadow: 0 2px 16px rgba(0,0,0,.07); }
+  .login-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .login-card .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+  .field input { width: 100%; padding: 12px 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border-strong); color: var(--text); font-family: var(--sans); font-size: 15px; outline: none; transition: border-color .2s; }
+  .field input:focus { border-color: var(--accent2); background: #fff; }
+  .field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .err { color: var(--danger); font-size: 12px; margin-top: 5px; display: none; }
+  .btn-login { width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-family: var(--sans); font-size: 16px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 4px; }
+  .btn-login:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  /* ── Main page ── */
+  #dialerScreen { display: none; }
+  .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── Stats row ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 5px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .stat-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; }
+  .stat-value { font-family: var(--mono); font-size: 32px; font-weight: 700; }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.amber  { color: var(--warn); }
+
+  /* ── Two-column grid ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px; }
+
+  /* ── Panel ── */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .panel-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-header h2 { font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+  .panel-body { padding: 20px; }
+
+  /* ── Dialer panel ── */
+  .dialer-panel { border: 2px solid var(--accent2); box-shadow: 0 4px 20px var(--accent-glow); }
+
+  /* Number display inside panel */
+  .number-block { text-align: center; padding: 20px 16px; }
+  .number-label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .lead-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; min-height: 26px; }
+  .lead-name.no-name { color: var(--muted); font-size: 13px; font-weight: 400; font-style: italic; }
+  .phone-number { font-family: var(--mono); font-size: 38px; font-weight: 700; color: var(--accent); letter-spacing: 3px; }
+  .phone-number.flash { animation: numFlash .35s ease; }
+  @keyframes numFlash { 0%{transform:scale(1);opacity:1} 35%{transform:scale(0.88);opacity:0} 65%{transform:scale(1.06);opacity:1} 100%{transform:scale(1)} }
+  .number-hint { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .resume-badge { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 700; margin-bottom: 8px; display: inline-block; }
+
+  /* Idle / no numbers states */
+  #idleOverlay { text-align: center; padding: 28px 16px; }
+  .idle-icon { font-size: 44px; margin-bottom: 10px; display: block; opacity: .3; }
+  .idle-text { color: var(--muted); font-size: 14px; }
+  #noNumbers { display: none; text-align: center; padding: 28px 16px; }
+  .no-nums-icon { font-size: 42px; margin-bottom: 10px; }
+  .no-nums-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .no-nums-sub { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+  /* Break card inside dialer */
+  #breakCard {
+    display: none;
+    background: var(--warn-bg); border: 1px solid var(--warn-border);
+    border-radius: 10px; padding: 20px; text-align: center; margin: 0 20px 16px;
+  }
+  .break-icon { font-size: 30px; margin-bottom: 6px; }
+  .break-title { font-size: 14px; font-weight: 700; color: var(--warn); margin-bottom: 4px; }
+  .break-timer { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--warn); letter-spacing: 2px; margin: 6px 0; }
+  .break-sub { font-size: 11px; color: var(--muted); }
+  #breakBar { height: 4px; background: #fde68a; border-radius: 2px; margin: 10px 0 0; }
+  #breakBarFill { height: 100%; background: var(--warn); border-radius: 2px; transition: width .5s; }
+
+  /* Action buttons */
+  .btn-row { display: flex; flex-direction: column; gap: 10px; padding: 0 20px 20px; }
+  .action-btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-family: var(--sans); font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  #btnStart { background: var(--accent); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+  #btnStart:hover { background: var(--accent2); transform: translateY(-1px); }
+  #btnBreak { background: var(--warn-bg); color: var(--warn); border: 1.5px solid var(--warn-border); display: none; }
+  #btnBreak:hover { background: #fef3c7; }
+  #btnBreak:disabled { opacity: .4; cursor: not-allowed; }
+  #btnEndBreak { background: var(--green); color: #fff; box-shadow: 0 4px 14px rgba(5,150,105,.15); display: none; }
+  #btnEndBreak:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+  /* Disposition grid inside panel */
+  .dispo-wrap { padding: 0 20px 20px; display: none; }
+  .dispo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .dispo-btn { padding: 12px 8px; border-radius: 10px; border: none; font-family: var(--sans); font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; text-align: center; line-height: 1.3; }
+  .dispo-btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+  .dispo-btn.dispo-dead          { background: #fef2f2; color: var(--danger); border: 1.5px solid #fecaca; }
+  .dispo-btn.dispo-not-received  { background: var(--warn-bg); color: var(--warn); border: 1.5px solid var(--warn-border); }
+  .field-err { display: none; font-size: 11px; color: #ef4444; margin-top: 4px; font-weight: 500; }
+  .dispo-btn.dispo-not-interested{ background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border-strong); }
+  .dispo-btn.dispo-followup      { background: #eff6ff; color: var(--blue); border: 1.5px solid #bfdbfe; }
+  .dispo-btn.dispo-switch-off    { background: var(--warn-bg); color: var(--warn); border: 1.5px solid var(--warn-border); }
+  .dispo-btn.dispo-interested    { background: var(--green-bg); color: var(--green); border: 1.5px solid var(--green-border); }
+  .dispo-btn.dispo-discard       { background: #f1f5f9; color: #475569; border: 1.5px solid #94a3b8; }
+
+  /* ── 20-call Reminder Popup ── */
+  .reminder-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 300; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .reminder-popup-overlay.active { opacity: 1; pointer-events: all; }
+  .reminder-popup { background: var(--surface); border-radius: 16px; padding: 30px; width: 90%; max-width: 400px; box-shadow: 0 12px 50px rgba(0,0,0,.2); text-align: center; position: relative; }
+  .reminder-popup .close-btn { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted); }
+  .reminder-popup .close-btn:hover { color: var(--danger); }
+  .reminder-popup h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--warn); }
+  .reminder-popup p { font-size: 15px; color: var(--text); line-height: 1.6; }
+
+  /* ── Followup Due Popup ── */
+  .followup-due-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 310; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .followup-due-overlay.active { opacity: 1; pointer-events: all; }
+  .followup-due-popup { background: var(--surface); border-radius: 16px; padding: 30px; width: 90%; max-width: 420px; box-shadow: 0 12px 50px rgba(0,0,0,.2); text-align: center; }
+  .followup-due-popup h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--blue); }
+  .followup-due-popup .due-list { text-align: left; margin: 12px 0; max-height: 200px; overflow-y: auto; }
+  .followup-due-popup .due-item { padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: var(--surface2); }
+  .followup-due-popup .due-item .phone { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+  .followup-due-popup .due-item .name { font-weight: 600; margin-left: 8px; }
+
+  /* Resume toast */
+  #resumeToast { display: none; background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--green); font-weight: 600; text-align: center; margin: 0 20px 14px; }
+
+  /* ── Stats panel ── */
+  .stats-panel-tabs { display: flex; gap: 4px; }
+  .stats-tab { padding: 5px 13px; border-radius: 6px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); font-family: var(--sans); font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .stats-tab:hover { border-color: var(--accent2); color: var(--accent); }
+  .stats-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .dispo-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; }
+  .dispo-stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; position: relative; }
+  .dispo-stat-card.dispo-stat-total { background: var(--accent-glow); border-color: rgba(37,99,235,.2); }
+  .dispo-stat-indicator { width: 8px; height: 8px; border-radius: 50%; position: absolute; top: 11px; left: 11px; }
+  .dispo-stat-val { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--accent); }
+  .dispo-stat-card.dispo-stat-total .dispo-stat-val { font-size: 32px; }
+  .dispo-stat-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 4px; }
+
+  /* ── Full-width panels ── */
+  .panel-full { margin-bottom: 20px; }
+
+  /* ── Interested leads table ── */
+  .leads-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .leads-table th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .leads-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .leads-table tr:last-child td { border-bottom: none; }
+  .phone-mono { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+  .loan-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(37,99,235,.15); white-space: nowrap; }
+  .timer-badge { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  .timer-badge.active-timer { color: var(--green); background: var(--green-bg); border: 1px solid var(--green-border); }
+  .timer-badge.expired-timer { color: var(--danger); background: #fef2f2; border: 1px solid #fecaca; }
+  .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 24px; }
+  .btn-sm { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--sans); transition: all .2s; border: none; }
+  .btn-sm.blue  { background: #eff6ff; color: var(--blue); border: 1px solid #bfdbfe; }
+  .btn-sm.green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .btn-sm.red   { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+  .btn-sm:hover { filter: brightness(1.06); }
+  .action-cell { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* ── Followups table ── */
+  .followup-date { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--blue); background: #eff6ff; border: 1px solid #bfdbfe; padding: 3px 8px; border-radius: 6px; }
+
+  /* ── Completed table ── */
+  .completed-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+  .completed-badge.done { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .completed-badge.status { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(37,99,235,.15); }
+
+  /* ── Add Lead panel ── */
+  .add-lead-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .add-lead-form .field { margin-bottom: 0; }
+  .add-lead-form .field-full { grid-column: 1 / -1; }
+  .field input, .field select { width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border-strong); color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color .2s; }
+  .field input:focus, .field select:focus { border-color: var(--accent2); background: #fff; }
+  .btn-add-lead { padding: 11px 22px; border-radius: 8px; border: none; background: var(--green); color: #fff; font-family: var(--sans); font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .btn-add-lead:hover { filter: brightness(1.07); transform: translateY(-1px); }
+
+  /* ── Modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal-box { background: var(--surface); border-radius: 16px; padding: 30px; width: 90%; max-width: 380px; box-shadow: 0 12px 50px rgba(0,0,0,.18); }
+  .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .modal-box .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+  .modal-box .field { margin-bottom: 16px; }
+  .modal-box textarea { width: 100%; padding: 12px 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border-strong); color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; resize: vertical; transition: border-color .2s; }
+  .modal-box textarea:focus { border-color: var(--accent2); background: #fff; }
+  .script-scroll-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--accent); color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,.3); user-select: none; touch-action: none; flex-shrink: 0; }
+  .script-scroll-btn:active { transform: scale(0.92); filter: brightness(1.15); }
+  .script-scroll-btn:disabled { opacity: .35; cursor: default; }
+  .btn-confirm { width: 100%; padding: 13px; border-radius: 10px; border: none; font-family: var(--sans); font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 4px; }
+  .btn-confirm.green { background: var(--green); color: #fff; }
+  .btn-confirm.blue  { background: var(--blue); color: #fff; }
+  .btn-confirm:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn-cancel-modal { width: 100%; padding: 11px; border-radius: 10px; border: 1.5px solid var(--border-strong); background: transparent; color: var(--muted); font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .btn-cancel-modal:hover { background: var(--bg); color: var(--text); }
+
+  /* ── Toast ── */
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 14px; transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 999; }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--accent); }
+  #toast.error   { border-color: var(--danger); }
+
+  /* ── Agent info row in header ── */
+  .agent-chip { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; }
+  .agent-chip .name { font-weight: 700; font-size: 13px; }
+  .agent-chip .eid  { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+  /* ── Panel header accents ── */
+  .panel-header.green-h  { background: rgba(5,150,105,.05); }
+  .panel-header.green-h h2 { color: var(--green); }
+  .panel-header.blue-h   { background: rgba(37,99,235,.05); }
+  .panel-header.blue-h h2 { color: var(--blue); }
+  .panel-header.accent-h { background: var(--accent-glow); }
+  .panel-header.accent-h h2 { color: var(--accent); }
+
+
+
+  @media(max-width:900px){ .grid-2{grid-template-columns:1fr} .add-lead-form{grid-template-columns:1fr} .stats-grid{grid-template-columns:1fr 1fr} .leaderboard-podium{flex-direction:column;align-items:center} .podium-card{min-width:auto;width:100%} }
+
+  /* ── Leaderboard Blink Animation ── */
+  @keyframes blink-glow {
+    0%, 100% { opacity: 1; text-shadow: 0 0 20px rgba(96,165,250,.6); }
+    50% { opacity: 0.6; text-shadow: 0 0 40px rgba(96,165,250,1), 0 0 80px rgba(245,158,11,.4); }
+  }
+  .leaderboard-header h2 {
+    animation: blink-glow 2s ease-in-out infinite;
+  }
+
+  /* ── Leaderboard ── */
+  .leaderboard-panel { margin-bottom: 24px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(37,99,235,.2); background: var(--surface); box-shadow: 0 8px 40px rgba(37,99,235,.08); }
+  .leaderboard-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%); flex-wrap: wrap; gap: 10px; }
+  .leaderboard-header h2 { margin: 0; font-size: 20px; color: #fff; font-weight: 800; letter-spacing: -.3px; text-shadow: 0 0 20px rgba(96,165,250,.6); }
+  .lb-period-tabs { display: flex; gap: 4px; background: rgba(255,255,255,.1); padding: 4px; border-radius: 8px; }
+  .lb-period-tab { padding: 6px 16px; border-radius: 6px; border: none; background: transparent; color: rgba(255,255,255,.6); font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .lb-period-tab:hover { color: #fff; background: rgba(255,255,255,.15); }
+  .lb-period-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.5); }
+  .leaderboard-body { padding: 20px 24px 24px; background: linear-gradient(180deg, #eff6ff 0%, #f4f6f9 80px); }
+
+  /* ── Face Bar (top ranked, no cards) ── */
+  .face-bar { display: flex; align-items: flex-end; justify-content: center; gap: 20px; padding: 24px 0 20px; margin-bottom: 8px; }
+  .face-bar-item { display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; }
+  .face-ring { border-radius: 50%; overflow: hidden; flex-shrink: 0; position: relative; transition: transform .3s; }
+  .face-ring:hover { transform: scale(1.06); }
+  .face-ring img { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; border-radius: 50%; }
+  .face-ring .face-letter { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; background: var(--accent); border-radius: 50%; }
+  /* rank 1 */
+  @keyframes rank1-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(245,158,11,.25), 0 8px 32px rgba(245,158,11,.4); transform: scale(1); }
+    50% { box-shadow: 0 0 0 8px rgba(245,158,11,.5), 0 8px 40px rgba(245,158,11,.7), 0 0 60px rgba(245,158,11,.3); transform: scale(1.05); }
+  }
+  .face-ring.r1 { width: 100px; height: 100px; border: 3px solid #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.25), 0 8px 32px rgba(245,158,11,.4); animation: rank1-pulse 2s ease-in-out infinite; }
+  .face-ring.r1 .face-letter { font-size: 36px; }
+  /* rank 2 */
+  .face-ring.r2 { width: 78px; height: 78px; border: 3px solid #94a3b8; box-shadow: 0 0 0 3px rgba(148,163,184,.2), 0 6px 20px rgba(148,163,184,.3); }
+  .face-ring.r2 .face-letter { font-size: 28px; }
+  /* rank 3 */
+  .face-ring.r3 { width: 62px; height: 62px; border: 3px solid #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.2), 0 4px 14px rgba(249,115,22,.3); }
+  .face-ring.r3 .face-letter { font-size: 22px; }
+
+  .face-crown { font-size: 20px; margin-bottom: -6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); z-index: 2; position: relative; }
+  .face-rank-badge { position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800; color: #fff; display: flex; align-items: center; justify-content: center; border: 2px solid #eff6ff; z-index: 3; }
+  .face-rank-badge.r1 { background: #f59e0b; }
+  .face-rank-badge.r2 { background: #94a3b8; }
+  .face-rank-badge.r3 { background: #f97316; }
+  .face-name { font-size: 12px; font-weight: 700; color: var(--text); margin-top: 8px; text-align: center; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .face-score { font-family: var(--mono); font-size: 13px; font-weight: 800; margin-top: 2px; text-align: center; }
+  .face-bar-item.r1 .face-score { color: #b45309; }
+  .face-bar-item.r2 .face-score { color: #475569; }
+  .face-bar-item.r3 .face-score { color: #c2410c; }
+  .face-remarks { font-size: 9px; color: var(--green); font-style: italic; margin-top: 4px; text-align: center; max-width: 96px; line-height: 1.4; }
+
+  /* ── Rank list rows ── */
+  .lb-list { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
+  .lb-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); transition: all .2s; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .lb-row:hover { border-color: var(--accent2); box-shadow: 0 4px 16px rgba(37,99,235,.1); transform: translateX(3px); }
+  .lb-row.is-me { border-color: var(--accent); background: var(--accent-glow); }
+  .lb-rank-badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); flex-shrink: 0; font-family: var(--mono); }
+  .lb-row-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #fff; background: var(--accent2); overflow: hidden; flex-shrink: 0; border: 2px solid var(--border); }
+  .lb-row-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center center; }
+  .lb-row-info { flex: 1; min-width: 0; }
+  .lb-row-name { font-weight: 700; font-size: 13px; color: var(--text); }
+  .lb-row-stats { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .lb-bar-wrap { height: 5px; background: var(--border); border-radius: 3px; margin-top: 6px; max-width: none; }
+  .lb-bar { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .lb-row-right { text-align: right; min-width: 55px; }
+  .lb-row-score { font-weight: 800; font-size: 17px; color: var(--accent); font-family: var(--mono); }
+  .lb-row-remarks { font-size: 13px; color: var(--green); font-style: normal; margin-top: 5px; line-height: 1.5; max-width: none; font-weight: 500; }
+  .lb-rank-badge.top3 { background: linear-gradient(135deg, #fef3c7, #fde68a); border-color: #f59e0b; font-size: 16px; }
+  .rank-1-row { border: 2px solid #f59e0b; background: rgba(245,158,11,.05); animation: rank1-row-pulse 2s ease-in-out infinite; }
+  @keyframes rank1-row-pulse {
+    0%, 100% { box-shadow: 0 2px 8px rgba(245,158,11,.15); }
+    50% { box-shadow: 0 4px 20px rgba(245,158,11,.35), 0 0 40px rgba(245,158,11,.1); }
+  }
+  .rank-1-avatar { border-color: #f59e0b !important; box-shadow: 0 0 12px rgba(245,158,11,.4); }
+
+  /* ============================================================
+     KINGFISHER x TASKUS — COLORFUL THEME OVERRIDES (light)
+     ============================================================ */
+  .stat-card { position: relative; overflow: hidden; }
+  .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent); }
+  .stat-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #0aa6c2, #22d3ee); }
+  .stat-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #1668d6, #60a5fa); }
+  .stat-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #e6157b, #ff7ab6); }
+  .stat-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #ff7a18, #ffb454); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #0aa6c2, #1668d6); border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: #e6eef8; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <div class="agent-chip" id="agentChip" style="display:none">
+      <div>
+        <div class="name" id="displayAgentName">&#8212;</div>
+        <div class="eid" id="displayEmpId">&#8212;</div>
+      </div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
+        <img src="/logo.png" alt="Ruralift" style="max-width:100%;max-height:100%;object-fit:contain">
+      </div>
+      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
+        <img src="/kingfisher-logo.png" alt="Kingfisher" style="max-width:100%;max-height:100%;object-fit:contain">
+      </div>
+    </div>
+    <span class="header-brand">Kingfisher x Ruralift CRM</span>
+  </div>
+  <div class="header-right">
+    <span class="today-badge" id="liveClock" style="min-width:96px;text-align:center">--:--:--</span>
+    <button id="btnLogout" onclick="logoutAgent()" style="display:none;background:none;border:1px solid var(--border-strong);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--sans)">Logout</button>
+    <span class="badge">AGENT</span>
+  </div>
+</header>
+
+<!-- Connection banner -->
+<div id="connBanner"></div>
+
+<!-- ─────────────────────────────────────────────────────────
+     LOGIN SCREEN
+──────────────────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h2>Agent Login</h2>
+      <p class="sub">Enter your Employee ID to view the dashboard</p>
+      <div class="field">
+        <label>Employee ID</label>
+        <input type="number" id="empId" placeholder="e.g. 1001" min="1" autocomplete="off">
+        <div class="err" id="errEmpId">Please enter a valid numeric Employee ID</div>
+      </div>
+      <button class="btn-login" onclick="registerAgent()">Enter Dialer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────
+     MAIN DIALER SCREEN
+──────────────────────────────────────────────────────────── -->
+<div id="dialerScreen">
+  <div class="main">
+
+
+
+    <!-- DAILY REPORT PDF -->
+    <div class="panel panel-full" style="margin-bottom:20px">
+      <div class="panel-header accent-h">
+        <h2>📋 Daily Report</h2>
+        <span style="font-size:12px;color:var(--muted)">Send to client daily</span>
+      </div>
+      <div class="panel-body" style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn-add-lead" onclick="downloadLiveReport()" style="background:var(--accent)">📄 Download Live Report (PDF)</button>
+      </div>
+    </div>
+
+    <!-- END OF DAY RULES (Hindi) -->
+    <div class="panel panel-full" style="margin-bottom:20px">
+      <div class="panel-header accent-h">
+        <h2>⏰ शाम 6:00 बजे से पहले ज़रूरी काम</h2>
+        <span style="font-size:12px;color:var(--muted)">Logout करने से पहले पालन करें</span>
+      </div>
+      <div class="panel-body">
+        <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.6;color:var(--fg)">
+          <li><strong>Daily PDF Report भेजें</strong> — Logout से पहले रोज़ शाम 6:00 बजे तक ऊपर दिए गए बटन से Live Report (PDF) डाउनलोड करके क्लाइंट को भेजें।</li>
+          <li><strong>Call Recording ZIP भेजें</strong> — उस दिन की सभी कॉल रिकॉर्डिंग को ZIP फ़ाइल में डालकर भेजें।</li>
+          <li><strong>दिन भर की Summary भेजें</strong> — उस दिन क्या-क्या हुआ, उसका संक्षिप्त सारांश (Interested leads, Followups, कोई खास बात) लिखकर भेजें।</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Dialed Today</span>
+        <span class="stat-value accent" id="countToday">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Net Dialing Time <span title="Net Dialing Time = 8h shift - Break - Meeting - Washroom (time available for actual calling)" style="cursor:help;opacity:.7">&#9432;</span></span>
+        <span class="stat-value accent" id="netDialingTime">8h 0m</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Break Used</span>
+        <span class="stat-value amber" id="breakTimeUsed">0:00</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Washroom</span>
+        <span class="stat-value" style="color:#6366f1" id="washroomTimeUsed">0:00</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Meeting</span>
+        <span class="stat-value" style="color:#0891b2" id="meetingTimeUsed">0:00</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Interested</span>
+        <span class="stat-value green" id="statInterestedCount">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Followups</span>
+        <span class="stat-value accent" id="statFollowupsCount">0</span>
+      </div>
+    </div>
+
+    <!-- TOP ROW: Dialer  +  Disposition Stats -->
+    <div class="grid-2">
+
+      <!-- Dialer Panel -->
+      <div class="panel dialer-panel">
+        <div class="panel-header accent-h">
+          <h2>📞 Current Lead</h2>
+          <span style="font-size:11px;color:var(--muted)">Active Dialer</span>
+        </div>
+
+        <div id="resumeToast">⚡ Session resumed — continuing from where you left off</div>
+
+        <div id="numberDisplay" style="display:none">
+          <div class="number-block">
+            <div class="number-label">Lead to Dial</div>
+            <div id="resumedBadge" class="resume-badge" style="display:none">⚡ RESUMED</div>
+            <div class="lead-name" id="leadName"></div>
+            <div class="phone-number" id="phoneDisplay">—</div>
+            <div class="number-hint">Dial this number now</div>
+            <button onclick="removeCurrentLead()" style="margin-top:10px;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #ef4444;background:rgba(239,68,68,.08);color:#ef4444;font-family:inherit">🗑 Remove Lead</button>
+          </div>
+        </div>
+
+        <div id="idleOverlay">
+          <span class="idle-icon">📋</span>
+          <p class="idle-text">Press Start to begin dialing leads</p>
+        </div>
+
+        <div id="noNumbers">
+          <div class="no-nums-icon">✅</div>
+          <div class="no-nums-title">All Done!</div>
+          <p class="no-nums-sub">No more numbers right now.<br>Check back or ask your admin.</p>
+        </div>
+
+        <div id="breakCard">
+          <div class="break-icon">☕</div>
+          <div class="break-title">You are on a Break</div>
+          <div class="break-timer" id="breakTimerDisplay">60:00</div>
+          <div class="break-sub">Break time remaining</div>
+          <div id="breakBar"><div id="breakBarFill" style="width:100%"></div></div>
+        </div>
+
+        <div id="washroomCard" style="display:none;text-align:center;padding:20px 0;">
+          <div style="font-size:30px;margin-bottom:6px">🚻</div>
+          <div style="font-size:14px;font-weight:700;color:#6366f1;margin-bottom:4px">Washroom Break</div>
+          <div class="break-timer" id="washroomTimerDisplay" style="color:#6366f1">0:00</div>
+          <div class="break-sub">Elapsed (not deducted from break)</div>
+        </div>
+
+        <div id="meetingCard" style="display:none;text-align:center;padding:20px 0;">
+          <div style="font-size:30px;margin-bottom:6px">📋</div>
+          <div style="font-size:14px;font-weight:700;color:#0891b2;margin-bottom:4px">In a Meeting</div>
+          <div class="break-timer" id="meetingTimerDisplay" style="color:#0891b2">0:00</div>
+          <div class="break-sub">Elapsed (not deducted from break)</div>
+        </div>
+
+        <!-- Disposition grid -->
+        <div id="dispositionPanel" class="dispo-wrap">
+          <div class="dispo-grid">
+            <button class="dispo-btn dispo-dead"          onclick="submitDisposition('dead')">☠️ Call Not Connected</button>
+            <button class="dispo-btn dispo-not-received"  onclick="submitDisposition('not_received')">📵 Call Not Received</button>
+            <button class="dispo-btn dispo-not-interested" onclick="submitDisposition('not_interested')">🚫 Not Interested</button>
+            <button class="dispo-btn dispo-followup"      onclick="submitDisposition('followup')">📅 Followup</button>
+            <button class="dispo-btn dispo-switch-off"    onclick="submitDisposition('switch_off')">📴 Switch OFF</button>
+            <button class="dispo-btn dispo-discard"       onclick="submitDisposition('discard')">🚫 Not-Eligible</button>
+            <button class="dispo-btn dispo-discard" style="background:#fce4ec;color:#c62828;border:1.5px solid #ef9a9a" onclick="submitDisposition('dnd')">🔕 DND</button>
+            <button class="dispo-btn dispo-interested"    onclick="submitDisposition('interested')">⭐ Interested</button>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="action-btn" id="btnStart"       onclick="startDialing()">▶ Start Dialing</button>
+          <button class="action-btn" id="btnBreak"       onclick="takeBreak()">☕ Take a Break</button>
+          <button class="action-btn" id="btnEndBreak"    onclick="endBreak()">▶ End Break — Resume Dialing</button>
+          <button class="action-btn" id="btnWashroom"    onclick="takeWashroom()" style="background:#eff6ff;color:#6366f1;border:1.5px solid #93c5fd;display:none;">🚻 Washroom</button>
+          <button class="action-btn" id="btnEndWashroom" onclick="endWashroom()"  style="background:#6366f1;color:#fff;display:none;">▶ Done — Resume Dialing</button>
+          <button class="action-btn" id="btnMeeting"     onclick="takeMeeting()"  style="background:#cffafe;color:#0891b2;border:1.5px solid #67e8f9;display:none;">📋 Meeting</button>
+          <button class="action-btn" id="btnEndMeeting"  onclick="endMeeting()"   style="background:#0891b2;color:#fff;display:none;">▶ Meeting Done — Resume</button>
+          <button class="action-btn" onclick="openAddLeadModal()" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0">➕ Add Lead to Dialer</button>
+        </div>
+      </div>
+
+      <!-- My Stats Panel -->
+      <div class="panel">
+        <div class="panel-header accent-h">
+          <h2>📊 My Disposition Stats</h2>
+          <div class="stats-panel-tabs">
+            <button class="stats-tab active" data-period="daily"   onclick="switchStatsPeriod('daily')">Daily</button>
+            <button class="stats-tab"        data-period="weekly"  onclick="switchStatsPeriod('weekly')">Weekly</button>
+            <button class="stats-tab"        data-period="monthly" onclick="switchStatsPeriod('monthly')">Monthly</button>
+            <button class="stats-tab"        data-period="yearly"  onclick="switchStatsPeriod('yearly')">Yearly</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="dispo-stats-grid">
+            <div class="dispo-stat-card dispo-stat-total">
+              <div class="dispo-stat-val" id="myStatsTotalCalls">0</div>
+              <div class="dispo-stat-lbl">Total Calls</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:var(--danger)"></div>
+              <div class="dispo-stat-val" id="myStatsDead">0</div>
+              <div class="dispo-stat-lbl">Not Connected</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:var(--warn)"></div>
+              <div class="dispo-stat-val" id="myStatsNotReceived">0</div>
+              <div class="dispo-stat-lbl">Not Received</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:var(--muted)"></div>
+              <div class="dispo-stat-val" id="myStatsNotInterested">0</div>
+              <div class="dispo-stat-lbl">Not Interested</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:var(--blue)"></div>
+              <div class="dispo-stat-val" id="myStatsFollowup">0</div>
+              <div class="dispo-stat-lbl">Followup</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:#f59e0b"></div>
+              <div class="dispo-stat-val" id="myStatsSwitchOff">0</div>
+              <div class="dispo-stat-lbl">Switch OFF</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:var(--green)"></div>
+              <div class="dispo-stat-val" id="myStatsInterested">0</div>
+              <div class="dispo-stat-lbl">Interested</div>
+            </div>
+            <div class="dispo-stat-card">
+              <div class="dispo-stat-indicator" style="background:#475569"></div>
+              <div class="dispo-stat-val" id="myStatsDiscard">0</div>
+              <div class="dispo-stat-lbl">Not-Eligible</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end grid-2 -->
+
+    <!-- INTERESTED LEADS (full width) -->
+    <div class="panel panel-full">
+      <div class="panel-header green-h">
+        <h2>⭐ My Interested Leads</h2>
+        <span style="font-size:12px;color:var(--muted)" id="interestedCountBadge">0 leads</span>
+      </div>
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="leads-table">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Name</th>
+              <th>Package Type</th>
+              <th>Revenue Generated</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="interestedTable">
+            <tr><td colspan="5" class="empty">No interested leads yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FOLLOWUPS + ADD LEAD side-by-side -->
+    <div class="grid-2">
+
+      <!-- Followups -->
+      <div class="panel">
+        <div class="panel-header blue-h">
+          <h2>📅 My Followups</h2>
+          <span style="font-size:12px;color:var(--muted)" id="followupsCountBadge">0 followups</span>
+        </div>
+        <div class="panel-body" style="padding:0;overflow-x:auto">
+          <table class="leads-table">
+            <thead>
+              <tr>
+                <th>Phone</th>
+                <th>Name</th>
+                <th>Followup Name</th>
+                <th>Package Type</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="followupsTable">
+              <tr><td colspan="7" class="empty">No followups yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Lead -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>➕ Add Interested Lead Manually</h2>
+        </div>
+        <div class="panel-body">
+          <div class="add-lead-form">
+            <div class="field">
+              <label>Full Name <span style="color:#ef4444">*</span></label>
+              <input type="text" id="manualLeadName" placeholder="e.g. Amit Kumar" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>Mobile No <span style="color:#ef4444">*</span></label>
+              <input type="text" id="manualPhone" placeholder="10-digit number" maxlength="10">
+            </div>
+            <div class="field">
+              <label>Package Type <span style="color:#ef4444">*</span></label>
+              <select id="manualLoanType">
+                <option value="">-- Select Package --</option>
+                <option value="Kitty_Party">Kitty Party</option>
+                <option value="Family_Fun_Day">Family Fun Day- Water Park</option>
+                <option value="Dream_Wedding">Dream Wedding</option>
+                <option value="Pool_Party">Private Pool Party</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Revenue Generated (₹) <span style="color:#ef4444">*</span></label>
+              <input type="number" id="manualRevenue" placeholder="e.g. 5000" min="1">
+            </div>
+            <div class="field field-full" style="display:flex;justify-content:flex-end">
+              <button class="btn-add-lead" onclick="addInterestedManually()">+ Add Lead</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end second grid-2 -->
+
+    <!-- DND Manual Add -->
+    <div class="panel panel-full" style="margin-bottom:20px">
+      <div class="panel-header" style="background:#fce4ec">
+        <h2 style="color:#c62828">🔕 DND (Do Not Disturb) Numbers</h2>
+        <span style="font-size:12px;color:var(--muted)" id="dndCountBadge">0 numbers</span>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="dndPhoneInput" placeholder="Enter phone number" style="padding:10px 14px;border-radius:8px;background:var(--bg);border:1px solid var(--border-strong);font-family:var(--mono);font-size:14px;width:200px;color:var(--text);outline:none;" maxlength="15">
+          <button class="btn-add-lead" onclick="addDndManually()">+ Add to DND</button>
+        </div>
+        <div id="dndNumbersList" style="display:flex;flex-direction:column;gap:6px;max-height:250px;overflow-y:auto;">
+          <p class="empty">No DND numbers yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONVERTED CUSTOMERS (full width) -->
+    <div class="panel panel-full">
+      <div class="panel-header accent-h">
+        <h2>✅ Converted Customers</h2>
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 leads</span>
+          <span style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono)" id="totalRevenueBadge">Total Revenue: ₹0</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="leads-table">
+          <thead>
+            <tr>
+              <th>Phone</th>
+              <th>Name</th>
+              <th>Package Type</th>
+              <th>Revenue Generated</th>
+              <th>Converted At</th>
+              <th>Elapsed</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="completedTable">
+            <tr><td colspan="7" class="empty">No converted customers yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end .main -->
+</div><!-- end #dialerScreen -->
+
+<div id="toast"></div>
+
+<!-- ── FOLLOWUP MODAL ── -->
+<div class="modal-overlay" id="followupModal">
+  <div class="modal-box">
+    <h3>Schedule Followup</h3>
+    <p class="modal-sub">Set a date and time to follow up with this lead</p>
+    <div class="field">
+      <label>Followup Name</label>
+      <input type="text" id="followupName" placeholder="e.g. Call back about loan" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Followup Date</label>
+      <input type="date" id="followupDate">
+    </div>
+    <div class="field">
+      <label>Followup Time</label>
+      <input type="time" id="followupTime">
+    </div>
+    <div class="field">
+      <label>Package Type <span style="color:#ef4444">*</span></label>
+      <select id="followupLoanType">
+        <option value="">-- Select Package --</option>
+        <option value="Kitty_Party">Kitty Party</option>
+        <option value="Family_Fun_Day">Family Fun Day- Water Park</option>
+        <option value="Dream_Wedding">Dream Wedding</option>
+        <option value="Pool_Party">Private Pool Party</option>
+      </select>
+    </div>
+    <button class="btn-confirm blue" onclick="confirmFollowup()">Confirm Followup</button>
+    <button class="btn-cancel-modal" onclick="closeFollowupModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── INTERESTED MODAL ── -->
+<div class="modal-overlay" id="interestedModal">
+  <div class="modal-box" style="max-width:480px;max-height:90vh;overflow-y:auto;">
+    <h3>⭐ Mark as Interested</h3>
+    <p class="modal-sub">Fill in lead details below (all fields mandatory)</p>
+    <div class="field">
+      <label>Full Name <span style="color:#ef4444">*</span></label>
+      <input type="text" id="interestedLeadName" placeholder="e.g. Amit Kumar" autocomplete="off">
+      <span class="field-err" id="errILeadName" style="display:none">Please enter the lead name</span>
+    </div>
+    <div class="field">
+      <label>Package Type <span style="color:#ef4444">*</span></label>
+      <select id="interestedLoanType">
+        <option value="">-- Select Package --</option>
+        <option value="Kitty_Party">Kitty Party</option>
+        <option value="Family_Fun_Day">Family Fun Day- Water Park</option>
+        <option value="Dream_Wedding">Dream Wedding</option>
+        <option value="Pool_Party">Private Pool Party</option>
+      </select>
+      <span class="field-err" id="errILoanType" style="display:none">Please select a package</span>
+    </div>
+    <div class="field">
+      <label>Revenue Generated (₹) <span style="color:#ef4444">*</span></label>
+      <input type="number" id="interestedRevenue" placeholder="e.g. 5000" min="1" autocomplete="off">
+      <span class="field-err" id="errIRevenue" style="display:none">Please enter revenue generated</span>
+    </div>
+    <button class="btn-confirm green" onclick="confirmInterested()">✅ Confirm Interested</button>
+    <button class="btn-cancel-modal" onclick="closeInterestedModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── DOC ZIP UPLOAD MODAL ── -->
+<div class="modal-overlay" id="docZipModal">
+  <div class="modal-box" style="max-width:440px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;">📦</div>
+    <h3 style="margin-bottom:6px;">Upload Documents ZIP</h3>
+    <p class="modal-sub" style="margin-bottom:20px;">Upload all lead documents as a single ZIP file to complete documentation</p>
+    <div id="docZipDropZone" style="border:2px dashed var(--border-strong);border-radius:12px;padding:32px 20px;margin-bottom:16px;cursor:pointer;transition:all .2s;background:var(--surface2);"
+         onclick="document.getElementById('docZipFileInput').click()"
+         ondragover="event.preventDefault();this.style.borderColor='var(--green)';this.style.background='var(--green-bg)'"
+         ondragleave="this.style.borderColor='var(--border-strong)';this.style.background='var(--surface2)'"
+         ondrop="handleDocZipDrop(event)">
+      <div style="font-size:32px;margin-bottom:8px;">📁</div>
+      <div style="font-weight:600;color:var(--fg);margin-bottom:4px;">Click or drag &amp; drop ZIP file</div>
+      <div style="font-size:12px;color:var(--muted)">Only .zip files accepted · Max 100MB</div>
+    </div>
+    <input type="file" id="docZipFileInput" accept=".zip,application/zip,application/x-zip-compressed" style="display:none" onchange="handleDocZipSelect(event)">
+    <div id="docZipSelected" style="display:none;background:var(--green-bg);border:1px solid var(--green-border);border-radius:8px;padding:12px 16px;margin-bottom:16px;text-align:left;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">🗜️</span>
+        <div>
+          <div id="docZipFileName" style="font-weight:600;color:var(--green);font-size:14px;"></div>
+          <div id="docZipFileSize" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+        </div>
+        <button onclick="clearDocZipFile()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:0">✕</button>
+      </div>
+    </div>
+    <div id="docZipProgress" style="display:none;margin-bottom:16px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;" id="docZipProgressText">Uploading…</div>
+      <div style="background:var(--surface2);border-radius:100px;height:8px;overflow:hidden;">
+        <div id="docZipProgressBar" style="height:100%;background:var(--green);width:0%;transition:width .3s;border-radius:100px;"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn-confirm green" id="btnUploadDocZip" onclick="submitDocZip()" style="flex:1">📤 Upload &amp; Complete</button>
+      <button class="btn-cancel-modal" onclick="closeDocZipModal()" style="flex:0 0 auto">Cancel</button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:12px;">Lead will be moved to Documentation Completed after successful upload</p>
+  </div>
+</div>
+
+<!-- ── LOGIN POPUP MODAL ── -->
+<div class="modal-overlay" id="loginPopupModal">
+  <div class="modal-box" style="max-width:440px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;" id="loginPopupIcon"></div>
+    <h3 id="loginPopupTitle" style="margin-bottom:12px;"></h3>
+    <p id="loginPopupMsg" style="font-size:14px;line-height:1.7;color:var(--text);white-space:pre-wrap;"></p>
+    <button class="btn-confirm blue" onclick="closeLoginPopup()" style="margin-top:20px">OK</button>
+  </div>
+</div>
+
+<!-- ── SCRIPT POPUP (Feature 5) ── -->
+<div class="modal-overlay" id="scriptPopupModal">
+  <div class="modal-box" style="width:96vw;max-width:1100px;height:92vh;max-height:92vh;display:flex;flex-direction:column;padding:28px 32px;">
+    <h3 style="margin-bottom:14px;flex-shrink:0;font-size:24px;">📋 Call Script</h3>
+    <div style="position:relative;flex:1;min-height:0;display:flex;">
+      <div id="scriptContent" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:22px 74px 22px 22px;font-size:21px;line-height:1.9;white-space:pre-wrap;overflow-y:hidden;flex:1;text-align:left;"></div>
+      <div id="scriptScrollBtns" style="position:absolute;right:14px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:12px;">
+        <button id="scriptScrollUpBtn" class="script-scroll-btn" aria-label="Scroll up" type="button">▲</button>
+        <button id="scriptScrollDownBtn" class="script-scroll-btn" aria-label="Scroll down" type="button">▼</button>
+      </div>
+    </div>
+    <button class="btn-confirm blue" onclick="closeScriptPopup()" style="margin-top:16px;flex-shrink:0;width:100%">✅ Call Completed</button>
+  </div>
+</div>
+
+<!-- ── ADD LEAD MODAL ── -->
+<div class="modal-overlay" id="addLeadModal">
+  <div class="modal-box">
+    <h3>➕ Add Lead to Dialer</h3>
+    <p class="modal-sub">Manually add a number to the calling pool</p>
+    <div class="field">
+      <label>Phone Number <span style="color:#ef4444">*</span></label>
+      <input type="text" id="addLeadPhone" placeholder="10-digit number" maxlength="10" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Name</label>
+      <input type="text" id="addLeadName" placeholder="e.g. Amit Kumar" autocomplete="off">
+    </div>
+    <button class="btn-confirm blue" onclick="confirmAddLead()">➕ Add to Dialer</button>
+    <button class="btn-cancel-modal" onclick="closeAddLeadModal()">Cancel</button>
+  </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- ── 20-CALL REMINDER POPUP ── -->
+<div class="reminder-popup-overlay" id="reminderPopup">
+  <div class="reminder-popup">
+    <button class="close-btn" onclick="closeReminderPopup()">&times;</button>
+    <h3>&#9888;&#65039; Reminder</h3>
+    <p>&#2309;&#2348; &#2340;&#2325; &#2325;&#2379;&#2312; &#2349;&#2368; &#2311;&#2306;&#2335;&#2352;&#2375;&#2360;&#2381;&#2335;&#2375;&#2337; &#2354;&#2368;&#2337; &#2320;&#2337; &#2325;&#2381;&#2351;&#2379;&#2306; &#2344;&#2361;&#2368;&#2306; &#2361;&#2369;&#2312; &#2361;&#2376;</p>
+  </div>
+</div>
+
+<!-- ── FOLLOWUP DUE POPUP ── -->
+<div class="followup-due-overlay" id="followupDuePopup">
+  <div class="followup-due-popup">
+    <h3>&#128197; Followup Due!</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">These followups are due now:</p>
+    <div class="due-list" id="followupDueList"></div>
+    <button class="btn-confirm blue" onclick="closeFollowupDuePopup()">OK, Got it</button>
+  </div>
+</div>
+
+<script>
+// ── XSS Protection ────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Socket ────────────────────────────────────────────────────────────────────
+const socket = io({
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 10000
+});
+
+let agentId    = sessionStorage.getItem('agentId');
+let agentName  = sessionStorage.getItem('agentName');
+let empId      = sessionStorage.getItem('empId');
+let currentNumberId = null;
+let dialerWasActive  = false;
+let dialerWasOnBreak = false;
+
+// Break state
+let onBreak         = false;
+let breakStartedAt  = null;
+let totalBreakMsUsed  = 0;
+let breakAllowedMs  = 3600000;
+let breakInterval   = null;
+let breakExhausted  = false;
+
+// Washroom state
+let onWashroom         = false;
+let washroomStartedAt  = null;
+let totalWashroomMsUsed = 0;
+let washroomInterval   = null;
+
+// Meeting state
+let onMeeting         = false;
+let meetingStartedAt  = null;
+let totalMeetingMsUsed = 0;
+let meetingInterval   = null;
+
+// ── Connection lifecycle ──────────────────────────────────────────────────────
+socket.on('connect', () => {
+  hideBanner();
+  if (agentId) {
+    if (dialerWasOnBreak || dialerWasActive) rejoinAfterReconnect();
+  }
+});
+socket.on('disconnect', () => {
+  showBanner('disconnected', '⚠ Connection lost — trying to reconnect…');
+  dialerWasActive  = (currentNumberId !== null);
+  dialerWasOnBreak = onBreak;
+});
+socket.on('reconnecting', (attempt) => {
+  showBanner('reconnecting', `🔄 Reconnecting… (attempt ${attempt})`);
+});
+socket.on('reconnect_failed', () => {
+  showBanner('disconnected', '❌ Could not reconnect. Please refresh the page.');
+});
+
+function showBanner(type, msg) {
+  const b = document.getElementById('connBanner');
+  b.className = type; b.textContent = msg; b.style.display = 'block';
+}
+function hideBanner() {
+  const b = document.getElementById('connBanner');
+  if (b.style.display !== 'none' && b.className !== '') {
+    b.className = 'reconnected'; b.textContent = '✅ Reconnected!'; b.style.display = 'block';
+    setTimeout(() => { b.style.display = 'none'; b.className = ''; }, 2500);
+  }
+}
+
+async function rejoinAfterReconnect() {
+  try {
+    const r = await fetch('/api/agent/state/' + agentId);
+    const d = await r.json();
+    if (d.error) return;
+    applyAgentState(d, true);
+  } catch (e) {
+    setTimeout(rejoinAfterReconnect, 2000);
+  }
+}
+
+// ── Auto-restore session ──────────────────────────────────────────────────────
+if (agentId && agentName && empId) {
+  showDialer(agentName, empId);
+  restoreSession();
+}
+
+async function restoreSession() {
+  try {
+    const r = await fetch('/api/agent/state/' + agentId);
+    const d = await r.json();
+    if (d.error) return;
+    applyAgentState(d, true);
+  } catch {}
+}
+
+function applyAgentState(d, fromRestore) {
+  totalBreakMsUsed = d.totalBreakMs || 0;
+  breakAllowedMs   = d.breakAllowedMs || 3600000;
+  breakExhausted   = totalBreakMsUsed >= breakAllowedMs;
+  totalWashroomMsUsed = d.totalWashroomMs || 0;
+  totalMeetingMsUsed  = d.totalMeetingMs || 0;
+
+  document.getElementById('countToday').textContent = d.totalDialedToday || 0;
+  updateBreakUsedDisplay();
+  updateWashroomUsedDisplay();
+  updateMeetingUsedDisplay();
+  updateNetDialingTime();
+
+  if (d.onBreak) {
+    onBreak = true;
+    breakStartedAt   = d.breakStartedAt || Date.now();
+    dialerWasOnBreak = true;
+    showBreakMode();
+    startBreakCountdown();
+    if (fromRestore) {
+      const t = document.getElementById('resumeToast');
+      t.textContent = '☕ Break resumed — reconnected while you were on break';
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 6000);
+    }
+  } else if (d.resumeNumber) {
+    currentNumberId  = d.resumeNumber.numberId;
+    dialerWasActive  = true;
+    if (fromRestore) {
+      const t = document.getElementById('resumeToast');
+      t.textContent = d.needsAutoResume
+        ? '⚡ Auto-resumed — server restarted, continuing from where you left off'
+        : '⚡ Session resumed — continuing from where you left off';
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 6000);
+    }
+    showNumber(d.resumeNumber.numberId, d.resumeNumber.phone, d.resumeNumber.name, d.totalDialedToday, true);
+    socket.emit('agent-start', { agentId });
+  }
+  refreshLeadSections();
+}
+
+// ── Register ──────────────────────────────────────────────────────────────────
+async function registerAgent() {
+  const empVal  = document.getElementById('empId').value.trim();
+  let valid = true;
+  document.getElementById('errEmpId').style.display = 'none';
+  if (!empVal || !/^\d+$/.test(empVal)) { document.getElementById('errEmpId').style.display = 'block'; valid = false; }
+  if (!valid) return;
+
+  const r = await fetch('/api/agent/register', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ name: '', employeeId: empVal })
+  });
+  const d = await r.json();
+  if (d.error) {
+    const errEl = document.getElementById('errEmpId');
+    errEl.textContent = d.error; errEl.style.display = 'block';
+    return;
+  }
+  agentId = d.agentId; agentName = d.name; empId = empVal;
+  sessionStorage.setItem('agentId', agentId);
+  sessionStorage.setItem('agentName', agentName);
+  sessionStorage.setItem('empId', empId);
+  showDialer(agentName, empId);
+  applyAgentState(d, true);
+  // Show login popup
+  showLoginPopup(d.lateLogin);
+}
+
+function logoutAgent() {
+  if (!confirm('Are you sure you want to logout?')) return;
+  sessionStorage.clear();
+  location.reload();
+}
+
+function showLoginPopup(lateLogin) {
+  var icon = document.getElementById('loginPopupIcon');
+  var title = document.getElementById('loginPopupTitle');
+  var msg = document.getElementById('loginPopupMsg');
+  if (lateLogin) {
+    icon.textContent = '\u26A0\uFE0F';
+    title.textContent = '\u091A\u0947\u0924\u093E\u0935\u0928\u0940!';
+    title.style.color = 'var(--danger)';
+    msg.textContent = '\u0906\u092A \u0905\u092A\u0928\u0947 \u0928\u093F\u0930\u094D\u0927\u093E\u0930\u093F\u0924 \u0915\u093E\u0930\u094D\u092F\u093E\u0932\u092F \u0938\u092E\u092F \u0938\u0947 \u0926\u0947\u0930 \u0938\u0947 \u0932\u0949\u0917\u093F\u0928 \u0939\u0941\u090F \u0939\u0948\u0902\u0964 \u092F\u0939 \u0917\u0902\u092D\u0940\u0930 \u0905\u0928\u0941\u0936\u093E\u0938\u0928\u0939\u0940\u0928\u0924\u093E \u092E\u093E\u0928\u0940 \u091C\u093E\u090F\u0917\u0940\u0964 \u0906\u092A\u0915\u0940 \u0926\u0947\u0930\u0940 \u0915\u0940 \u091C\u093E\u0928\u0915\u093E\u0930\u0940 \u0938\u094D\u0935\u091A\u093E\u0932\u093F\u0924 \u0930\u0942\u092A \u0938\u0947 \u0938\u0949\u095E\u094D\u091F\u0935\u0947\u092F\u0930 \u0915\u0947 \u092E\u093E\u0927\u094D\u092F\u092E \u0938\u0947 \u092E\u093E\u0932\u093F\u0915\u094B\u0902 (Owners) \u090F\u0935\u0902 \u091F\u0940\u092E \u0932\u0940\u0921\u0930 (TL) \u0915\u094B \u092D\u0947\u091C \u0926\u0940 \u0917\u0908 \u0939\u0948\u0964 \u0915\u0943\u092A\u092F\u093E \u092D\u0935\u093F\u0937\u094D\u092F \u092E\u0947\u0902 \u0938\u092E\u092F \u0915\u093E \u092A\u093E\u0932\u0928 \u0915\u0930\u0947\u0902, \u0905\u0928\u094D\u092F\u0925\u093E \u0906\u0935\u0936\u094D\u092F\u0915 \u092A\u094D\u0930\u0936\u093E\u0938\u0928\u093F\u0915 \u0915\u093E\u0930\u094D\u0930\u0935\u093E\u0908 \u0915\u0940 \u091C\u093E \u0938\u0915\u0924\u0940 \u0939\u0948\u0964';
+  } else {
+    icon.textContent = '\u2705';
+    title.textContent = '\u0938\u092E\u092F \u092A\u0930 \u0932\u0949\u0917\u093F\u0928!';
+    title.style.color = 'var(--green)';
+    msg.textContent = '\u0906\u092A\u0928\u0947 \u0938\u092E\u092F \u092A\u0930 \u0932\u0949\u0917\u093F\u0928 \u0915\u093F\u092F\u093E \u0939\u0948\u0964 \u092C\u0939\u0941\u0924 \u0905\u091A\u094D\u091B\u093E \u0915\u093E\u0930\u094D\u092F, \u0907\u0938\u0940 \u0924\u0930\u0939 \u0938\u092E\u092F \u0915\u0940 \u092A\u093E\u092C\u0902\u0926\u0940 \u092C\u0928\u093E\u090F \u0930\u0916\u0947\u0902\u0964';
+  }
+  document.getElementById('loginPopupModal').classList.add('active');
+}
+
+function closeLoginPopup() {
+  document.getElementById('loginPopupModal').classList.remove('active');
+}
+
+function showDialer(name, eid) {
+  document.getElementById('loginScreen').style.display  = 'none';
+  document.getElementById('dialerScreen').style.display = 'block';
+  document.getElementById('agentChip').style.display    = 'flex';
+  document.getElementById('displayAgentName').textContent = name;
+  document.getElementById('displayEmpId').textContent     = 'EID: ' + eid;
+  document.getElementById('btnLogout').style.display = 'inline-block';
+  fetchMyStats();
+
+}
+
+// ── Dialing ───────────────────────────────────────────────────────────────────
+function startDialing() {
+  dialerWasActive = true;
+  socket.emit('agent-start', { agentId });
+}
+function nextNumber() {
+  const prev = currentNumberId; currentNumberId = null;
+  socket.emit('agent-next', { agentId, prevNumberId: prev });
+}
+
+function showNumber(numberId, phone, name, totalDialedToday, resumed) {
+  currentNumberId  = numberId;
+  dialerWasActive  = true;
+  dialerWasOnBreak = false;
+  document.getElementById('countToday').textContent = totalDialedToday;
+  document.getElementById('idleOverlay').style.display      = 'none';
+  document.getElementById('numberDisplay').style.display    = 'block';
+  document.getElementById('noNumbers').style.display        = 'none';
+  document.getElementById('btnStart').style.display         = 'none';
+  document.getElementById('dispositionPanel').style.display = 'block';
+  document.getElementById('resumedBadge').style.display     = resumed ? 'inline-block' : 'none';
+
+  if (!breakExhausted && !onBreak) {
+    document.getElementById('btnBreak').style.display = 'block';
+    document.getElementById('btnBreak').disabled      = false;
+    document.getElementById('btnBreak').textContent   = '☕ Take a Break';
+  } else if (breakExhausted) {
+    document.getElementById('btnBreak').style.display = 'block';
+    document.getElementById('btnBreak').disabled      = true;
+    document.getElementById('btnBreak').textContent   = '☕ No Break Time Left';
+  }
+  if (!onWashroom && !onBreak && !onMeeting) {
+    document.getElementById('btnWashroom').style.display = 'block';
+  }
+  if (!onMeeting && !onBreak && !onWashroom) {
+    document.getElementById('btnMeeting').style.display = 'block';
+  }
+
+  const nameEl = document.getElementById('leadName');
+  if (name && name.trim()) { nameEl.textContent = '👤 ' + name.trim(); nameEl.className = 'lead-name'; }
+  else                     { nameEl.textContent = 'Name not available'; nameEl.className = 'lead-name no-name'; }
+
+  const el = document.getElementById('phoneDisplay');
+  el.textContent = formatPhone(phone);
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+
+socket.on('show-number', ({ numberId, phone, name, totalDialedToday, resumed }) => {
+  showNumber(numberId, phone, name, totalDialedToday, resumed);
+  refreshLeadSections();
+});
+
+socket.on('no-numbers', (data) => {
+  if (data && data.totalDialedToday !== undefined)
+    document.getElementById('countToday').textContent = data.totalDialedToday;
+  currentNumberId = null; dialerWasActive = false;
+  document.getElementById('numberDisplay').style.display     = 'none';
+  document.getElementById('idleOverlay').style.display       = 'none';
+  document.getElementById('btnStart').style.display          = 'none';
+  document.getElementById('dispositionPanel').style.display  = 'none';
+  document.getElementById('btnBreak').style.display          = 'none';
+  document.getElementById('btnWashroom').style.display        = 'none';
+  document.getElementById('btnMeeting').style.display         = 'none';
+  document.getElementById('noNumbers').style.display         = 'block';
+  refreshLeadSections();
+});
+
+socket.on('error', (msg) => {
+  if (msg === 'Agent not found') { sessionStorage.clear(); location.reload(); }
+  else alert('Error: ' + msg);
+});
+
+socket.on('force-stop', () => {
+  currentNumberId = null; dialerWasActive = false;
+  showIdle();
+});
+
+function showIdle() {
+  document.getElementById('numberDisplay').style.display     = 'none';
+  document.getElementById('idleOverlay').style.display       = 'block';
+  document.getElementById('noNumbers').style.display         = 'none';
+  document.getElementById('btnStart').style.display          = 'block';
+  document.getElementById('dispositionPanel').style.display  = 'none';
+  document.getElementById('btnBreak').style.display          = 'none';
+  document.getElementById('btnWashroom').style.display       = 'none';
+  document.getElementById('btnMeeting').style.display        = 'none';
+  document.getElementById('breakCard').style.display         = 'none';
+  document.getElementById('btnEndBreak').style.display       = 'none';
+  document.getElementById('washroomCard').style.display      = 'none';
+  document.getElementById('btnEndWashroom').style.display    = 'none';
+  document.getElementById('meetingCard').style.display       = 'none';
+  document.getElementById('btnEndMeeting').style.display     = 'none';
+}
+
+// ── Break ─────────────────────────────────────────────────────────────────────
+function takeBreak() {
+  if (breakExhausted) return;
+  socket.emit('agent-break-start', { agentId });
+}
+function endBreak() {
+  socket.emit('agent-break-end', { agentId });
+}
+
+socket.on('break-started', (data) => {
+  if (data.error) { alert(data.error); return; }
+  onBreak = true; dialerWasOnBreak = true;
+  breakStartedAt = data.breakStartedAt || Date.now();
+  showBreakMode(); startBreakCountdown();
+});
+
+socket.on('break-ended', (data) => {
+  if (data.error) { alert(data.error); return; }
+  onBreak = false; dialerWasOnBreak = false; breakStartedAt = null;
+  totalBreakMsUsed = data.totalBreakMs || totalBreakMsUsed;
+  breakExhausted   = totalBreakMsUsed >= breakAllowedMs;
+  stopBreakCountdown(); updateBreakUsedDisplay(); hideBreakMode();
+  if (currentNumberId) {
+    document.getElementById('numberDisplay').style.display     = 'block';
+    document.getElementById('dispositionPanel').style.display  = 'block';
+    if (!breakExhausted) {
+      document.getElementById('btnBreak').style.display = 'block';
+      document.getElementById('btnBreak').disabled      = false;
+      document.getElementById('btnBreak').textContent   = '☕ Take a Break';
+    } else {
+      document.getElementById('btnBreak').style.display = 'block';
+      document.getElementById('btnBreak').disabled      = true;
+      document.getElementById('btnBreak').textContent   = '☕ No Break Time Left';
+    }
+    document.getElementById('btnWashroom').style.display = 'block';
+    document.getElementById('btnMeeting').style.display  = 'block';
+  } else { showIdle(); }
+});
+
+function showBreakMode() {
+  document.getElementById('breakCard').style.display         = 'block';
+  document.getElementById('btnBreak').style.display          = 'none';
+  document.getElementById('dispositionPanel').style.display  = 'none';
+  document.getElementById('numberDisplay').style.display     = 'none';
+  document.getElementById('idleOverlay').style.display       = 'none';
+  document.getElementById('btnStart').style.display          = 'none';
+  document.getElementById('btnEndBreak').style.display       = 'block';
+}
+function hideBreakMode() {
+  document.getElementById('breakCard').style.display    = 'none';
+  document.getElementById('btnEndBreak').style.display  = 'none';
+}
+
+function startBreakCountdown() {
+  if (breakInterval) clearInterval(breakInterval);
+  breakInterval = setInterval(tickBreak, 1000);
+  tickBreak();
+}
+function stopBreakCountdown() {
+  if (breakInterval) { clearInterval(breakInterval); breakInterval = null; }
+}
+function tickBreak() {
+  if (!onBreak || !breakStartedAt) return;
+  const liveElapsed = Date.now() - breakStartedAt;
+  const totalUsed   = totalBreakMsUsed + liveElapsed;
+  const remaining   = Math.max(0, breakAllowedMs - totalUsed);
+  document.getElementById('breakTimerDisplay').textContent = formatMs(remaining);
+  document.getElementById('breakBarFill').style.width = ((remaining / breakAllowedMs) * 100) + '%';
+  updateBreakUsedDisplayLive(totalUsed);
+  if (remaining <= 0) {
+    stopBreakCountdown();
+    breakExhausted = true;
+    socket.emit('agent-break-end', { agentId });
+  }
+}
+
+function updateBreakUsedDisplay()       { document.getElementById('breakTimeUsed').textContent = formatMs(totalBreakMsUsed); updateNetDialingTime(); }
+function updateBreakUsedDisplayLive(ms) { document.getElementById('breakTimeUsed').textContent = formatMs(ms); updateNetDialingTime(); }
+
+// ── Washroom ──────────────────────────────────────────────────────────────────
+function takeWashroom() {
+  socket.emit('agent-washroom-start', { agentId });
+}
+function endWashroom() {
+  socket.emit('agent-washroom-end', { agentId });
+}
+
+socket.on('washroom-started', (data) => {
+  if (data.error) { alert(data.error); return; }
+  onWashroom = true;
+  washroomStartedAt = data.washroomStartedAt || Date.now();
+  showWashroomMode();
+  startWashroomTimer();
+});
+
+socket.on('washroom-ended', (data) => {
+  if (data.error) { alert(data.error); return; }
+  onWashroom = false; washroomStartedAt = null;
+  totalWashroomMsUsed = data.totalWashroomMs || totalWashroomMsUsed;
+  stopWashroomTimer(); updateWashroomUsedDisplay(); hideWashroomMode();
+  if (currentNumberId) {
+    document.getElementById('numberDisplay').style.display     = 'block';
+    document.getElementById('dispositionPanel').style.display  = 'block';
+    if (!breakExhausted) {
+      document.getElementById('btnBreak').style.display = 'block';
+      document.getElementById('btnBreak').disabled = false;
+    }
+    document.getElementById('btnWashroom').style.display = 'block';
+    document.getElementById('btnMeeting').style.display  = 'block';
+  } else { showIdle(); }
+});
+
+function showWashroomMode() {
+  document.getElementById('washroomCard').style.display       = 'block';
+  document.getElementById('btnBreak').style.display           = 'none';
+  document.getElementById('btnWashroom').style.display        = 'none';
+  document.getElementById('btnMeeting').style.display         = 'none';
+  document.getElementById('dispositionPanel').style.display   = 'none';
+  document.getElementById('numberDisplay').style.display      = 'none';
+  document.getElementById('idleOverlay').style.display        = 'none';
+  document.getElementById('btnStart').style.display           = 'none';
+  document.getElementById('btnEndWashroom').style.display     = 'block';
+}
+function hideWashroomMode() {
+  document.getElementById('washroomCard').style.display   = 'none';
+  document.getElementById('btnEndWashroom').style.display = 'none';
+}
+function startWashroomTimer() {
+  if (washroomInterval) clearInterval(washroomInterval);
+  washroomInterval = setInterval(tickWashroom, 1000); tickWashroom();
+}
+function stopWashroomTimer() {
+  if (washroomInterval) { clearInterval(washroomInterval); washroomInterval = null; }
+}
+function tickWashroom() {
+  if (!onWashroom || !washroomStartedAt) return;
+  const liveElapsed = Date.now() - washroomStartedAt;
+  const totalUsed = totalWashroomMsUsed + liveElapsed;
+  document.getElementById('washroomTimerDisplay').textContent = formatMs(totalUsed);
+  updateWashroomUsedDisplayLive(totalUsed);
+}
+function updateWashroomUsedDisplay()       { document.getElementById('washroomTimeUsed').textContent = formatMs(totalWashroomMsUsed); updateNetDialingTime(); }
+function updateWashroomUsedDisplayLive(ms) { document.getElementById('washroomTimeUsed').textContent = formatMs(ms); updateNetDialingTime(); }
+
+// ── Meeting ───────────────────────────────────────────────────────────────────
+function takeMeeting() {
+  socket.emit('agent-meeting-start', { agentId });
+}
+function endMeeting() {
+  socket.emit('agent-meeting-end', { agentId });
+}
+
+socket.on('meeting-started', (data) => {
+  if (data.error) { alert(data.error); return; }
+  onMeeting = true;
+  meetingStartedAt = data.meetingStartedAt || Date.now();
+  showMeetingMode();
+  startMeetingTimer();
+});
+
+socket.on('meeting-ended', (data) => {
+  if (data.error) { alert(data.error); return; }
+  onMeeting = false; meetingStartedAt = null;
+  totalMeetingMsUsed = data.totalMeetingMs || totalMeetingMsUsed;
+  stopMeetingTimer(); updateMeetingUsedDisplay(); hideMeetingMode();
+  if (currentNumberId) {
+    document.getElementById('numberDisplay').style.display     = 'block';
+    document.getElementById('dispositionPanel').style.display  = 'block';
+    if (!breakExhausted) {
+      document.getElementById('btnBreak').style.display = 'block';
+      document.getElementById('btnBreak').disabled = false;
+    }
+    document.getElementById('btnWashroom').style.display = 'block';
+    document.getElementById('btnMeeting').style.display  = 'block';
+  } else { showIdle(); }
+});
+
+function showMeetingMode() {
+  document.getElementById('meetingCard').style.display        = 'block';
+  document.getElementById('btnBreak').style.display           = 'none';
+  document.getElementById('btnWashroom').style.display        = 'none';
+  document.getElementById('btnMeeting').style.display         = 'none';
+  document.getElementById('dispositionPanel').style.display   = 'none';
+  document.getElementById('numberDisplay').style.display      = 'none';
+  document.getElementById('idleOverlay').style.display        = 'none';
+  document.getElementById('btnStart').style.display           = 'none';
+  document.getElementById('btnEndMeeting').style.display      = 'block';
+}
+function hideMeetingMode() {
+  document.getElementById('meetingCard').style.display   = 'none';
+  document.getElementById('btnEndMeeting').style.display = 'none';
+}
+function startMeetingTimer() {
+  if (meetingInterval) clearInterval(meetingInterval);
+  meetingInterval = setInterval(tickMeeting, 1000); tickMeeting();
+}
+function stopMeetingTimer() {
+  if (meetingInterval) { clearInterval(meetingInterval); meetingInterval = null; }
+}
+function tickMeeting() {
+  if (!onMeeting || !meetingStartedAt) return;
+  const liveElapsed = Date.now() - meetingStartedAt;
+  const totalUsed = totalMeetingMsUsed + liveElapsed;
+  document.getElementById('meetingTimerDisplay').textContent = formatMs(totalUsed);
+  updateMeetingUsedDisplayLive(totalUsed);
+}function updateMeetingUsedDisplay()       { document.getElementById('meetingTimeUsed').textContent = formatMs(totalMeetingMsUsed); updateNetDialingTime(); }
+function updateMeetingUsedDisplayLive(ms) { document.getElementById('meetingTimeUsed').textContent = formatMs(ms); updateNetDialingTime(); }
+
+function updateNetDialingTime() {
+  const SHIFT_MS = 8 * 60 * 60 * 1000;
+  const liveBreak = (onBreak && breakStartedAt) ? (Date.now() - breakStartedAt) : 0;
+  const liveWashroom = (onWashroom && washroomStartedAt) ? (Date.now() - washroomStartedAt) : 0;
+  const liveMeeting = (onMeeting && meetingStartedAt) ? (Date.now() - meetingStartedAt) : 0;
+  const usedBreak = totalBreakMsUsed + liveBreak;
+  const usedWashroom = totalWashroomMsUsed + liveWashroom;
+  const usedMeeting = totalMeetingMsUsed + liveMeeting;
+  const netMs = Math.max(0, SHIFT_MS - usedBreak - usedWashroom - usedMeeting);
+  const h = Math.floor(netMs / (60 * 60 * 1000));
+  const m = Math.floor((netMs % (60 * 60 * 1000)) / (60 * 1000));
+  const el = document.getElementById('netDialingTime');
+  if (el) el.textContent = h + 'h ' + m + 'm';
+}
+setInterval(updateNetDialingTime, 1000);
+
+function formatMs(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm ' + String(s).padStart(2, '0') + 's';
+}
+function formatPhone(p) {
+  const s = String(p).replace(/\D/g,'');
+  if (s.length === 10) return s.replace(/(\d{5})(\d{5})/, '$1 $2');
+  if (s.length === 12) return s.replace(/(\d{2})(\d{5})(\d{5})/, '+$1 $2 $3');
+  return p;
+}
+function formatTimestamp(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' }) + ' ' +
+           d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+  } catch(e) { return iso; }
+}
+
+// ── Disposition ───────────────────────────────────────────────────────────────
+function submitDisposition(disposition) {
+  if (disposition === 'followup')   { showFollowupModal();   return; }
+  if (disposition === 'interested') { showInterestedModal(); return; }
+  document.getElementById('dispositionPanel').style.display = 'none';
+  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition });
+  currentNumberId = null;
+}
+
+function showFollowupModal() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('followupDate').setAttribute('min', today);
+  document.getElementById('followupDate').value = today;
+  document.getElementById('followupTime').value = '';
+  document.getElementById('followupName').value = '';
+  document.getElementById('followupLoanType').value = '';
+  document.getElementById('followupModal').classList.add('active');
+}
+function closeFollowupModal() { document.getElementById('followupModal').classList.remove('active'); }
+function confirmFollowup() {
+  const followupDate = document.getElementById('followupDate').value;
+  const followupTime = document.getElementById('followupTime').value;
+  const followupName = document.getElementById('followupName').value.trim();
+  const loanType      = document.getElementById('followupLoanType').value;
+  if (!followupDate) { alert('Please select a date'); return; }
+  if (!followupTime) { alert('Please select a time'); return; }
+  if (!loanType)      { alert('Please select a package'); return; }
+  closeFollowupModal();
+  document.getElementById('dispositionPanel').style.display = 'none';
+  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'followup', followupDate, followupTime, followupName, loanType });
+  currentNumberId = null;
+}
+
+function showInterestedModal() {
+  document.getElementById('interestedLeadName').value      = '';
+  document.getElementById('interestedLoanType').value       = '';
+  document.getElementById('interestedRevenue').value        = '';
+  ['errILeadName','errILoanType','errIRevenue'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display='none';
+  });
+  document.getElementById('interestedModal').classList.add('active');
+}
+function closeInterestedModal() { document.getElementById('interestedModal').classList.remove('active'); }
+function confirmInterested() {
+  const leadName       = document.getElementById('interestedLeadName').value.trim();
+  const loanType       = document.getElementById('interestedLoanType').value;
+  const revenueGenerated = document.getElementById('interestedRevenue').value.trim();
+
+  // Hide all errors first
+  ['errILeadName','errILoanType','errIRevenue'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  let valid = true;
+  if (!leadName)                              { document.getElementById('errILeadName').style.display='block'; valid=false; }
+  if (!loanType)                              { document.getElementById('errILoanType').style.display='block'; valid=false; }
+  if (!revenueGenerated || Number(revenueGenerated) <= 0) { document.getElementById('errIRevenue').style.display='block'; valid=false; }
+  if (!valid) return;
+
+  closeInterestedModal();
+  document.getElementById('dispositionPanel').style.display = 'none';
+  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'interested', leadName, loanType, revenueGenerated });
+  currentNumberId = null;
+}
+
+// ── Lead sections data ────────────────────────────────────────────────────────
+let interestedLeadsData = [];
+
+async function refreshLeadSections() {
+  if (!agentId) return;
+  try {
+    const [intRes, fuRes, compRes] = await Promise.all([
+      fetch('/api/agent/interested/' + agentId),
+      fetch('/api/agent/followups/'  + agentId),
+      fetch('/api/agent/completed/'  + agentId)
+    ]);
+    const interested = await intRes.json();
+    const followups  = await fuRes.json();
+    const completed  = await compRes.json();
+    interestedLeadsData = interested || [];
+    renderInterestedTable(interestedLeadsData);
+    renderFollowupsTable(followups);
+    renderCompletedTable(completed);
+    // Update header stats
+    document.getElementById('statInterestedCount').textContent = interestedLeadsData.length;
+    document.getElementById('statFollowupsCount').textContent  = (followups || []).length;
+  } catch (e) { /* silent */ }
+  fetchMyStats();
+}
+
+// Countdown helpers
+function getCountdownText(interestedAt) {
+  if (!interestedAt) return '--:--:--';
+  const deadline  = new Date(interestedAt).getTime() + (72 * 60 * 60 * 1000);
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return 'EXPIRED';
+  const hrs  = Math.floor(remaining / 3600000);
+  const mins = Math.floor((remaining % 3600000) / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  return hrs + 'h ' + String(mins).padStart(2,'0') + 'm ' + String(secs).padStart(2,'0') + 's';
+}
+
+// Live countdown tick
+setInterval(() => {
+  interestedLeadsData.forEach(l => {
+    const el = document.querySelector('[data-timer-for="' + l.id + '"]');
+    if (!el) return;
+    const text = getCountdownText(l.interestedAt);
+    el.textContent = text;
+    el.className = 'timer-badge ' + (text === 'EXPIRED' ? 'expired-timer' : 'active-timer');
+  });
+}, 1000);
+
+const PACKAGE_LABELS = {
+  Kitty_Party: 'Kitty Party',
+  Family_Fun_Day: 'Family Fun Day- Water Park',
+  Dream_Wedding: 'Dream Wedding',
+  Pool_Party: 'Private Pool Party'
+};
+
+function renderInterestedTable(leads) {
+  const tbody = document.getElementById('interestedTable');
+  document.getElementById('interestedCountBadge').textContent = leads.length + ' lead' + (leads.length !== 1 ? 's' : '');
+  if (!leads || leads.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No interested leads yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l => {
+    const pkgSelect = `<select onchange="updateInterestedPackage('${escapeHtml(l.id)}', this.value)" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface2);font-family:var(--sans)">
+      ${Object.keys(PACKAGE_LABELS).map(k => `<option value="${k}" ${l.loanType===k?'selected':''}>${PACKAGE_LABELS[k]}</option>`).join('')}
+    </select>`;
+    const revenueVal = l.revenueGenerated || '';
+    return `<tr>
+      <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
+      <td style="font-weight:600">${escapeHtml(l.name) || '—'}</td>
+      <td>${pkgSelect}</td>
+      <td><input type="number" value="${escapeHtml(String(revenueVal))}" placeholder="₹ Amount" min="0" style="width:100px;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface2);font-family:var(--mono)" onchange="updateRevenueGenerated('${escapeHtml(l.id)}', this.value)"></td>
+      <td>
+        <div class="action-cell">
+          <button class="btn-sm green" onclick="copyWhatsappMessage('${escapeHtml(l.id)}')">💬 WhatsApp</button>
+          <button class="btn-sm blue"  onclick="markConverted('${escapeHtml(l.id)}')">✅ Converted</button>
+          <button class="btn-sm red"   onclick="removeInterestedLead('${escapeHtml(l.id)}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+const PACKAGE_WHATSAPP_MESSAGES = {
+  Kitty_Party: `🎉 *KITTY PARTY EVENT* 🎉
+*Kingfisher Mandla Resort & Entertainment*
+
+"Celebrate - Laugh - Enjoy - Perfect reason to get together"
+
+💰 *Special Price: ₹499/- PER LADY*
+
+✅ Welcome Drink
+✅ Lunch Buffet
+✅ Reserved Seating Area
+✅ Music System Access
+✅ Tambola Tickets & Material
+✅ Selfie Point / Photo Corner
+✅ Winner Gift by Kingfisher
+
+🎯 *TAMBOLA FUN:*
+- Each lady receives Tambola tickets
+- Tambola is played with a screen, and the winner gets a gift.
+
+🍽️ *DELICIOUS LUNCH MENU:*
+- Welcome Drink: Lemon Mint / Jaljeera
+- Starters (Unlimited): Crispy Corn / French Fries
+- Main Course: Paneer Sabzi, Dal Tadka, Jeera Rice, Naan
+- Dessert: Gulab Jamun (1 pc. per person)
+
+✨ *ADDITIONAL FEATURES:*
+- Group of 8 or more: Ideal for friends
+- Comfortable Seating: Cushioned and arranged
+- DJ Music: DJ available to set the mood
+- Selfie Point: Special photo area
+- Safe & Secure Environment: Family-friendly atmosphere
+- Make it Special: Option to add personalized touches
+
+📞 For booking, contact Kingfisher Mandla Resort & Entertainment today!`,
+  Family_Fun_Day: `🎢 *FAMILY FUN DAY- WATER PARK* 🎢
+*Water Park + Movie + Food*
+*Kingfisher Mandla Resort & Entertainment*
+
+"Water Park - Movie - Fun - Memories - All in One Package!"
+"Make Every Moment a Family Memory!"
+
+👨‍👩‍👧 *PACKAGE A: FAMILY OF 3 (2 Adults + 1 Child)*
+💰 Package Price: ₹1,499/- ONLY
+Actual Value: ₹2,450/-
+Your Savings: ₹951/-
+
+Inclusions:
+- Water Park Entry (Adult x 2): ₹350 each = ₹700
+- Water Park Entry (Child x 1): ₹350
+- Costume (x 3): ₹100 each = ₹300
+- Movie Ticket (x 3): ₹150 each = ₹450
+- Kids Jumping Section (x 1): ₹100
+- Welcome Drink (x 3): ₹50 each = ₹150
+
+👨‍👩‍👧‍👦 *PACKAGE B: FAMILY OF 4 (2 Adults + 2 Children)*
+💰 Package Price: ₹1,799/- ONLY
+Actual Value: ₹3,200/-
+Your Savings: ₹1,401/-
+
+Inclusions:
+- Water Park Entry (Adult x 2): ₹550 each = ₹1,100
+- Water Park Entry (Child x 2): ₹350 each = ₹700
+- Costume (x 4): ₹100 each = ₹400
+- Movie Ticket (x 4): ₹150 each = ₹600
+- Kids Jumping Section (x 2): ₹100 each = ₹200
+- Welcome Drink (x 4): ₹50 each = ₹200
+
+✨ *EXCITING ADD-ONS (Extra charges):*
+- Fish Spa: ₹99/-
+- Bull Ride: ₹99/-
+- Massage Chair (15 min): ₹99/-
+- Massage Chair (30 min): ₹129/-
+- Photography: ₹199/-
+
+⚠️ Package valid for one day only.
+
+📞 Book your Family Fun Day- Water Park now!`,
+  Dream_Wedding: `💍 *YOUR DREAM WEDDING VENUE* 💍
+*Kingfisher Mandla Resort & Entertainment*
+📍 Mandla Raipur Road, Pondi Maharajpur, Mandla (M.P.) 481665
+
+🌿 *ECONOMY PACKAGE (Standard Wedding):*
+
+*For 1 Day: ₹2,99,000/-*
+- 02 Halls
+- 500 people food (Veg + Non-veg Dinner)
+- Decoration (Floral, stage, mandap, gate)
+- DJ & Anchor combo
+
+*For 2 Days: ₹4,51,000/-*
+- 06 Halls (Includes Hall + Lawn)
+- 500 people food (Veg + Non-veg Dinner)
+- Decoration (Floral, stage, mandap, gate)
+- DJ & Anchor combo
+
+👑 *PREMIUM PACKAGE (Luxury Wedding):*
+
+*For 1 Day: ₹5,51,000/-*
+- 15 Halls (Lawns + 15 cottages)
+- AC Room & Lawn included
+- 100 people Breakfast + Lunch
+- 500 people Dinner (Veg + Non-veg)
+- Decoration (Floral, stage, mandap, gate for 100 people)
+- Decoration (Top-tier: Haldi, Mehendi, Sangeet, Stage, Mandap, Gate)
+- DJ & Anchor combo
+
+*For 2 Days: ₹8,51,000/-*
+- 15 Halls + 15 Cottages + AC Hall + Lawn
+- 100 people Breakfast + Lunch
+- Decoration (Top-tier for 100 people)
+- 100 people Breakfast + Lunch (Day 2)
+- 500 people Dinner (Veg + Non-veg)
+- Decoration (Floral for 500 people)
+- Decoration (Top-tier: Haldi, Mehendi, Sangeet, Stage, Mandap, Gate, all top-tier decor)
+- DJ & Anchor combo
+
+📞 Let's plan your dream wedding — contact us today!`,
+  Pool_Party: `🏊 *PRIVATE POOL PARTY PACKAGE* 🏊
+*Kingfisher Mandla Resort & Entertainment*
+
+"Celebrate - Enjoy - Make Memories"
+
+💰 Minimum 10 People: ₹3,000/- ONLY
+💰 Above 10 People (Max 20): ₹4,999/- ONLY
+
+Perfect For: Birthday parties, Friend get-togethers, Family celebrations, Kitty parties, Small corporate parties.
+
+✅ *PACKAGE INCLUDES:*
+- 3 Hours Pool Access (Exclusive private access for your group)
+- Unlimited Tea
+- Unlimited Maggie
+- Unlimited Crispy Corn
+- Music System (High-Quality Sound System)
+
+🌟 *PACKAGE HIGHLIGHTS:*
+- Private & Safe Environment
+- Clean & Well Maintained Pool
+- Delicious Snacks & Beverages
+- Premium Music Experience
+- Fun, Food & Memories
+
+✨ *EXCITING ADD-ONS (Extra charges):*
+- DJ: ₹2,999/-
+- Decoration: ₹1,999/-
+- Photography: ₹1,999/-
+- Fog / Smoke Effect: ₹1,499/-
+- Cake (1 Kg): ₹799/-
+- Cold Drinks: On Actuals (Pay as you consume)
+
+📌 *BOOKING POINTS:*
+- Limited bookings per day
+- Prior booking recommended
+- Terms & Conditions apply
+
+🏢 *VENUE FACILITIES:*
+- Safe & Secure
+- Hygienic Food
+- Ample Parking
+- Clean & Green Environment
+- Best Amenities
+
+📞 Book your Private Pool Party now!`
+};
+
+async function updateInterestedPackage(numberId, loanType) {
+  try {
+    const r = await fetch('/api/admin/update-interested', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ numberId, loanType })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    const lead = interestedLeadsData.find(l => l.id === numberId);
+    if (lead) lead.loanType = loanType;
+    showToast('Package updated', 'success');
+  } catch (e) { alert('Failed to update package'); }
+}
+
+async function updateRevenueGenerated(numberId, amount) {
+  try {
+    const r = await fetch('/api/agent/update-revenue', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentId, numberId, revenueGenerated: amount })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    const lead = interestedLeadsData.find(l => l.id === numberId);
+    if (lead) lead.revenueGenerated = amount;
+    showToast('Revenue updated', 'success');
+  } catch (e) { alert('Failed to update revenue'); }
+}
+
+function copyWhatsappMessage(numberId) {
+  const lead = interestedLeadsData.find(l => l.id === numberId);
+  if (!lead) return;
+  const pkg = lead.loanType;
+  const msg = PACKAGE_WHATSAPP_MESSAGES[pkg];
+  if (!msg) { showToast('Please select a package first', 'error'); return; }
+  navigator.clipboard.writeText(msg).then(() => {
+    showToast('WhatsApp message copied ✅', 'success');
+  }).catch(() => {
+    showToast('Failed to copy message', 'error');
+  });
+}
+
+async function markConverted(numberId) {
+  if (!confirm('Mark this lead as Converted? It will move to Converted Customers.')) return;
+  try {
+    const r = await fetch('/api/agent/mark-documentation-complete', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentId, numberId })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    showToast('Lead moved to Converted Customers ✅', 'success');
+    refreshLeadSections();
+  } catch (e) { alert('Failed to mark as converted'); }
+}
+
+function renderFollowupsTable(leads) {
+  const tbody = document.getElementById('followupsTable');
+  document.getElementById('followupsCountBadge').textContent = (leads||[]).length + ' followup' + ((leads||[]).length !== 1 ? 's' : '');
+  if (!leads || leads.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No followups yet</td></tr>';
+    return;
+  }
+  // Sort by nearest date and time first
+  const sorted = [...leads].sort((a, b) => {
+    const dtA = (a.followupDate || '') + ' ' + (a.followupTime || '');
+    const dtB = (b.followupDate || '') + ' ' + (b.followupTime || '');
+    return dtA.localeCompare(dtB);
+  });
+  tbody.innerHTML = sorted.map(l => {
+    const timeAmPm = formatTimeAmPm(l.followupTime);
+    const overdueTag = l.overdue ? ' <span style="color:#dc2626;font-weight:700;font-size:11px;background:#fef2f2;border:1px solid #fecaca;padding:2px 6px;border-radius:4px;margin-left:4px">OVERDUE</span>' : '';
+    const pkgLabel = PACKAGE_LABELS[l.loanType] || '\u2014';
+    return `<tr>
+    <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
+    <td>${escapeHtml(l.name) || '\u2014'}</td>
+    <td>${escapeHtml(l.followupName) || '\u2014'}</td>
+    <td>${escapeHtml(pkgLabel)}</td>
+    <td><span class="followup-date">${escapeHtml(l.followupDate || '\u2014')}</span>${overdueTag}</td>
+    <td style="font-family:var(--mono);font-size:12px">${timeAmPm}</td>
+    <td><button class="btn-sm red" onclick="removeFollowup('${escapeHtml(l.id || l.numberId)}')">&#128465; Remove</button></td>
+  </tr>`;
+  }).join('');
+}
+
+function formatTimeAmPm(time24) {
+  if (!time24) return '\u2014';
+  const parts = time24.split(':');
+  if (parts.length < 2) return time24;
+  let h = parseInt(parts[0], 10);
+  const m = parts[1];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  if (h === 0) h = 12;
+  else if (h > 12) h -= 12;
+  return h + ':' + m + ' ' + ampm;
+}
+
+async function removeFollowup(numberId) {
+  if (!confirm('Remove this followup? Lead will be moved to Not Interested.')) return;
+  try {
+    const r = await fetch('/api/agent/followup/' + numberId, { method: 'DELETE' });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    showToast('Followup removed', 'success');
+    refreshLeadSections();
+  } catch (e) { alert('Failed to remove followup'); }
+}
+
+function renderCompletedTable(leads) {
+  const tbody = document.getElementById('completedTable');
+  document.getElementById('completedCountBadge').textContent = (leads||[]).length + ' lead' + ((leads||[]).length !== 1 ? 's' : '');
+  
+  // Calculate total revenue
+  const totalRevenue = (leads || []).reduce((sum, l) => sum + (Number(l.revenueGenerated) || 0), 0);
+  document.getElementById('totalRevenueBadge').textContent = 'Total Revenue: ₹' + totalRevenue.toLocaleString('en-IN');
+
+  if (!leads || leads.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No completed leads yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l => {
+    const completedDate = l.documentationCompletedAt
+      ? new Date(l.documentationCompletedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+      : '—';
+    const statusBadge = l.adminStatus
+      ? `<span class="completed-badge status">${escapeHtml(l.adminStatus)}</span>`
+      : '<span class="completed-badge status">In Process</span>';
+    let elapsedStr = '—';
+    if (l.documentationCompletedAt) {
+      const elapsedMs = Date.now() - new Date(l.documentationCompletedAt).getTime();
+      const elapsedDays = Math.floor(elapsedMs / (24 * 60 * 60 * 1000));
+      const elapsedHrs = Math.floor((elapsedMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+      elapsedStr = elapsedDays + 'd ' + elapsedHrs + 'h';
+    }
+    const revenueDisplay = l.revenueGenerated ? '₹' + Number(l.revenueGenerated).toLocaleString('en-IN') : '—';
+    return `<tr>
+      <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
+      <td style="font-weight:600">${escapeHtml(l.name) || '—'}</td>
+      <td>${escapeHtml(PACKAGE_LABELS[l.loanType] || '—')}</td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green)">${revenueDisplay}</td>
+      <td style="font-size:12px;font-family:var(--mono)">${completedDate}</td>
+      <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--warn)">${elapsedStr}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Interested lead actions ───────────────────────────────────────────────────
+function openLoanForm(numberId) {
+  window.open('/forms/PLJOB-main/index.html?numberId=' + encodeURIComponent(numberId) + '&agentId=' + encodeURIComponent(agentId), '_blank');
+}
+// ── Doc ZIP upload state ─────────────────────────────────────────────────────
+let docZipTargetNumberId = null;
+let docZipFile = null;
+
+function openDocZipModal(numberId) {
+  docZipTargetNumberId = numberId;
+  docZipFile = null;
+  document.getElementById('docZipSelected').style.display = 'none';
+  document.getElementById('docZipProgress').style.display = 'none';
+  document.getElementById('docZipDropZone').style.display = 'block';
+  document.getElementById('btnUploadDocZip').disabled = false;
+  document.getElementById('btnUploadDocZip').textContent = '📤 Upload & Complete';
+  document.getElementById('docZipFileInput').value = '';
+  document.getElementById('docZipModal').classList.add('active');
+}
+
+function closeDocZipModal() {
+  document.getElementById('docZipModal').classList.remove('active');
+  docZipTargetNumberId = null;
+  docZipFile = null;
+}
+
+function handleDocZipSelect(event) {
+  const file = event.target.files[0];
+  if (file) setDocZipFile(file);
+}
+
+function handleDocZipDrop(event) {
+  event.preventDefault();
+  document.getElementById('docZipDropZone').style.borderColor = 'var(--border-strong)';
+  document.getElementById('docZipDropZone').style.background = 'var(--surface2)';
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.zip')) { showToast('Only ZIP files are accepted', 'error'); return; }
+  setDocZipFile(file);
+}
+
+function setDocZipFile(file) {
+  docZipFile = file;
+  document.getElementById('docZipFileName').textContent = file.name;
+  document.getElementById('docZipFileSize').textContent = formatBytes(file.size);
+  document.getElementById('docZipSelected').style.display = 'block';
+  document.getElementById('docZipDropZone').style.display = 'none';
+}
+
+function clearDocZipFile() {
+  docZipFile = null;
+  document.getElementById('docZipFileInput').value = '';
+  document.getElementById('docZipSelected').style.display = 'none';
+  document.getElementById('docZipDropZone').style.display = 'block';
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+async function submitDocZip() {
+  if (!docZipFile) { showToast('Please select a ZIP file first', 'error'); return; }
+  if (!docZipTargetNumberId) return;
+  const btn = document.getElementById('btnUploadDocZip');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  document.getElementById('docZipProgress').style.display = 'block';
+  const bar = document.getElementById('docZipProgressBar');
+  const txt = document.getElementById('docZipProgressText');
+
+  const formData = new FormData();
+  formData.append('docZip', docZipFile);
+  formData.append('agentId', agentId);
+
+  try {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        bar.style.width = pct + '%';
+        txt.textContent = 'Uploading… ' + pct + '%';
+      }
+    };
+    await new Promise((resolve, reject) => {
+      xhr.onload = () => resolve(xhr);
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.open('POST', '/api/agent/upload-doc-zip/' + docZipTargetNumberId);
+      xhr.send(formData);
+    });
+    const resp = JSON.parse(xhr.responseText);
+    if (resp.error) { showToast(resp.error, 'error'); btn.disabled=false; btn.textContent='📤 Upload & Complete'; return; }
+    bar.style.width = '100%';
+    txt.textContent = '✅ Upload complete!';
+    showToast('Documents uploaded! Lead moved to Documentation Completed ✅', 'success');
+    setTimeout(() => {
+      closeDocZipModal();
+      refreshLeadSections();
+    }, 800);
+  } catch (e) {
+    showToast('Upload failed: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '📤 Upload & Complete';
+  }
+}
+
+async function removeInterestedLead(numberId) {
+  if (!confirm('Are you sure you want to remove this lead permanently?')) return;
+  try {
+    const r = await fetch('/api/agent/remove-interested', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentId, numberId })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    refreshLeadSections();
+  } catch (e) { alert('Failed to remove lead'); }
+}
+async function addInterestedManually() {
+  const leadName   = document.getElementById('manualLeadName').value.trim();
+  const phone      = document.getElementById('manualPhone').value.trim();
+  const loanType   = document.getElementById('manualLoanType').value;
+  const revenueGenerated = document.getElementById('manualRevenue').value.trim();
+  if (!leadName)                    { alert('Please enter the full name'); return; }
+  if (!phone)                       { alert('Please enter a phone number'); return; }
+  if (!/^\d{10}$/.test(phone))      { alert('Please enter a valid 10-digit phone number'); return; }
+  if (!loanType)                    { alert('Please select a package type'); return; }
+  if (!revenueGenerated || Number(revenueGenerated) <= 0) { alert('Please enter revenue generated'); return; }
+  try {
+    const r = await fetch('/api/agent/add-interested', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentId, phone, leadName, loanType, revenueGenerated })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    document.getElementById('manualLeadName').value   = '';
+    document.getElementById('manualPhone').value      = '';
+    document.getElementById('manualLoanType').value   = '';
+    document.getElementById('manualRevenue').value    = '';
+    showToast('Lead added successfully', 'success');
+    refreshLeadSections();
+  } catch (e) { alert('Failed to add lead'); }
+}
+
+// ── Add Lead to Dialer (manual number) ────────────────────────────────────────
+function openAddLeadModal() {
+  document.getElementById('addLeadPhone').value = '';
+  document.getElementById('addLeadName').value  = '';
+  document.getElementById('addLeadModal').classList.add('active');
+}
+function closeAddLeadModal() { document.getElementById('addLeadModal').classList.remove('active'); }
+
+async function confirmAddLead() {
+  const phone = document.getElementById('addLeadPhone').value.trim();
+  const name  = document.getElementById('addLeadName').value.trim();
+  if (!phone || !/^\d{10}$/.test(phone)) { alert('Please enter a valid 10-digit phone number'); return; }
+  try {
+    const r = await fetch('/api/agent/add-manual-number', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId, phone, name })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    closeAddLeadModal();
+    showToast('Lead added to dialer ✅', 'success');
+  } catch (e) { alert('Failed to add lead'); }
+}
+
+async function removeCurrentLead() {
+  if (!currentNumberId) return;
+  if (!confirm('Remove this lead from the dialer pool?')) return;
+  try {
+    const r = await fetch('/api/agent/number/' + currentNumberId, { method: 'DELETE' });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    currentNumberId = null;
+    document.getElementById('numberDisplay').style.display = 'none';
+    showToast('Lead removed', 'success');
+    startDialing();
+  } catch (e) { alert('Failed to remove lead'); }
+}
+
+// ── My Stats ──────────────────────────────────────────────────────────────────
+let currentStatsPeriod = 'daily';
+
+function switchStatsPeriod(period) {
+  currentStatsPeriod = period;
+  document.querySelectorAll('.stats-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.stats-tab[data-period="' + period + '"]').classList.add('active');
+  fetchMyStats();
+}
+async function fetchMyStats() {
+  if (!agentId) return;
+  try {
+    const r = await fetch('/api/stats/dispositions?period=' + currentStatsPeriod + '&agentId=' + agentId);
+    const d = await r.json();
+    document.getElementById('myStatsTotalCalls').textContent    = d.totalCalls || 0;
+    document.getElementById('myStatsDead').textContent          = d.dead || 0;
+    document.getElementById('myStatsNotReceived').textContent   = d.not_received || 0;
+    document.getElementById('myStatsNotInterested').textContent = d.not_interested || 0;
+    document.getElementById('myStatsFollowup').textContent      = d.followup || 0;
+    document.getElementById('myStatsSwitchOff').textContent     = d.switch_off || 0;
+    document.getElementById('myStatsInterested').textContent    = d.interested || 0;
+    interestedCountToday = d.interested || 0;
+    document.getElementById('myStatsDiscard').textContent       = d.discard || 0;
+  } catch (e) { /* silent */ }
+}
+
+// ── PDF Report Generation (Graphical Dashboard) ───────────────────────────────
+// NOTE: /api/agent/dialed-today/:agentId and /api/agent/stats/:agentId endpoints needed on server
+
+// Brand palette + disposition metadata (RGB arrays)
+const BRAND_BLUE        = [37, 99, 235];
+const BRAND_BLUE_DARK   = [29, 78, 216];
+const INK               = [30, 41, 59];
+const MUTED             = [100, 116, 139];
+
+const DISPO_META = {
+  'Interested':     { color: [16, 185, 129], label: 'Interested' },
+  'Followup':       { color: [59, 130, 246], label: 'Follow-up' },
+  'Not Interested': { color: [148, 163, 184], label: 'Not Interested' },
+  'CNC (Dead)':     { color: [239, 68, 68],  label: 'CNC (Dead)' },
+  'CNR':            { color: [245, 158, 11], label: 'CNR (Not Received)' },
+  'Switch Off':     { color: [249, 115, 22], label: 'Switch Off' },
+  'DND':            { color: [190, 24, 93],  label: 'DND' },
+  'Discard':        { color: [107, 114, 128],label: 'Discard' }
+};
+
+function _rgb(a) { return 'rgb(' + a[0] + ',' + a[1] + ',' + a[2] + ')'; }
+
+// Render a Chart.js config to a PNG data URL (offscreen, no animation)
+function makeChartImage(config, w, h) {
+  if (typeof Chart === 'undefined') return null;
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-99999px;top:-99999px;width:' + w + 'px;height:' + h + 'px;';
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  holder.appendChild(canvas);
+  document.body.appendChild(holder);
+  let url = null;
+  try {
+    const chart = new Chart(canvas.getContext('2d'), Object.assign({}, config, {
+      options: Object.assign({ animation: false, responsive: false, maintainAspectRatio: false, devicePixelRatio: 2 }, config.options || {})
+    }));
+    url = canvas.toDataURL('image/png', 1.0);
+    chart.destroy();
+  } catch (e) { url = null; }
+  document.body.removeChild(holder);
+  return url;
+}
+
+// Match a raw disposition string to a known bucket key
+function matchDispoKey(raw) {
+  if (!raw) return null;
+  const s = String(raw).toLowerCase();
+  if (DISPO_META[raw]) return raw;
+  if (s.includes('interest') && s.includes('not')) return 'Not Interested';
+  if (s.includes('interest')) return 'Interested';
+  if (s.includes('follow')) return 'Followup';
+  if (s.includes('dead') || s.includes('cnc')) return 'CNC (Dead)';
+  if (s.includes('cnr') || s.includes('not received') || s.includes('received')) return 'CNR';
+  if (s.includes('switch')) return 'Switch Off';
+  if (s.includes('dnd')) return 'DND';
+  if (s.includes('discard')) return 'Discard';
+  return null;
+}
+
+// Build per-disposition counts + grouped phone numbers
+function computeDispo(d) {
+  const counts = {}; const groups = {};
+  Object.keys(DISPO_META).forEach(k => { counts[k] = 0; groups[k] = []; });
+  if (d.dialedLog && d.dialedLog.length) {
+    d.dialedLog.forEach(e => {
+      const k = matchDispoKey(e.disposition);
+      if (k) { counts[k]++; groups[k].push(e.phone); }
+    });
+  } else if (d.dispoStats) {
+    const s = d.dispoStats;
+    counts['Interested']     = s.interested || 0;
+    counts['Followup']       = s.followup || 0;
+    counts['Not Interested'] = s.notInterested || 0;
+    counts['CNC (Dead)']     = s.dead || 0;
+    counts['CNR']            = s.notReceived || 0;
+    counts['Switch Off']     = s.switchOff || 0;
+    counts['DND']            = s.dnd || 0;
+    counts['Discard']        = s.discard || 0;
+  }
+  return { counts, groups };
+}
+
+// Horizontal gradient fill
+function gradientRect(doc, x, y, w, h, c1, c2, steps) {
+  steps = steps || 60;
+  const sw = w / steps;
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1);
+    doc.setFillColor(
+      Math.round(c1[0] + (c2[0] - c1[0]) * t),
+      Math.round(c1[1] + (c2[1] - c1[1]) * t),
+      Math.round(c1[2] + (c2[2] - c1[2]) * t)
+    );
+    doc.rect(x + i * sw, y, sw + 0.6, h, 'F');
+  }
+}
+
+// A single KPI stat card
+function kpiCard(doc, x, y, w, h, label, value, color) {
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(x, y, w, h, 2.5, 2.5, 'FD');
+  // top accent strip
+  doc.setFillColor(color[0], color[1], color[2]);
+  doc.roundedRect(x, y, w, 2.3, 1, 1, 'F');
+  // value (auto-shrink to fit)
+  const val = String(value);
+  let fs = 17;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(fs);
+  while (doc.getTextWidth(val) > w - 5 && fs > 8) { fs -= 1; doc.setFontSize(fs); }
+  doc.setTextColor(color[0], color[1], color[2]);
+  doc.text(val, x + w / 2, y + h / 2 + 1.5, { align: 'center' });
+  // label
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+  doc.text(label.toUpperCase(), x + w / 2, y + h - 3.5, { align: 'center' });
+}
+
+// Section header with colored accent tab
+function sectionHeader(doc, y, title, color) {
+  y = checkPage(doc, y, 18);
+  color = color || BRAND_BLUE;
+  doc.setFillColor(color[0], color[1], color[2]);
+  doc.roundedRect(14, y - 4.5, 3.2, 7, 1, 1, 'F');
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(color[0], color[1], color[2]);
+  doc.text(title, 21, y + 1);
+  doc.setTextColor(INK[0], INK[1], INK[2]);
+  return y + 9;
+}
+
+function checkPage(doc, y, needed) {
+  if (y + needed > 278) { doc.addPage(); return 18; }
+  return y;
+}
+
+// ── Data collectors ────────────────────────────────────────────────────────────
+function getLiveReportData() {
+  const stats = window._liveDispoStats || {};
+  const dispoStats = {
+    totalDialed:   stats.totalDialedToday || 0,
+    interested:    stats.interestedToday || (interestedLeadsData || []).length,
+    followup:      stats.followupToday || 0,
+    notInterested: stats.notInterestedToday || 0,
+    dead:          stats.deadToday || 0,
+    notReceived:   stats.notReceivedToday || 0,
+    switchOff:     stats.switchOffToday || 0,
+    dnd:           stats.dndToday || 0,
+    discard:       stats.discardToday || 0
+  };
+  const dialedLog = (window._liveDialedLog || []).map(l => ({
+    phone: l.phone || '', disposition: l.disposition || '', time: l.time || ''
+  }));
+
+  const interested = (interestedLeadsData || []).map(l => ({
+    phone: l.phone, name: l.name || 'N/A', loanType: PACKAGE_LABELS[l.loanType] || l.loanType || 'N/A', revenue: l.revenueGenerated || '0'
+  }));
+
+  const followups = [];
+  document.querySelectorAll('#followupsTable tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 6) followups.push({
+      phone: cells[0].textContent.trim(), name: cells[1].textContent.trim(),
+      pkg: cells[3].textContent.trim(), date: cells[4].textContent.trim(), time: cells[5].textContent.trim()
+    });
+  });
+
+  const dndList = [];
+  document.querySelectorAll('#dndNumbersList [data-phone]').forEach(el => {
+    const p = el.getAttribute('data-phone'); if (p) dndList.push({ phone: p });
+  });
+
+  const converted = [];
+  document.querySelectorAll('#completedTable tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length >= 5) converted.push({
+      phone: cells[0].textContent.trim(), name: cells[1].textContent.trim(),
+      loanType: cells[2].textContent.trim(), revenue: cells[3].textContent.trim().replace(/[₹,]/g, ''),
+      date: cells[4].textContent.trim()
+    });
+  });
+
+  // If server didn't return totalDialed, derive from the log
+  if (!dispoStats.totalDialed && dialedLog.length) dispoStats.totalDialed = dialedLog.length;
+
+  return {
+    agentName: (document.getElementById('displayAgentName').textContent || 'N/A'),
+    dispoStats, dialedLog, interested, followups, dndList, converted
+  };
+}
+
+// ── Master report builder (shared by Live + Dummy) ──────────────────────────────
+function buildReportPDF(d, isDummy) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const today = new Date();
+  const dateStr = String(today.getDate()).padStart(2, '0') + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + today.getFullYear();
+  const fileName = dateStr + (isDummy ? '_Kingfisher Report (DEMO).pdf' : '_Kingfisher Report.pdf');
+
+  const { counts, groups } = computeDispo(d);
+  const totalDialed   = d.dispoStats.totalDialed || Object.values(counts).reduce((a, b) => a + b, 0);
+  const interestedN   = d.interested.length || counts['Interested'] || 0;
+  const followupN     = d.followups.length || counts['Followup'] || 0;
+  const convertedN    = d.converted.length;
+  const revenue       = d.converted.reduce((s, l) => s + (Number(String(l.revenue).replace(/[^0-9.]/g, '')) || 0), 0);
+  const convRate      = totalDialed ? Math.round((convertedN / totalDialed) * 100) : 0;
+
+  // ===== HEADER =====
+  gradientRect(doc, 0, 0, 210, 42, BRAND_BLUE_DARK, BRAND_BLUE);
+  // subtle accent line
+  doc.setFillColor(250, 204, 21);
+  doc.rect(0, 42, 210, 1.4, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(21);
+  doc.text('KINGFISHER MANDLA', 14, 17);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(191, 219, 254);
+  doc.text('x  Ruralift', 14, 25);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text('DAILY AGENT REPORT', 196, 14, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(191, 219, 254);
+  doc.text(dateStr, 196, 21, { align: 'right' });
+  doc.text('Agent: ' + d.agentName, 196, 27, { align: 'right' });
+  if (isDummy) {
+    doc.setFillColor(250, 204, 21);
+    doc.roundedRect(160, 31, 36, 6.5, 1.5, 1.5, 'F');
+    doc.setTextColor(29, 78, 216);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('SAMPLE / DEMO DATA', 178, 35.3, { align: 'center' });
+  }
+
+  doc.setTextColor(INK[0], INK[1], INK[2]);
+
+  // ===== KPI CARDS =====
+  let y = 52;
+  const kpis = [
+    { label: 'Total Dialed', value: totalDialed, color: BRAND_BLUE },
+    { label: 'Interested', value: interestedN, color: [16, 185, 129] },
+    { label: 'Follow-ups', value: followupN, color: [59, 130, 246] },
+    { label: 'Converted', value: convertedN, color: [236, 72, 153] },
+    { label: 'Revenue', value: 'Rs ' + revenue.toLocaleString('en-IN'), color: [22, 163, 74] }
+  ];
+  const gap = 3, cardW = (182 - gap * 4) / 5, cardH = 24;
+  kpis.forEach((k, i) => kpiCard(doc, 14 + i * (cardW + gap), y, cardW, cardH, k.label, k.value, k.color));
+  y += cardH + 6;
+
+  // conversion-rate strip
+  doc.setFillColor(245, 243, 255);
+  doc.roundedRect(14, y, 182, 9, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+  doc.setTextColor(BRAND_BLUE[0], BRAND_BLUE[1], BRAND_BLUE[2]);
+  doc.text('Conversion Rate: ' + convRate + '%', 18, y + 5.9);
+  doc.text('Interested Rate: ' + (totalDialed ? Math.round(interestedN / totalDialed * 100) : 0) + '%', 90, y + 5.9);
+  doc.text('Contactable: ' + (totalDialed ? Math.round((interestedN + followupN) / totalDialed * 100) : 0) + '%', 150, y + 5.9);
+  doc.setTextColor(INK[0], INK[1], INK[2]);
+  y += 16;
+
+  // ===== DISPOSITION DONUT + LEGEND =====
+  const activeDispo = Object.keys(counts).filter(k => counts[k] > 0);
+  y = sectionHeader(doc, y, 'Call Disposition Breakdown', BRAND_BLUE);
+
+  if (activeDispo.length > 0) {
+    const donutImg = makeChartImage({
+      type: 'doughnut',
+      data: {
+        labels: activeDispo.map(k => DISPO_META[k].label),
+        datasets: [{
+          data: activeDispo.map(k => counts[k]),
+          backgroundColor: activeDispo.map(k => _rgb(DISPO_META[k].color)),
+          borderColor: '#ffffff', borderWidth: 3
+        }]
+      },
+      options: { cutout: '60%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+    }, 520, 520);
+
+    const dSize = 58, dX = 15, dY = y + 2;
+    if (donutImg) doc.addImage(donutImg, 'PNG', dX, dY, dSize, dSize);
+    // center total
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(19);
+    doc.setTextColor(INK[0], INK[1], INK[2]);
+    doc.text(String(totalDialed), dX + dSize / 2, dY + dSize / 2 - 0.5, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+    doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('CALLS', dX + dSize / 2, dY + dSize / 2 + 5, { align: 'center' });
+
+    // legend on the right with percentage bars
+    let ly = dY + 2;
+    const lx = 84, barX = 84, barW = 78;
+    activeDispo.forEach(k => {
+      const c = DISPO_META[k].color;
+      const v = counts[k];
+      const pct = totalDialed ? Math.round(v / totalDialed * 100) : 0;
+      doc.setFillColor(c[0], c[1], c[2]);
+      doc.roundedRect(lx, ly, 3.2, 3.2, 0.6, 0.6, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+      doc.setTextColor(INK[0], INK[1], INK[2]);
+      doc.text(DISPO_META[k].label, lx + 5.5, ly + 3);
+      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+      doc.text(v + '  (' + pct + '%)', 196, ly + 3, { align: 'right' });
+      // track + fill
+      doc.setFillColor(233, 236, 242);
+      doc.roundedRect(barX, ly + 4.4, barW, 1.8, 0.9, 0.9, 'F');
+      doc.setFillColor(c[0], c[1], c[2]);
+      doc.roundedRect(barX, ly + 4.4, Math.max(1.4, barW * (pct / 100)), 1.8, 0.9, 0.9, 'F');
+      ly += 9.6;
+    });
+    y = Math.max(dY + dSize, ly) + 8;
+  } else {
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(10);
+    doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('No calls dialed today.', 16, y + 4);
+    y += 14;
+  }
+
+  // ===== FUNNEL BAR CHART =====
+  y = sectionHeader(doc, y, 'Performance Funnel', BRAND_BLUE);
+  const funnelImg = makeChartImage({
+    type: 'bar',
+    data: {
+      labels: ['Dialed', 'Interested', 'Follow-ups', 'Converted'],
+      datasets: [{
+        data: [totalDialed, interestedN, followupN, convertedN],
+        backgroundColor: [_rgb(BRAND_BLUE), _rgb([16, 185, 129]), _rgb([59, 130, 246]), _rgb([236, 72, 153])],
+        borderRadius: 6, barThickness: 26
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#eef0f4' }, ticks: { precision: 0, font: { size: 13 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 14, weight: 'bold' } } }
+      }
+    }
+  }, 960, 300);
+  if (funnelImg) { doc.addImage(funnelImg, 'PNG', 15, y, 182, 57); y += 62; }
+
+  // ===== DETAIL PAGES =====
+  doc.addPage();
+  y = 18;
+  y = renderDispoGroups(doc, y, groups, counts);
+  if (d.interested.length) y = addInterestedSection(doc, y, d.interested);
+  if (d.followups.length)  y = addFollowupsSection(doc, y, d.followups);
+  if (d.dndList.length)    y = addDndSection(doc, y, d.dndList);
+  if (d.converted.length)  y = addConvertedSection(doc, y, d.converted);
+
+  addFooters(doc);
+  doc.save(fileName);
+}
+
+// Detailed call log grouped by disposition
+function renderDispoGroups(doc, y, groups, counts) {
+  y = sectionHeader(doc, y, 'Call Log by Disposition', [71, 85, 105]);
+  const active = Object.keys(groups).filter(k => groups[k].length > 0);
+  if (active.length === 0) {
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
+    doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('No detailed call records available.', 16, y + 3);
+    return y + 12;
+  }
+  active.forEach(k => {
+    const c = DISPO_META[k].color;
+    const nums = groups[k];
+    y = checkPage(doc, y, 22 + nums.length * 6);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+    doc.setTextColor(c[0], c[1], c[2]);
+    doc.text(DISPO_META[k].label + '  (' + nums.length + ')', 14, y);
+    doc.setTextColor(INK[0], INK[1], INK[2]);
+    y += 4;
+    doc.autoTable({
+      startY: y,
+      head: [['#', 'Phone Number']],
+      body: nums.map((p, i) => [String(i + 1), p]),
+      theme: 'striped',
+      headStyles: { fillColor: c, fontStyle: 'bold', fontSize: 9 },
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 9, cellPadding: 2.6 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: { 0: { cellWidth: 15 } }
+    });
+    y = doc.lastAutoTable.finalY + 7;
+  });
+  return y + 3;
+}
+
+function addInterestedSection(doc, y, leads) {
+  y = sectionHeader(doc, y, 'Interested Leads (Today)', [16, 185, 129]);
+  doc.autoTable({
+    startY: y,
+    head: [['Phone', 'Name', 'Package', 'Revenue (Rs.)']],
+    body: leads.map(l => [l.phone, l.name, l.loanType, l.revenue]),
+    theme: 'striped',
+    headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', fontSize: 9 },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9, cellPadding: 4 },
+    alternateRowStyles: { fillColor: [236, 253, 245] }
+  });
+  return doc.lastAutoTable.finalY + 12;
+}
+
+function addFollowupsSection(doc, y, leads) {
+  y = sectionHeader(doc, y, 'Follow-ups (Today)', [59, 130, 246]);
+  doc.autoTable({
+    startY: y,
+    head: [['Phone', 'Name', 'Package', 'Date', 'Time']],
+    body: leads.map(l => [l.phone, l.name, l.pkg || '', l.date, l.time]),
+    theme: 'striped',
+    headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold', fontSize: 9 },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9, cellPadding: 4 },
+    alternateRowStyles: { fillColor: [239, 246, 255] }
+  });
+  return doc.lastAutoTable.finalY + 12;
+}
+
+function addDndSection(doc, y, numbers) {
+  y = sectionHeader(doc, y, 'DND Numbers (All Time)', [190, 24, 93]);
+  doc.autoTable({
+    startY: y,
+    head: [['#', 'Phone Number']],
+    body: numbers.map((n, i) => [String(i + 1), n.phone]),
+    theme: 'striped',
+    headStyles: { fillColor: [190, 24, 93], fontStyle: 'bold', fontSize: 9 },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9, cellPadding: 4 },
+    alternateRowStyles: { fillColor: [253, 242, 248] }
+  });
+  return doc.lastAutoTable.finalY + 12;
+}
+
+function addConvertedSection(doc, y, leads) {
+  y = sectionHeader(doc, y, 'Converted Customers (Today)', [236, 72, 153]);
+  const totalRev = leads.reduce((s, l) => s + (Number(String(l.revenue).replace(/[^0-9.]/g, '')) || 0), 0);
+  doc.setFillColor(253, 242, 248);
+  doc.roundedRect(14, y - 3, 182, 9, 2, 2, 'F');
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.setTextColor(190, 24, 93);
+  doc.text('Total Revenue Generated:  Rs. ' + totalRev.toLocaleString('en-IN'), 18, y + 3);
+  doc.setTextColor(INK[0], INK[1], INK[2]);
+  doc.setFont('helvetica', 'normal');
+  y += 11;
+  doc.autoTable({
+    startY: y,
+    head: [['Phone', 'Name', 'Package', 'Revenue (Rs.)', 'Date']],
+    body: leads.map(l => [l.phone, l.name, l.loanType, l.revenue, l.date || '']),
+    theme: 'striped',
+    headStyles: { fillColor: [236, 72, 153], fontStyle: 'bold', fontSize: 9 },
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 9, cellPadding: 4 },
+    alternateRowStyles: { fillColor: [253, 242, 248] }
+  });
+  return doc.lastAutoTable.finalY + 12;
+}
+
+// Footer + page numbers on every page
+function addFooters(doc) {
+  const total = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(14, 286, 196, 286);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+    doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+    doc.text('Kingfisher Mandla x Ruralift  |  Confidential Daily Report', 14, 291);
+    doc.text('Page ' + i + ' of ' + total, 196, 291, { align: 'right' });
+  }
+}
+
+// ── Entry points ────────────────────────────────────────────────────────────────
+async function downloadLiveReport() {
+  try {
+    const r = await fetch('/api/agent/dialed-today/' + agentId);
+    window._liveDialedLog = (await r.json()) || [];
+  } catch (e) { window._liveDialedLog = []; }
+  try {
+    const r = await fetch('/api/agent/stats/' + agentId);
+    window._liveDispoStats = await r.json();
+  } catch (e) { window._liveDispoStats = null; }
+  buildReportPDF(getLiveReportData(), false);
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ── Periodic refresh ──────────────────────────────────────────────────────────
+setInterval(() => { if (agentId) { refreshLeadSections(); fetchMyStats(); } }, 10000);
+setInterval(() => { if (agentId) socket.emit('ping-alive', { agentId }); }, 30000);
+
+['empId'].forEach(id => {
+  document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') registerAgent(); });
+});
+
+// ── 20-Call Interested Reminder ──────────────────────────────────────────────
+let callsSinceLastReminder = 0;
+let interestedCountToday = 0;
+
+function checkInterestedReminder() {
+  callsSinceLastReminder++;
+  if (callsSinceLastReminder >= 20) {
+    if (interestedCountToday === 0) {
+      document.getElementById('reminderPopup').classList.add('active');
+    }
+    callsSinceLastReminder = 0;
+  }
+}
+
+function closeReminderPopup() {
+  document.getElementById('reminderPopup').classList.remove('active');
+}
+
+// Hook into disposition flow to track calls
+const _origSubmitDisposition = submitDisposition;
+submitDisposition = function(disposition) {
+  checkInterestedReminder();
+  _origSubmitDisposition(disposition);
+};
+
+// ── Followup Due Popup ───────────────────────────────────────────────────────
+let followupDueAcknowledged = new Set();
+let lastDueFollowupsData = [];
+
+async function checkDueFollowups() {
+  if (!agentId) return;
+  try {
+    const r = await fetch('/api/agent/due-followups/' + agentId);
+    const data = await r.json();
+    if (!data || !Array.isArray(data) || data.length === 0) return;
+    const newDue = data.filter(d => !followupDueAcknowledged.has(d.id || d.numberId));
+    if (newDue.length === 0) return;
+    lastDueFollowupsData = newDue;
+    const listEl = document.getElementById('followupDueList');
+    listEl.innerHTML = newDue.map(d => `<div class="due-item">
+      <span class="phone">${escapeHtml(formatPhone(d.phone))}</span>
+      <span class="name">${escapeHtml(d.followupName || d.name || '')}</span>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">${escapeHtml(d.followupDate || '')} ${formatTimeAmPm(d.followupTime)}</div>
+    </div>`).join('');
+    document.getElementById('followupDuePopup').classList.add('active');
+  } catch (e) { /* silent */ }
+}
+
+function closeFollowupDuePopup() {
+  document.getElementById('followupDuePopup').classList.remove('active');
+  // Mark all currently shown followups as acknowledged by their IDs
+  lastDueFollowupsData.forEach(d => {
+    followupDueAcknowledged.add(d.id || d.numberId);
+  });
+}
+
+// Check every 30 seconds for due followups
+setInterval(checkDueFollowups, 30000);
+setTimeout(checkDueFollowups, 5000);
+
+// ── Timer Update from server (global broadcast) ─────────────────────────────
+socket.on('timer-update', (data) => {
+  if (!agentId || data.agentId !== agentId) return;
+  // Update local timer state based on server broadcast
+  if (data.type === 'break') {
+    if (data.action === 'end') {
+      onBreak = false; breakStartedAt = null; dialerWasOnBreak = false;
+      totalBreakMsUsed = data.totalBreakMs || totalBreakMsUsed;
+      breakExhausted = totalBreakMsUsed >= breakAllowedMs;
+      stopBreakCountdown(); updateBreakUsedDisplay(); hideBreakMode();
+      if (currentNumberId) {
+        document.getElementById('numberDisplay').style.display = 'block';
+        document.getElementById('dispositionPanel').style.display = 'block';
+        document.getElementById('btnWashroom').style.display = 'block';
+        document.getElementById('btnMeeting').style.display = 'block';
+      } else { showIdle(); }
+    }
+  } else if (data.type === 'washroom') {
+    if (data.action === 'end') {
+      onWashroom = false; washroomStartedAt = null;
+      totalWashroomMsUsed = data.totalWashroomMs || totalWashroomMsUsed;
+      stopWashroomTimer(); updateWashroomUsedDisplay(); hideWashroomMode();
+      if (currentNumberId) {
+        document.getElementById('numberDisplay').style.display = 'block';
+        document.getElementById('dispositionPanel').style.display = 'block';
+        document.getElementById('btnWashroom').style.display = 'block';
+        document.getElementById('btnMeeting').style.display = 'block';
+      } else { showIdle(); }
+    }
+  } else if (data.type === 'meeting') {
+    if (data.action === 'end') {
+      onMeeting = false; meetingStartedAt = null;
+      totalMeetingMsUsed = data.totalMeetingMs || totalMeetingMsUsed;
+      stopMeetingTimer(); updateMeetingUsedDisplay(); hideMeetingMode();
+      if (currentNumberId) {
+        document.getElementById('numberDisplay').style.display = 'block';
+        document.getElementById('dispositionPanel').style.display = 'block';
+        document.getElementById('btnWashroom').style.display = 'block';
+        document.getElementById('btnMeeting').style.display = 'block';
+      } else { showIdle(); }
+    }
+  }
+});
+
+// ── Script Popup (Feature 5) ──────────────────────────────────────────────────
+let scriptContent = null;
+let scriptLoaded = false;
+let scriptPopupShown = false;
+
+async function loadScript() {
+  try {
+    const r = await fetch('/api/script');
+    const d = await r.json();
+    scriptContent = d.script;
+    scriptLoaded = true;
+  } catch(e) { scriptContent = null; scriptLoaded = true; }
+}
+loadScript();
+
+function showScriptPopup() {
+  if (!scriptContent) return; // No script uploaded
+  var el = document.getElementById('scriptContent');
+  el.textContent = scriptContent;
+  document.getElementById('scriptPopupModal').classList.add('active');
+  setTimeout(function() { el.scrollTop = 0; if (window.updateScriptScrollBtns) window.updateScriptScrollBtns(); }, 50);
+  scriptPopupShown = true;
+}
+
+function closeScriptPopup() {
+  document.getElementById('scriptPopupModal').classList.remove('active');
+  scriptPopupShown = false;
+}
+
+// ── Script popup virtual scroll buttons (avoids native scroll fighting page scroll) ──
+(function setupScriptScrollButtons() {
+  const content = document.getElementById('scriptContent');
+  const upBtn = document.getElementById('scriptScrollUpBtn');
+  const downBtn = document.getElementById('scriptScrollDownBtn');
+  if (!content || !upBtn || !downBtn) return;
+  let holdTimer = null;
+  function updateBtnStates() {
+    upBtn.disabled = content.scrollTop <= 0;
+    downBtn.disabled = content.scrollTop + content.clientHeight >= content.scrollHeight - 1;
+  }
+  function stopHold() { if (holdTimer) { clearInterval(holdTimer); holdTimer = null; } }
+  function startHold(dir) {
+    stopHold();
+    content.scrollTop += dir * 90;
+    holdTimer = setInterval(function() { content.scrollTop += dir * 22; }, 50);
+  }
+  upBtn.addEventListener('mousedown', e => { e.preventDefault(); startHold(-1); });
+  downBtn.addEventListener('mousedown', e => { e.preventDefault(); startHold(1); });
+  upBtn.addEventListener('touchstart', e => { e.preventDefault(); startHold(-1); }, { passive:false });
+  downBtn.addEventListener('touchstart', e => { e.preventDefault(); startHold(1); }, { passive:false });
+  ['mouseup','mouseleave','touchend','touchcancel'].forEach(evt => {
+    upBtn.addEventListener(evt, stopHold);
+    downBtn.addEventListener(evt, stopHold);
+  });
+  content.addEventListener('scroll', updateBtnStates);
+  window.updateScriptScrollBtns = updateBtnStates;
+})();
+
+// Override showNumber to also show script popup
+const _origShowNumber = showNumber;
+showNumber = function(numberId, phone, name, totalDialedToday, resumed) {
+  _origShowNumber(numberId, phone, name, totalDialedToday, resumed);
+  // Show script popup on every new number
+  if (scriptContent) {
+    showScriptPopup();
+  }
+};
+
+// ── DND Manual Management ─────────────────────────────────────────────────────
+async function loadDndNumbers() {
+  try { const r = await fetch('/api/admin/dnd'); const d = await r.json(); renderDndNumbers(d.dndNumbers || []); } catch(e) {}
+}
+function renderDndNumbers(list) {
+  const el = document.getElementById('dndNumbersList'); const badge = document.getElementById('dndCountBadge');
+  if (badge) badge.textContent = list.length + ' number' + (list.length !== 1 ? 's' : '');
+  if (!list.length) { el.innerHTML = '<p class="empty">No DND numbers yet</p>'; return; }
+  el.innerHTML = list.map(d => '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;"><span class="phone-mono">' + escapeHtml(formatPhone(d.phone)) + '</span><button class="btn-sm red" onclick="removeDndNumber(\'' + d.phone + '\')">Remove</button></div>').join('');
+}
+async function addDndManually() {
+  const input = document.getElementById('dndPhoneInput');
+  const phone = input.value.trim().replace(/\s+/g,'');
+  if (!phone || !/^\d{7,15}$/.test(phone)) { showToast('Enter a valid phone number','error'); return; }
+  try {
+    const r = await fetch('/api/admin/dnd', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone, addedBy: agentId}) });
+    const d = await r.json();
+    if (d.error) { showToast(d.error,'error'); return; }
+    input.value = ''; showToast('Added to DND','success'); loadDndNumbers();
+  } catch(e) { showToast('Failed','error'); }
+}
+async function removeDndNumber(phone) {
+  if (!confirm('Remove ' + phone + ' from DND?')) return;
+  try {
+    const r = await fetch('/api/admin/dnd/' + encodeURIComponent(phone), {method:'DELETE'});
+    const d = await r.json();
+    if (d.error) { showToast(d.error,'error'); return; }
+    showToast('Removed from DND','success'); loadDndNumbers();
+  } catch(e) { showToast('Failed','error'); }
+}
+if (agentId) loadDndNumbers();
+setInterval(() => { if (agentId) loadDndNumbers(); }, 30000);
+
+// ─── Live IST Clock (header) ───────────────────────────────────────────────
+// Always shows the actual current time in India (UTC+5:30), regardless of
+// whatever timezone the browser viewing this is set to.
+function tickLiveClock() {
+  const el = document.getElementById('liveClock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: true }) + ' IST';
+}
+tickLiveClock();
+setInterval(tickLiveClock, 1000);
+
+
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+</body>
+</html>

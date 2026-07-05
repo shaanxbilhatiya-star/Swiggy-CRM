@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Ruralift | Smart Loan Hub + WhatsApp Checklist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #f3e8ff 100%);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+      color: #111827;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #0aa6c2 0%, #1668d6 42%, #7b2ff7 70%, #e6157b 100%);
+      border-bottom: 3px solid #ff7a18;
+      border-radius: 2rem;
+      padding: 2rem 2rem 1.8rem;
+      margin-bottom: 2.2rem;
+      box-shadow: 0 20px 35px -12px rgba(22, 104, 214, 0.28);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.3px;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero p {
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(6px);
+      display: inline-block;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #bfdbfe;
+      margin-top: 1rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .app-card {
+      background: white;
+      border-radius: 1.5rem;
+      padding: 1.4rem 1.2rem 1.8rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.03);
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+
+    .app-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 30px -12px rgba(37, 99, 235, 0.2);
+      border-color: #dbeafe;
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .app-card h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .app-card p {
+      font-size: 0.85rem;
+      color: #4b5563;
+      margin-bottom: 1rem;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #eef2ff;
+      color: #1e40af;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .whatsapp-tool {
+      background: white;
+      border-radius: 1.8rem;
+      padding: 1.8rem 2rem;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 1.3rem;
+      border-left: 5px solid #25D366;
+      padding-left: 1rem;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .field-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 0.4rem;
+    }
+
+    .field-group input, .field-group select, .field-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      background: #fafcff;
+    }
+
+    .field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    .conditional-panel {
+      background: #f8fafc;
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      margin: 0.8rem 0;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.4rem;
+    }
+
+    .radio-group label {
+      font-weight: 500;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .message-preview {
+      background: #f1f5f9;
+      border-radius: 1.2rem;
+      padding: 1.2rem;
+      margin: 1.2rem 0;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      font-family: monospace;
+      border-left: 4px solid #25D366;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .flex-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-copy {
+      background: #334155;
+      color: white;
+      border: none;
+      padding: 0.85rem 1.8rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn-copy:hover {
+      background: #1e293b;
+    }
+
+    hr {
+      margin: 1.5rem 0 0.5rem;
+      border: none;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      color: #4b5563;
+    }
+
+    @media (max-width: 680px) {
+      body { padding: 1rem 1rem 3rem; }
+      .hero h1 { font-size: 1.5rem; }
+      .whatsapp-tool { padding: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>🏦 Ruralift · Loan Management Hub</h1>
+    <p>Agent portal — एप्लीकेशन फॉर्म खोलें और स्मार्ट दस्तावेज़ चेकलिस्ट तैयार करें (property type, co-applicant, ownership के साथ)</p>
+    <div class="badge">⚡ Smart Checklist Tool | Hinglish</div>
+  </div>
+
+  <!-- Loan cards grid - all open in new tab -->
+  <div class="cards-grid">
+    <a href="./BL_Business.html" class="app-card" target="_blank" rel="noopener noreferrer"><div class="card-icon">🏢</div><h3>BL — Business Loan</h3><p>Self-employed, shop owner, ITR + bank statement.</p><span class="tag">Business</span></a>
+    <a href="./LAP_Business.html" class="app-card" target="_blank" rel="noopener noreferrer"><div class="card-icon">🏠</div><h3>LAP — Businessman</h3><p>Loan Against Property for business owners.</p><span class="tag">Property + Business</span></a>
+    <a href="./LAP_Salaried.html" class="app-card" target="_blank" rel="noopener noreferrer"><div class="card-icon">👔</div><h3>LAP — Salaried</h3><p>Loan Against Property for employees.</p><span class="tag">Salary slips + Property</span></a>
+    <a href="./PL_Business.html" class="app-card" target="_blank" rel="noopener noreferrer"><div class="card-icon">📈</div><h3>PL — Businessman</h3><p>Personal Loan for self-employed.</p><span class="tag">GST/ITR</span></a>
+    <a href="./PL_Salaried.html" class="app-card" target="_blank" rel="noopener noreferrer"><div class="card-icon">💼</div><h3>PL — Salaried</h3><p>Personal Loan for job holders.</p><span class="tag">Salary slips</span></a>
+  </div>
+
+  <!-- SMART WHATSAPP TOOL (no prefilled number, direct web.whatsapp.com) -->
+  <div class="whatsapp-tool">
+    <div class="section-title">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span>📄 स्मार्ट दस्तावेज़ चेकलिस्ट (Hinglish)</span>
+    </div>
+    <p style="font-size:0.85rem; margin-bottom:1.2rem;">Loan type, property type, co-applicant (सिर्फ LAP के लिए), ownership — सब के हिसाब से documents की list automatically तैयार होगी।</p>
+
+    <div class="form-row">
+      <div class="field-group"><label>🏷️ लोन प्रकार</label><select id="loanTypeSelect"><option value="BL">🏢 BL – Business Loan</option><option value="LAP_Business">🏠 LAP – Businessman</option><option value="LAP_Salaried">👔 LAP – Salaried</option><option value="PL_Business">📊 PL – Businessman</option><option value="PL_Salaried">💼 PL – Salaried</option></select></div>
+    </div>
+
+    <!-- DYNAMIC CONDITIONAL PANELS (LAP Property & Co-applicant) - Only for LAP -->
+    <div id="lapPropertyPanel" style="display:none;" class="conditional-panel">
+      <div class="field-group"><label>🏠 Property type (LAP के लिए)</label>
+        <select id="propTypeSelect">
+          <option value="house">🏠 Pakka Ghar (Residential House)</option>
+          <option value="plot">📐 Sirf Zameen (Residential Plot)</option>
+          <option value="agri">🌾 Kheti Ki Zameen (Agricultural Land)</option>
+          <option value="shop">🏪 Dukaan / Shop (Commercial)</option>
+          <option value="village">🏘️ Gram Panchayat Property</option>
+        </select>
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="coApplicantCheck"> 👥 Co-applicant / Joint applicant (spouse/parent) – केवल LAP के लिए</label>
+        <label><input type="checkbox" id="thirdPartyOwnerCheck"> 🏛️ Property किसी और के नाम पर (Father/Mother/Other)</label>
+      </div>
+      <div id="ownerTypeDiv" style="display:none; margin-top:8px;">
+        <div class="radio-group">
+          <label><input type="radio" name="ownerType" value="father"> Father</label>
+          <label><input type="radio" name="ownerType" value="mother"> Mother</label>
+          <label><input type="radio" name="ownerType" value="both"> Both Father+Mother</label>
+          <label><input type="radio" name="ownerType" value="other"> Other co-owner</label>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="message-preview" id="previewMsgBox"></div>
+
+    <div class="flex-buttons">
+      <button class="btn-copy" id="copyMsgBtn">
+        📋 मैसेज कॉपी करें
+      </button>
+    </div>
+  </div>
+  <footer>© Ruralift Processing | All forms open in new tab</footer>
+</div>
+
+<script>
+  // DOM elements
+  const loanSelect = document.getElementById('loanTypeSelect');
+  const lapPanel = document.getElementById('lapPropertyPanel');
+  const propTypeSelect = document.getElementById('propTypeSelect');
+  const coApplicantCheck = document.getElementById('coApplicantCheck');
+  const thirdPartyOwnerCheck = document.getElementById('thirdPartyOwnerCheck');
+  const ownerTypeDiv = document.getElementById('ownerTypeDiv');
+  const previewDiv = document.getElementById('previewMsgBox');
+
+  function togglePanels() {
+    const loan = loanSelect.value;
+    if (loan === 'LAP_Business' || loan === 'LAP_Salaried') {
+      lapPanel.style.display = 'block';
+    } else {
+      lapPanel.style.display = 'none';
+      // reset LAP specific checkboxes when hidden
+      coApplicantCheck.checked = false;
+      thirdPartyOwnerCheck.checked = false;
+      ownerTypeDiv.style.display = 'none';
+      document.querySelectorAll('input[name="ownerType"]').forEach(r => r.checked = false);
+    }
+    updatePreview();
+  }
+
+  function showOwnerType(show) {
+    ownerTypeDiv.style.display = show ? 'block' : 'none';
+  }
+
+  thirdPartyOwnerCheck.addEventListener('change', () => {
+    showOwnerType(thirdPartyOwnerCheck.checked);
+    updatePreview();
+  });
+  coApplicantCheck.addEventListener('change', updatePreview);
+  propTypeSelect.addEventListener('change', updatePreview);
+  loanSelect.addEventListener('change', () => { togglePanels(); updatePreview(); });
+
+  // ---- helper functions for message ----
+  function getLoanDisplayName(loanCode) {
+    const map = { 'BL':'BL (Business Loan)', 'LAP_Business':'LAP (Businessman - Loan Against Property)', 'LAP_Salaried':'LAP (Salaried - Loan Against Property)', 'PL_Business':'Personal Loan - Businessman', 'PL_Salaried':'Personal Loan - Salaried' };
+    return map[loanCode] || 'Loan';
+  }
+
+  function kycBullets() {
+    return "✅ Aadhaar Card (front & back)\n✅ PAN Card\n✅ Passport size photo (recent)\n✅ Current Address Proof – Electricity bill / Rent agreement (same as residence)\n✅ Cancelled Cheque / Passbook first page (account holder & IFSC)\n";
+  }
+
+  function coApplicantBullet(hasCo) {
+    if (!hasCo) return "";
+    return "\n👥 **Co-applicant / सह-आवेदक के अतिरिक्त दस्तावेज़ (LAP के लिए):**\n✅ Co-applicant का Aadhaar + PAN Card\n✅ Co-applicant की Passport size photo\n✅ Income proof (if any) / Co-applicant signature proof\n";
+  }
+
+  function thirdPartyOwnerBullet(hasThird, ownerTypeVal) {
+    if (!hasThird) return "";
+    let ownerLabel = "";
+    if (ownerTypeVal === 'father') ownerLabel = "Father";
+    else if (ownerTypeVal === 'mother') ownerLabel = "Mother";
+    else if (ownerTypeVal === 'both') ownerLabel = "Father & Mother";
+    else if (ownerTypeVal === 'other') ownerLabel = "Other Co-owner";
+    else ownerLabel = "Third party owner";
+    return `\n🏛️ **Property ${ownerLabel} के नाम पर है – अतिरिक्त KYC अनिवार्य:**\n✅ ${ownerLabel} का Aadhaar Card\n✅ ${ownerLabel} का PAN Card\n✅ Consent / NOC from owner for mortgage\n`;
+  }
+
+  function propertySpecificDocs(propType) {
+    let docList = "\n🏠 **Property Documents (जमीन/मकान से जुड़े कागज़ात) :**\n";
+    switch(propType) {
+      case 'house':
+        docList += "✅ Registry / Sale Deed (रजिस्ट्री) – जरूरी\n✅ Diversion Certificate (if agricultural to residential) – जरूरी\n✅ Naksha / Map (Property layout) – जरूरी\n✅ Khasra / B1 (खसरा) – अगर उपलब्ध हो\n✅ Property Tax Receipt (latest)\n✅ Namantaran / TNC / Approved Map (जहाँ लागू)\n";
+        break;
+      case 'plot':
+        docList += "✅ Registry (प्लॉट की रजिस्ट्री) – जरूरी\n✅ Diversion Certificate (mandatory for plot financing)\n✅ Khasra / B1 / Patta (खसरा / पट्टा)\n✅ Naksha / Site Plan (if available)\n";
+        break;
+      case 'agri':
+        docList += "✅ Patta (पट्टा) – जरूरी\n✅ Khasra (खसरा) – जरूरी\n✅ Rin Pustika (ऋण पुस्तिका / loan passbook) – जरूरी\n✅ Khatauni / Registry (if any)\n⚠️ नोट: कृषि भूमि पर अधिकतर बैंक लोन नहीं देते, फिर भी दस्तावेज़ भेजें।\n";
+        break;
+      case 'shop':
+        docList += "✅ Registry / Shop Sale deed – जरूरी\n✅ Commercial Diversion Certificate – जरूरी\n✅ Shop Naksha / B1 (दुकान का नक्शा)\n✅ Trade License / GST Certificate (Business proof)\n✅ Property Tax Receipt (commercial)\n";
+        break;
+      case 'village':
+        docList += "✅ Patta (ग्राम पंचायत पट्टा) – जरूरी\n✅ Khasra (खसरा) – जरूरी\n✅ Panchayat NOC / permission letter (if available)\n✅ B1 / Tax Receipt / Electricity bill of property\n";
+        break;
+      default: docList += "✅ Registry / Patta & Khasra (जमीन के कागजात)\n✅ Diversion / NOC as applicable\n";
+    }
+    docList += "\n📹 **Property Video (walk-through) – बिल्कुल जरूरी**\n  → चारों तरफ का वीडियो, आसपास का एरिया, मकान/जमीन की हालत साफ दिखे।\n";
+    return docList;
+  }
+
+  function optionalDocsSection(loanType, isLap, hasCoApplicantLap) {
+    let optional = "\n📌 **ऑप्शनल दस्तावेज़ (जितना हो सके उतना अच्छा – loan approval chances बढ़ते हैं):**\n";
+    if (loanType === 'BL' || loanType === 'PL_Business') {
+      optional += "✅ पिछले सालों का अतिरिक्त ITR (4-5 years)\n✅ बिजनेस का प्रॉपर्टी पेपर / लीज एग्रीमेंट (अगर रेंटेड है)\n✅ पुराने लोन की क्लोजर लेटर / NOC (अगर कोई लोन पहले चुका है)\n✅ अन्य आय के प्रमाण (किराया, डिविडेंड, आदि)\n✅ बिजनेस की तस्वीरें (shop front + inside stock)\n";
+    } 
+    else if (loanType === 'PL_Salaried') {
+      optional += "✅ पिछले साल का फॉर्म 16 (अगर ITR नहीं है तो यह भी काम आता है)\n✅ सैलरी स्लिप (पिछले 1 साल की सभी – optional but plus point)\n✅ प्रमोशन लेटर / सैलरी रिवीजन लेटर (अगर हाल ही में बढ़ोतरी हुई हो)\n✅ अन्य इनकम प्रूफ (फिक्स्ड डिपॉजिट, रेंटल इनकम)\n✅ पुराने लोन की क्लोजर सर्टिफिकेट\n";
+    }
+    else if (loanType === 'LAP_Business' || loanType === 'LAP_Salaried') {
+      optional += "✅ अतिरिक्त प्रॉपर्टी डॉक्यूमेंट (जैसे पुरानी टैक्स रसीद, पानी बिल)\n✅ बिजनेस / सैलरी का अतिरिक्त प्रूफ (पिछले 2 साल का ITR या फॉर्म 16)\n✅ प्रॉपर्टी की पुरानी फोटो / वीडियो (construction progress)\n";
+      if (hasCoApplicantLap) {
+        optional += "👥 को-एप्लिकेंट का इनकम स्टेटमेंट / सैलरी स्लिप – इससे एलिजिबिलिटी बढ़ती है।\n";
+      }
+    }
+    optional += "✅ आधार / पैन के अलावा कोई अन्य आईडी (वोटर आईडी, ड्राइविंग लाइसेंस) - वेरिफिकेशन के लिए\n";
+    return optional;
+  }
+
+  function businessIncomeDocs(loanType) {
+    let txt = "\n💰 **Income & Business Proofs:**\n";
+    if (loanType === 'BL' || loanType === 'LAP_Business' || loanType === 'PL_Business') {
+      txt += "✅ GST Certificate (मौजूद हो तो अनिवार्य)\n✅ Udhyam / Gumastha / Shop Act – इनमें से कोई एक जरूर\n✅ ITR – पिछले 3 सालों के (Computation sheet सहित)\n✅ Bank Statement – पिछले 12 महीने (business account)\n✅ Shop / Business Video (walkthrough with board & stock)\n";
+      if(loanType === 'LAP_Business') txt += "✅ Business address proof (shop electricity bill / rent agreement)\n";
+    } 
+    else if (loanType === 'LAP_Salaried' || loanType === 'PL_Salaried') {
+      txt += "✅ Salary Slips – पिछले 6 महीने (latest)\n✅ Bank Statement – पिछले 6 महीने (जहाँ salary credit हो)\n✅ Form 16 / ITR (last 2 years – recommended)\n✅ Appointment letter / Employee ID card (if available)\n✅ Office address proof (visiting card / email)\n";
+    }
+    txt += "\n📌 **CIBIL Report** – नवीनतम CIBIL (अनिवार्य)\n";
+    return txt;
+  }
+
+  function generateFullMessage() {
+    const loan = loanSelect.value;
+    const isLap = (loan === 'LAP_Business' || loan === 'LAP_Salaried');
+    const selectedProp = propTypeSelect.value;
+    const hasCoApplicant = isLap ? coApplicantCheck.checked : false;
+    const hasThirdParty = isLap ? thirdPartyOwnerCheck.checked : false;
+    let ownerTypeVal = '';
+    if (hasThirdParty && isLap) {
+      const radios = document.querySelectorAll('input[name="ownerType"]');
+      for (let r of radios) if (r.checked) { ownerTypeVal = r.value; break; }
+    }
+
+    const greeting = `नमस्ते सर/मैम,\n`;
+    let msg = `${greeting}आपके ${getLoanDisplayName(loan)} के लिए ज़रूरी दस्तावेज़ों की स्मार्ट चेकलिस्ट नीचे दी गई है। कृपया जल्द से जल्द ये सब share करें।\n\n📌 **मुख्य दस्तावेज़ (KYC + address):**\n`;
+    msg += kycBullets();
+
+    if (hasCoApplicant && isLap) msg += coApplicantBullet(true);
+    if (hasThirdParty && isLap) msg += thirdPartyOwnerBullet(true, ownerTypeVal);
+
+    if (isLap) {
+      msg += propertySpecificDocs(selectedProp);
+    }
+
+    msg += businessIncomeDocs(loan);
+
+    msg += "\n📋 **अन्य जरूरी बातें:**\n✅ सभी PDF अगर password protected हैं तो password देना होगा।\n✅ Existing loan / EMI की details (sanction letter / statement)\n";
+    if (isLap && hasThirdParty) msg += "✅ Co-owner की सहमति (consent letter) अनिवार्य\n";
+
+    msg += `\n🙏 कृपया सभी दस्तावेज़ share करें। किसी भी सहायता के लिए संपर्क करें।\n_यह संदेश Ruralift loan assistant द्वारा जनरेट किया गया है._`;
+    return msg;
+  }
+
+  function updatePreview() {
+    const msg = generateFullMessage();
+    previewDiv.innerHTML = msg.replace(/\n/g, '<br>');
+  }
+
+  function copyMessage() {
+    const msg = generateFullMessage();
+    navigator.clipboard.writeText(msg).then(() => {
+      const toast = document.createElement('div');
+      toast.innerText = "✅ मैसेज कॉपी हो गया!";
+      toast.style.position = "fixed";
+      toast.style.bottom = "20px";
+      toast.style.left = "50%";
+      toast.style.transform = "translateX(-50%)";
+      toast.style.backgroundColor = "#16a34a";
+      toast.style.color = "white";
+      toast.style.padding = "10px 20px";
+      toast.style.borderRadius = "40px";
+      toast.style.fontSize = "13px";
+      toast.style.zIndex = "9999";
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }).catch(() => alert("Copy failed"));
+  }
+
+  document.getElementById('copyMsgBtn').addEventListener('click', copyMessage);
+  document.querySelectorAll('input[name="ownerType"]').forEach(radio => radio.addEventListener('change', updatePreview));
+  
+  togglePanels();
+  updatePreview();
+</script>
+</body>
+</html>

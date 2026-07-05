@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BL — Business Loan Application</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--blue-mid:#dbeafe;
+  --ind:#4f46e5;--ind-dark:#4338ca;--ind-light:#eef2ff;--ind-mid:#c7d2fe;
+  --green:#16a34a;--green-light:#f0fdf4;--green-mid:#bbf7d0;
+  --red:#dc2626;--red-light:#fef2f2;--red-mid:#fecaca;
+  --amber:#d97706;--amber-light:#fffbeb;--amber-mid:#fde68a;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;
+  --gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-900:#111827;
+  --radius:14px;--radius-sm:9px;
+  --shadow:0 1px 4px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.05);
+  --shadow-lg:0 8px 32px rgba(79,70,229,0.18),0 2px 8px rgba(0,0,0,0.08);
+}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#e0e7ff 0%,#eff6ff 50%,#f5f3ff 100%);min-height:100vh;padding:2rem 1rem 5rem;color:var(--gray-900)}
+.wrap{max-width:680px;margin:0 auto}
+
+/* HEADER */
+.form-header{background:linear-gradient(120deg,#0aa6c2 0%,#1668d6 42%,#7b2ff7 70%,#e6157b 100%);border-radius:20px;padding:2rem 2rem 1.6rem;margin-bottom:1.4rem;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.form-header::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(255,255,255,0.06);border-radius:50%}
+.form-header::after{content:'';position:absolute;bottom:-60px;left:-30px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%}
+.form-header h1{font-size:26px;font-weight:700;color:#fff;letter-spacing:-0.5px;position:relative}
+.form-header .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);color:#c7d2fe;font-size:12px;font-weight:500;border-radius:20px;padding:4px 12px;margin-top:10px;position:relative;backdrop-filter:blur(4px)}
+.form-header .badge svg{width:13px;height:13px;opacity:.8}
+
+/* SECTION */
+.sec{background:#fff;border-radius:var(--radius);padding:1.6rem 1.75rem;margin-bottom:1rem;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,0.04);transition:box-shadow 0.2s}
+.sec:hover{box-shadow:0 2px 8px rgba(79,70,229,0.08),0 4px 20px rgba(0,0,0,0.07)}
+.sec.error-highlight{box-shadow:0 0 0 2.5px var(--red),0 4px 20px rgba(220,38,38,0.15)!important;animation:shake 0.45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-7px)}30%,60%,90%{transform:translateX(7px)}}
+
+.sec-title{font-size:14px;font-weight:700;color:#4338ca;margin-bottom:1.2rem;padding-bottom:10px;border-bottom:1.5px solid var(--ind-mid);display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.5px}
+.sec-title svg{width:17px;height:17px;flex-shrink:0}
+.sec-title .chip{margin-left:auto;font-size:10px;font-weight:600;background:var(--ind-light);color:#4338ca;padding:2px 9px;border-radius:20px;letter-spacing:0;text-transform:none}
+
+/* FIELDS */
+.fi{margin-bottom:1.1rem}
+.fi:last-child{margin-bottom:0}
+.fi label{display:block;font-size:12.5px;font-weight:600;color:var(--gray-600);margin-bottom:6px;letter-spacing:0.1px}
+.fi label .r{color:var(--red);margin-left:2px}
+.fi label .opt{font-size:11px;font-weight:400;color:var(--gray-400);margin-left:4px}
+.fi input[type=text],.fi input[type=email],.fi input[type=tel],
+.fi input[type=number],.fi input[type=date],.fi input[type=password],.fi select,.fi textarea{
+  width:100%;padding:10px 13px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+  font-size:14px;color:var(--gray-900);background:#fff;outline:none;font-family:'Inter',sans-serif;
+  transition:border-color 0.15s,box-shadow 0.15s;appearance:none;-webkit-appearance:none
+}
+.fi input:focus,.fi select:focus,.fi textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
+.fi input::placeholder,.fi textarea::placeholder{color:var(--gray-400);font-size:13px}
+.fi select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.fi textarea{resize:vertical;min-height:68px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.addr-divider{font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;margin:1.1rem 0 0.8rem;display:flex;align-items:center;gap:8px}
+.addr-divider::before,.addr-divider::after{content:'';flex:1;height:1px;background:var(--gray-200)}
+
+/* INFO BOX */
+.info-box{background:var(--ind-light);border:1.5px solid var(--ind-mid);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:13px;color:#3730a3}
+.info-box strong{display:block;font-size:12px;font-weight:700;color:#4338ca;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px}
+.info-box ul{padding-left:16px;line-height:1.8}
+.info-box ul li{font-size:12.5px}
+.info-box .must{color:var(--red);font-weight:700}
+
+/* UPLOAD BUTTON */
+.ub{margin-top:8px;border:1.5px dashed var(--gray-300);border-radius:var(--radius-sm);padding:11px 14px;background:var(--gray-50);display:flex;align-items:center;gap:11px;cursor:pointer;position:relative;transition:all 0.18s}
+.ub:hover{border-color:#6366f1;background:var(--ind-light)}
+.ub.uploaded{border-color:var(--green);background:var(--green-light);border-style:solid}
+.ub input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ub-icon{width:36px;height:36px;border-radius:8px;background:var(--ind-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s}
+.ub.uploaded .ub-icon{background:var(--green-mid)}
+.ub-icon svg{width:18px;height:18px;color:#4338ca}
+.ub.uploaded .ub-icon svg{color:var(--green)}
+.ul strong{display:block;font-size:13px;color:var(--gray-700);font-weight:600}
+.tag{display:inline-block;font-size:10.5px;background:var(--ind-mid);color:#3730a3;padding:2px 7px;border-radius:20px;margin-top:4px;font-weight:600;margin-right:3px}
+.ub.uploaded .tag{background:var(--green-mid);color:#15803d}
+.tag-must{display:inline-block;font-size:10.5px;background:var(--red-mid);color:var(--red);padding:2px 7px;border-radius:20px;margin-top:4px;font-weight:700;margin-right:3px}
+.tag-opt{display:inline-block;font-size:10.5px;background:var(--gray-100);color:var(--gray-500);padding:2px 7px;border-radius:20px;margin-top:4px;font-weight:600;margin-right:3px}
+.fn{font-size:12px;color:var(--green);margin-top:6px;display:none;font-weight:500}
+.err{font-size:12px;color:var(--red);margin-top:6px;font-weight:600;display:none}
+.sec-err-banner{display:none;background:var(--red-light);border:1.5px solid var(--red-mid);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);font-weight:700}
+
+/* PASSWORD UNLOCK */
+.pw-row{background:#fafafa;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:10px 13px;margin-top:8px;display:flex;align-items:center;gap:10px}
+.pw-row label{font-size:12px;font-weight:600;color:var(--gray-500);white-space:nowrap;margin:0}
+.pw-row input{flex:1;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 10px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--gray-900);background:#fff}
+.pw-row input:focus{border-color:#6366f1}
+
+/* OBLIGATIONS */
+.ob-row{background:linear-gradient(135deg,var(--ind-light),#f5f3ff);border:1px solid var(--ind-mid);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;position:relative}
+.ob-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--red);cursor:pointer;font-size:17px;line-height:1;padding:2px 5px;border-radius:6px;font-family:inherit;transition:background 0.12s}
+.ob-del:hover{background:var(--red-light)}
+.add-btn{display:flex;align-items:center;gap:7px;background:none;border:1.5px dashed #818cf8;color:#4338ca;border-radius:var(--radius-sm);padding:10px 15px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;font-family:'Inter',sans-serif;transition:background 0.15s}
+.add-btn:hover{background:var(--ind-light)}
+.ob-total{background:linear-gradient(135deg,var(--ind-light),#eff6ff);border:1px solid var(--ind-mid);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.ob-total span{font-size:13px;color:#3730a3;font-weight:500}
+.ob-total strong{font-size:16px;color:#4338ca;font-weight:700}
+
+/* FOIR */
+.foir-card{margin-top:14px;border-radius:var(--radius-sm);padding:16px;background:#fff;border:1.5px solid var(--gray-200);transition:border-color 0.2s}
+.foir-card.safe{border-color:var(--green);background:var(--green-light)}
+.foir-card.warn{border-color:#f59e0b;background:#fffbeb}
+.foir-card.danger{border-color:var(--red);background:var(--red-light)}
+.foir-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.foir-label{font-size:12px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px}
+.foir-pct{font-size:22px;font-weight:800;color:var(--gray-400)}
+.foir-card.safe .foir-pct{color:var(--green)}
+.foir-card.warn .foir-pct{color:#d97706}
+.foir-card.danger .foir-pct{color:var(--red)}
+.foir-bar-track{width:100%;height:10px;background:var(--gray-200);border-radius:10px;overflow:hidden;position:relative}
+.foir-bar-fill{height:100%;border-radius:10px;transition:width 0.4s,background 0.4s}
+.foir-bar-line{position:absolute;top:-2px;bottom:-2px;width:2px;background:rgba(0,0,0,0.25);border-radius:2px;left:65%}
+.foir-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--gray-500)}
+.foir-verdict{margin-top:10px;font-size:13px;font-weight:600;padding:8px 12px;border-radius:7px;text-align:center}
+.foir-card.safe .foir-verdict{background:var(--green-mid);color:#14532d}
+.foir-card.warn .foir-verdict{background:var(--amber-mid);color:#78350f}
+.foir-card.danger .foir-verdict{background:var(--red-mid);color:#7f1d1d}
+
+/* DOC CHECKLIST */
+.doc-checklist{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);overflow:hidden;margin-top:12px}
+.doc-checklist-title{font-size:12px;font-weight:700;color:var(--gray-600);padding:10px 14px;background:var(--gray-100);border-bottom:1px solid var(--gray-200);text-transform:uppercase;letter-spacing:0.4px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-600);transition:background 0.15s}
+.doc-item:last-child{border-bottom:none}
+.doc-item.has-doc{color:var(--gray-700)}
+.doc-status{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;background:var(--gray-200);color:var(--gray-400);transition:all 0.2s}
+.doc-item.has-doc .doc-status{background:var(--green-mid);color:var(--green)}
+.doc-item.missing .doc-status{background:var(--red-mid);color:var(--red)}
+
+/* REFERENCES */
+.rb{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px}
+.rb h4{font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px}
+
+/* SUBMIT */
+.sbtn{width:100%;padding:15px;background:linear-gradient(135deg,#4338ca,#6366f1);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;margin-top:0.6rem;display:flex;align-items:center;justify-content:center;gap:9px;transition:all 0.18s;font-family:'Inter',sans-serif;letter-spacing:0.2px;box-shadow:0 4px 14px rgba(79,70,229,0.35)}
+.sbtn:hover{box-shadow:0 6px 20px rgba(79,70,229,0.45);transform:translateY(-1px)}
+.sbtn:active{transform:translateY(0)}
+.sbtn:disabled{background:var(--gray-300);cursor:not-allowed;box-shadow:none;transform:none}
+
+/* PROGRESS */
+.prog{display:none;background:#fff;border-radius:var(--radius);padding:1.6rem 1.75rem;margin-top:1rem;text-align:center;box-shadow:var(--shadow)}
+.prog p{font-size:14px;color:var(--gray-500);margin-bottom:12px;font-weight:500}
+.pbar{width:100%;height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,#4338ca,#6366f1);width:0%;transition:width 0.3s;border-radius:4px}
+.done{display:none;background:linear-gradient(135deg,var(--green-light),#ecfdf5);border:1.5px solid var(--green-mid);border-radius:var(--radius);padding:2rem 1.75rem;margin-top:1rem;text-align:center;box-shadow:0 4px 16px rgba(22,163,74,0.12)}
+.done-icon{font-size:44px;margin-bottom:10px}
+.done p{font-size:16px;color:var(--green);font-weight:700}
+.done small{font-size:13px;color:#15803d;display:block;margin-top:6px}
+
+/* TOAST */
+#val-toast{display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-size:14px;font-weight:700;border-radius:12px;padding:14px 24px;z-index:9999;box-shadow:0 8px 30px rgba(220,38,38,0.35);text-align:center;min-width:280px;animation:slideDown 0.3s ease}
+@keyframes slideDown{from{top:0;opacity:0}to{top:20px;opacity:1}}
+.rs-prefix{position:relative;display:block}
+.rs-prefix input{padding-left:30px}
+.rs-prefix::before{content:'₹';position:absolute;left:12px;top:11px;font-size:14px;color:var(--gray-500);font-weight:600;pointer-events:none;z-index:1;line-height:1}
+
+@media(max-width:520px){
+  .two{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}
+  body{padding:1rem 0.5rem 4rem}
+  .sec,.form-header{padding:1.2rem 1.1rem}
+  .form-header h1{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div id="val-toast"></div>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="form-header">
+    <h1>BL — Business Loan Application</h1>
+    <div class="badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      Case: BL · Business Loan · Self-Employed / Business Owner Only
+    </div>
+  </div>
+
+  <!-- ① CUSTOMER DETAILS -->
+  <div class="sec" id="sec-personal">
+    <div class="sec-err-banner" id="sec-personal-err">⚠ Please fill all required personal details!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Customer Details
+    </div>
+    <div class="two">
+      <div class="fi"><label>Customer Name <span class="r">*</span></label><input type="text" id="f_name" placeholder="e.g. Rajesh Kumar Singh"></div>
+      <div class="fi"><label>Date of Birth <span class="r">*</span></label><input type="date" id="f_dob" onchange="calcAge()"></div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Age</label><input type="number" id="f_age" placeholder="Auto from DOB" readonly style="background:var(--gray-50);color:var(--gray-500)"></div>
+      <div class="fi"><label>Marital Status</label>
+        <select id="f_marital"><option>Unmarried</option><option>Married</option><option>Divorced</option></select>
+      </div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Contact No <span class="r">*</span></label><input type="tel" id="f_mobile" placeholder="e.g. 9876543210" maxlength="10"></div>
+      <div class="fi"><label>Alternate No</label><input type="tel" id="f_alt_mobile" placeholder="e.g. 9876543211" maxlength="10"></div>
+    </div>
+    <div class="fi"><label>Email ID</label><input type="email" id="f_email" placeholder="e.g. name@gmail.com"></div>
+    <div class="two">
+      <div class="fi"><label>Father's Name</label><input type="text" id="f_father" placeholder="e.g. Ramesh Kumar Singh"></div>
+      <div class="fi"><label>Mother's Name</label><input type="text" id="f_mother" placeholder="e.g. Sunita Devi Singh"></div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Spouse Name</label><input type="text" id="f_spouse" placeholder="e.g. Priya Devi"></div>
+      <div class="fi"><label>Spouse DOB</label><input type="date" id="f_spouse_dob"></div>
+    </div>
+    <div class="fi"><label>Education</label>
+      <select id="f_edu"><option>Graduate</option><option>Post Graduate</option><option>12th Pass</option><option>10th Pass</option><option>Other</option></select>
+    </div>
+  </div>
+
+  <!-- ② ADDRESS DETAILS -->
+  <div class="sec" id="sec-address">
+    <div class="sec-err-banner" id="sec-address-err">⚠ Please fill all required address fields and upload documents!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Address Details
+    </div>
+
+    <div class="addr-divider">Residence Address — as per Electricity Bill / Address Proof</div>
+    <div class="fi"><label>Residence Address <span class="r">*</span></label><textarea id="f_addr" placeholder="e.g. House No. 12, Main Road, Village Name, Dist. XYZ"></textarea></div>
+    <div class="two">
+      <div class="fi"><label>Residence Landmark</label><input type="text" id="f_addr_landmark" placeholder="e.g. Near SBI Bank"></div>
+      <div class="fi"><label>Residence PIN Code</label><input type="text" id="f_pin" placeholder="e.g. 481661" maxlength="6"></div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Rented / Owned</label>
+        <select id="f_residence_type"><option value="">Select</option><option>Owned</option><option>Rented</option><option>Family-owned</option></select>
+      </div>
+      <div class="fi"><label>Residence Address Proof</label>
+        <select id="f_addr_proof"><option value="">Select</option><option>Electricity Bill</option><option>Aadhaar Card</option><option>Ration Card</option><option>Rent Agreement</option><option>Gas Bill</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="fi">
+      <label>Residence Address Proof Upload <span class="r">*</span> <span class="opt">— Electricity bill / Ration card / Rent agreement</span></label>
+      <div class="ub" id="ub-elec">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_elec" onchange="mark(this,'elec-fn','ub-elec')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div class="ul"><strong>Upload Residence Address Proof</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="elec-fn"></div>
+      <div class="err" id="elec-err">⚠ Residence address proof is required</div>
+    </div>
+
+    <div class="addr-divider">Permanent Address — if different from residence</div>
+    <div class="fi">
+      <label>Same as Residence?</label>
+      <select id="f_perm_same" onchange="togglePermanent(this.value)">
+        <option value="yes">Yes — Same as Residence Address</option>
+        <option value="no">No — Different Permanent Address</option>
+      </select>
+    </div>
+    <div id="permanent-block" style="display:none">
+      <div class="fi"><label>Permanent Address</label><textarea id="f_perm_addr" placeholder="e.g. Village Isaapur, Taluka XYZ, Dist. Mandla, MP — 481661"></textarea></div>
+      <div class="two">
+        <div class="fi"><label>Permanent Address Landmark</label><input type="text" id="f_perm_landmark" placeholder="e.g. Near Gram Panchayat"></div>
+        <div class="fi"><label>Permanent PIN Code</label><input type="text" id="f_perm_pin" placeholder="e.g. 481661" maxlength="6"></div>
+      </div>
+      <div class="fi"><label>Permanent Address Proof Type</label>
+        <select id="f_perm_proof"><option value="">Select</option><option>Aadhaar Card</option><option>Ration Card</option><option>Electricity Bill</option><option>Voter ID</option><option>Rent Agreement</option><option>Other</option></select>
+      </div>
+      <div class="fi">
+        <label>Permanent Address Proof Upload</label>
+        <div class="ub" id="ub-perm-proof">
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_perm_proof" onchange="mark(this,'perm-proof-fn','ub-perm-proof')" multiple>
+          <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="ul"><strong>Upload Permanent Address Proof</strong><span class="tag-opt">If different</span><span class="tag">PDF / JPG / PNG</span></div>
+        </div>
+        <div class="fn" id="perm-proof-fn"></div>
+      </div>
+    </div>
+
+    <div class="addr-divider">KYC Documents</div>
+    <div class="fi">
+      <label>Aadhaar Card <span class="r">*</span></label>
+      <div class="ub" id="ub-aadhaar">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_aadhaar" onchange="mark(this,'aadh-fn','ub-aadhaar')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload Aadhaar Card (front &amp; back)</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="aadh-fn"></div>
+      <div class="err" id="aadh-err">⚠ Aadhaar card is required</div>
+    </div>
+    <div class="fi">
+      <label>PAN Card <span class="r">*</span></label>
+      <div class="ub" id="ub-pan">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_pan" onchange="mark(this,'pan-fn','ub-pan')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload PAN Card</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="pan-fn"></div>
+      <div class="err" id="pan-err">⚠ PAN card is required</div>
+    </div>
+    <div class="fi">
+      <label>Passport-Size Photo <span class="r">*</span></label>
+      <div class="ub" id="ub-photo">
+        <input type="file" accept=".jpg,.jpeg,.png" id="up_photo" onchange="mark(this,'photo-fn','ub-photo')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div class="ul"><strong>Upload recent passport-size photo</strong><span class="tag-must">MANDATORY</span><span class="tag">JPG / PNG only</span></div>
+      </div>
+      <div class="fn" id="photo-fn"></div>
+      <div class="err" id="photo-err">⚠ Passport-size photo is required</div>
+    </div>
+    <div class="fi">
+      <label>Cancelled Cheque / Passbook Photo <span class="r">*</span></label>
+      <div class="ub" id="ub-cheque">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_cheque" onchange="mark(this,'cheque-fn','ub-cheque')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+        <div class="ul"><strong>Upload Cancelled Cheque or Passbook First Page</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span>
+          <div style="font-size:11.5px;color:#3730a3;margin-top:4px">🏦 Must clearly show account number, IFSC code &amp; account holder name</div>
+        </div>
+      </div>
+      <div class="fn" id="cheque-fn"></div>
+      <div class="err" id="cheque-err">⚠ Cancelled cheque or passbook photo is required</div>
+    </div>
+  </div>
+
+  <!-- ③ CIBIL -->
+  <div class="sec" id="sec-cibil">
+    <div class="sec-err-banner" id="sec-cibil-err">⚠ Please upload CIBIL report!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      CIBIL Score
+    </div>
+    <div class="fi"><label>CIBIL Score</label><input type="number" id="f_cibil" placeholder="e.g. 720" min="300" max="900"></div>
+    <div class="fi">
+      <label>CIBIL Report <span class="r">*</span></label>
+      <div class="ub" id="ub-cibil">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_cibil" onchange="mark(this,'cibil-fn','ub-cibil')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload CIBIL report</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="cibil-fn"></div>
+      <div class="err" id="cibil-err">⚠ CIBIL report is required</div>
+    </div>
+  </div>
+
+  <!-- ④ BUSINESS DETAILS -->
+  <div class="sec" id="sec-business">
+    <div class="sec-err-banner" id="sec-business-err">⚠ Please fill all required business fields!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+      Business Details
+    </div>
+    <div class="two">
+      <div class="fi"><label>Business Name</label><input type="text" id="f_biz_name" placeholder="e.g. Sharma General Store"></div>
+      <div class="fi"><label>Business Type <span class="r">*</span></label>
+        <select id="f_biz_type">
+          <option value="">Select</option>
+          <option>Retail Shop / General Store</option>
+          <option>Wholesale Trading</option>
+          <option>Manufacturing</option>
+          <option>Service Business</option>
+          <option>Food / Restaurant / Hotel</option>
+          <option>Transport / Logistics</option>
+          <option>Construction / Contractor</option>
+          <option>Agriculture / Farming</option>
+          <option>Medical / Pharmacy</option>
+          <option>IT / Technology</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Total Business Experience <span class="r">*</span></label><input type="text" id="f_biz_exp" placeholder="e.g. 5 years / 3 yrs 6 months"></div>
+      <div class="fi"><label>Business Contact No</label><input type="tel" id="f_biz_mobile" placeholder="e.g. 9876543212" maxlength="10"></div>
+    </div>
+    <div class="fi"><label>GSTIN <span class="opt">— if registered</span></label><input type="text" id="f_gstin" placeholder="e.g. 23ABCDE1234F1Z5" maxlength="15" style="text-transform:uppercase"></div>
+    <div class="addr-divider">Business Address</div>
+    <div class="fi"><label>Business Address <span class="r">*</span></label><textarea id="f_biz_addr" placeholder="e.g. Shop No. 5, Main Market, Nainpur, Dist. Mandla, MP"></textarea></div>
+    <div class="two">
+      <div class="fi"><label>Business Landmark</label><input type="text" id="f_biz_landmark" placeholder="e.g. Near Railway Station"></div>
+      <div class="fi"><label>Business PIN Code</label><input type="text" id="f_biz_pin" placeholder="e.g. 481661" maxlength="6"></div>
+    </div>
+    <div class="fi"><label>Residence to Business Distance</label>
+      <select id="f_distance">
+        <option value="">Select</option>
+        <option>Less than 1 km</option>
+        <option>1 – 3 km</option>
+        <option>3 – 5 km</option>
+        <option>5 – 10 km</option>
+        <option>10 – 20 km</option>
+        <option>More than 20 km</option>
+      </select>
+    </div>
+    <div class="addr-divider">Income Details</div>
+    <div class="fi"><label>Gross Monthly Income (₹) <span class="r">*</span></label>
+      <div class="rs-prefix"><input type="number" id="f_income" placeholder="e.g. 50000" oninput="updateFoir()"></div>
+    </div>
+    <div class="fi"><label>Monthly Net Income / Profit (₹) <span class="r">*</span></label>
+      <div class="rs-prefix"><input type="number" id="f_net_income" placeholder="e.g. 35000"></div>
+    </div>
+  </div>
+
+  <!-- ⑤ BUSINESS DOCUMENTS -->
+  <div class="sec" id="sec-biz-docs">
+    <div class="sec-err-banner" id="sec-biz-docs-err">⚠ Please upload ITR and Bank Statements!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Business Documents
+    </div>
+
+    <div class="info-box">
+      <strong>📋 Required Business Documents</strong>
+      <ul>
+        <li><span class="must">ITR — Last 3 Years</span> — Mandatory (with password if locked)</li>
+        <li><span class="must">Bank Statement — Last 12 Months</span> — Mandatory (with password if locked)</li>
+        <li>GST Certificate — Required if GST registered</li>
+        <li>Udhyam / MSME Certificate — if available</li>
+        <li>Gumastha / Shop Act License — if applicable</li>
+        <li>Business Address Proof — Electricity bill / Rent agreement of shop</li>
+        <li><span class="must">Shop / Business Video</span> — Walk-through, mandatory</li>
+      </ul>
+    </div>
+
+    <div class="fi">
+      <label>GST Certificate <span class="opt">— if GST registered</span></label>
+      <div class="ub" id="ub-gst">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_gst" onchange="mark(this,'gst-fn','ub-gst')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="ul"><strong>Upload GST Certificate</strong><span class="tag-opt">If GST registered</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="gst-fn"></div>
+    </div>
+
+    <div class="fi" id="fi-udhyam">
+      <label>Udhyam / MSME Certificate <span class="opt">— or Gumastha / Shop Act</span></label>
+      <div class="ub" id="ub-udhyam">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_udhyam" onchange="mark(this,'udhyam-fn','ub-udhyam')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="ul"><strong>Upload Udhyam / MSME Certificate</strong><span class="tag-opt">Optional</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="udhyam-fn"></div>
+    </div>
+
+    <div class="fi">
+      <label>Gumastha / Shop Act License <span class="opt">— if applicable</span></label>
+      <div class="ub" id="ub-gumastha">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_gumastha" onchange="mark(this,'gumastha-fn','ub-gumastha')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
+        <div class="ul"><strong>Upload Gumastha / Shop Act License</strong><span class="tag-opt">Optional</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="gumastha-fn"></div>
+    </div>
+
+    <div class="fi">
+      <label>Business Address Proof <span class="opt">— Electricity bill / Rent agreement of shop</span></label>
+      <div class="ub" id="ub-biz-addr-proof">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_biz_addr_proof" onchange="mark(this,'biz-addr-proof-fn','ub-biz-addr-proof')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div class="ul"><strong>Upload Shop Electricity Bill / Rent Agreement</strong><span class="tag-opt">Optional</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="biz-addr-proof-fn"></div>
+    </div>
+
+    <div class="fi">
+      <label>ITR — Last 3 Years <span class="r">*</span></label>
+      <div class="ub" id="ub-itr">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_itr" onchange="mark(this,'itr-fn','ub-itr')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="ul"><strong>Upload ITR — Last 3 Years (multi-select)</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="itr-fn"></div>
+      <div class="err" id="itr-err">⚠ ITR (Last 3 Years) is required</div>
+      <div class="pw-row">
+        <label>🔐 PDF Password</label>
+        <input type="password" id="pw_itr" placeholder="If ITR PDF is password protected">
+      </div>
+    </div>
+
+    <div class="fi">
+      <label>Bank Statement — Last 12 Months <span class="r">*</span></label>
+      <div class="ub" id="ub-bank">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_bank" onchange="mark(this,'bank-fn','ub-bank')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+        <div class="ul"><strong>Upload Bank Statement — 12 Months (multi-select)</strong><span class="tag-must">MANDATORY</span><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="bank-fn"></div>
+      <div class="err" id="bank-err">⚠ Bank statement is required</div>
+      <div class="pw-row">
+        <label>🔐 PDF Password</label>
+        <input type="password" id="pw_bank" placeholder="If bank statement PDF is password protected">
+      </div>
+    </div>
+
+    <div class="fi" style="margin-top:1.2rem;padding-top:1.2rem;border-top:1.5px dashed var(--ind-mid)">
+      <label>Shop / Business Video <span class="r">*</span> <span class="opt">— Walk-through, all sides clearly visible</span></label>
+      <div class="ub" id="ub-shop-video" style="border-color:#818cf8;background:var(--ind-light)">
+
+  <!-- ⑥ LOAN DETAILS -->
+  <div class="sec" id="sec-loan">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Loan Details
+    </div>
+    <div class="fi"><label>Loan Amount Required (₹) <span class="r">*</span></label>
+        <div class="rs-prefix"><input type="number" id="f_lamount" placeholder="e.g. 500000"></div>
+      </div>
+    <div class="fi"><label>Loan Purpose</label>
+      <select id="f_loan_purpose">
+        <option value="">Select</option>
+        <option>Business Expansion</option>
+        <option>Working Capital</option>
+        <option>Purchase of Equipment / Machinery</option>
+        <option>Stock / Inventory Purchase</option>
+        <option>Shop Renovation / Construction</option>
+        <option>Debt Consolidation</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <!-- SOA — appears only when obligations are filled -->
+    <div id="fi-soa" style="display:none;margin-top:14px;border-top:1px dashed #e5e7eb;padding-top:14px">
+      <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">
+        📄 Statement of Account (SOA)
+        <span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:6px">— for each active loan above</span>
+      </label>
+      <div class="ub" id="ub-soa">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_soa" onchange="mark(this,'soa-fn','ub-soa')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="ul"><strong>Upload SOA for existing loans</strong><span class="tag">Multi-select</span></div>
+      </div>
+      <div class="fn" id="soa-fn"></div>
+    </div>
+  </div>
+
+  <!-- ⑦ OBLIGATIONS -->
+
+    <!-- SOA — always visible, standalone -->
+    <div class="fi" style="margin-top:0.6rem">
+      <label>Statement of Account (SOA) <span class="opt">(Optional / If Available)</span></label>
+      <div class="ub" id="ub-soa-always">
+        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" id="up_soa_always" onchange="mark(this,'soa-always-fn','ub-soa-always')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="ul"><strong>Upload Statement of Account (SOA)</strong><span class="tag">Multi-select · Optional</span></div>
+      </div>
+      <div class="fn" id="soa-always-fn"></div>
+    </div>
+
+  <div class="sec" id="sec-obligations">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      Existing Obligations / EMIs
+      <span class="chip">Running loans</span>
+    </div>
+    <div id="ob-list">
+      <div class="ob-row" id="ob-1">
+        <div class="three-col">
+          <div class="fi" style="margin-bottom:0"><label>Loan type</label><input type="text" class="ob-type" placeholder="e.g. Home Loan" oninput="calcTotal()"></div>
+          <div class="fi" style="margin-bottom:0"><label>Bank / Lender</label><input type="text" class="ob-bank" placeholder="e.g. SBI"></div>
+          <div class="fi" style="margin-bottom:0"><label>EMI (₹)</label><input type="number" class="ob-emi" placeholder="0" oninput="calcTotal()"></div>
+        </div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="addOb()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add Another Loan / EMI
+    </button>
+    <div class="ob-total">
+      <span>Total Monthly EMI Outflow</span>
+      <strong id="ob-total-val">₹ 0</strong>
+    </div>
+  </div>
+
+  <!-- ⑧ FOIR -->
+  <div class="sec" id="sec-foir">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      Income vs. Obligation Analysis
+      <span class="chip">FOIR Check</span>
+    </div>
+    <div class="two" style="margin-bottom:12px">
+      <div style="background:var(--ind-light);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--ind-mid)">
+        <div style="font-size:11px;font-weight:700;color:#4338ca;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Monthly Income</div>
+        <div style="font-size:20px;font-weight:800;color:#4338ca" id="foir-income-disp">₹ —</div>
+      </div>
+      <div style="background:#fff7ed;border-radius:var(--radius-sm);padding:12px 14px;border:1px solid #fed7aa">
+        <div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Total EMI / Month</div>
+        <div style="font-size:20px;font-weight:800;color:#b45309" id="foir-emi-disp">₹ —</div>
+      </div>
+    </div>
+    <div class="foir-card" id="foir-card">
+      <div class="foir-header"><span class="foir-label">Fixed Obligation to Income Ratio (FOIR)</span><span class="foir-pct" id="foir-pct">—</span></div>
+      <div class="foir-bar-track"><div class="foir-bar-fill" id="foir-bar" style="width:0%"></div><div class="foir-bar-line"></div></div>
+      <div class="foir-meta"><span>0%</span><span style="position:relative;left:-8%">65% limit</span><span>100%</span></div>
+      <div class="foir-verdict" id="foir-verdict">Enter income and obligations above to see FOIR analysis</div>
+    </div>
+  </div>
+
+  <!-- ⑨ REFERENCES -->
+  <div class="sec" id="sec-refs">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      References
+    </div>
+    <div class="rb">
+      <h4>📞 Reference 1 — Friend</h4>
+      <div class="fi"><label>Name</label><input type="text" id="f_ref1name" placeholder="e.g. Ankit Sharma"></div>
+      <div class="two">
+        <div class="fi" style="margin-bottom:0"><label>Contact No</label><input type="tel" id="f_ref1mob" placeholder="e.g. 9876500001" maxlength="10"></div>
+        <div class="fi" style="margin-bottom:0"><label>Address</label><input type="text" id="f_ref1addr" placeholder="e.g. Village Nainpur, Mandla"></div>
+      </div>
+    </div>
+    <div class="rb" style="margin-bottom:0">
+      <h4>👨‍👩‍👧 Reference 2 — Relative</h4>
+      <div class="fi"><label>Name</label><input type="text" id="f_ref2name" placeholder="e.g. Priya Deshmukh"></div>
+      <div class="two">
+        <div class="fi" style="margin-bottom:0"><label>Contact No</label><input type="tel" id="f_ref2mob" placeholder="e.g. 9876500002" maxlength="10"></div>
+        <div class="fi" style="margin-bottom:0"><label>Address</label><input type="text" id="f_ref2addr" placeholder="e.g. Village Bichhiya, Mandla"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑩ AGENT DETAILS -->
+  <div class="sec" id="sec-agent">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Agent Details
+    </div>
+    <div class="two">
+      <div class="fi"><label>Agent Name</label><input type="text" id="f_agent" placeholder="e.g. Suresh Patil"></div>
+      <div class="fi"><label>Case Type</label><input type="text" value="BL — Business Loan" readonly style="background:var(--gray-50);color:var(--gray-500);cursor:default"></div>
+    </div>
+    <div class="fi"><label>Calling / Visit Date</label><input type="date" id="f_cdate"></div>
+    <div class="fi"><label>Notes / Remarks</label><textarea id="f_notes" placeholder="Any special remarks about the case, business, or applicant..."></textarea></div>
+  </div>
+
+  <!-- ⑪ DOCUMENT CHECKLIST -->
+  <div class="sec" id="sec-checklist">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Document Checklist
+    </div>
+    <p style="font-size:12.5px;color:var(--gray-500);margin-bottom:10px">Status updates live as you upload documents above.</p>
+    <div class="doc-checklist">
+      <div class="doc-checklist-title">Documents Summary</div>
+      <div class="doc-item" id="chk-aadhaar"><div class="doc-status" id="chk-aadhaar-icon">✕</div>Aadhaar Card</div>
+      <div class="doc-item" id="chk-pan"><div class="doc-status" id="chk-pan-icon">✕</div>PAN Card</div>
+      <div class="doc-item" id="chk-photo"><div class="doc-status" id="chk-photo-icon">✕</div>Passport-size Photo</div>
+      <div class="doc-item" id="chk-cheque"><div class="doc-status" id="chk-cheque-icon">✕</div>Cancelled Cheque / Passbook</div>
+      <div class="doc-item" id="chk-elec"><div class="doc-status" id="chk-elec-icon">✕</div>Residence Address Proof</div>
+      <div class="doc-item" id="chk-cibil"><div class="doc-status" id="chk-cibil-icon">✕</div>CIBIL Report</div>
+      <div class="doc-item" id="chk-itr"><div class="doc-status" id="chk-itr-icon">✕</div>ITR — Last 3 Years</div>
+      <div class="doc-item" id="chk-bank"><div class="doc-status" id="chk-bank-icon">✕</div>Bank Statement — Last 12 Months</div>
+      <div class="doc-item" id="chk-soa" style="display:none"><div class="doc-status" id="chk-soa-icon">✕</div>Statement of Account (SOA)</div>
+      <div class="doc-item" id="chk-shop-video"><div class="doc-status" id="chk-shop-video-icon">✕</div>Shop / Business Video <strong style="color:var(--red);font-size:11px;margin-left:4px">MANDATORY</strong></div>
+    </div>
+  </div>
+
+  <button class="sbtn" id="submitBtn" onclick="saveFile()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save & Download File
+  </button>
+  <div class="prog" id="progBox"><p id="progMsg">Packing documents...</p><div class="pbar"><div class="pbar-fill" id="pbar"></div></div></div>
+  <div class="done" id="doneBox"><div class="done-icon">✅</div><p id="doneMsg">ZIP downloaded!</p><small id="doneSub"></small></div>
+</div>
+
+<script>
+let obCount=1;
+
+function g(id){return document.getElementById(id)}
+
+function calcAge(){
+  const dob=val('f_dob');
+  if(!dob)return;
+  const today=new Date();
+  const birth=new Date(dob);
+  let age=today.getFullYear()-birth.getFullYear();
+  const m=today.getMonth()-birth.getMonth();
+  if(m<0||(m===0&&today.getDate()<birth.getDate()))age--;
+  g('f_age').value=age>0?age:'';
+}
+
+function togglePermanent(v){
+  g('permanent-block').style.display=(v==='no')?'block':'none';
+}
+
+function mark(input,fnId,ubId){
+  const ub=g(ubId);const fn=g(fnId);
+  if(input.files&&input.files.length>0){
+    ub.classList.add('uploaded');
+    fn.style.display='block';
+    fn.textContent=input.files.length>1?input.files.length+' files selected':input.files[0].name;
+    updateChecklist();
+  }
+}
+
+function updateChecklist(){
+  const checks=[
+    ['chk-aadhaar','up_aadhaar'],['chk-pan','up_pan'],['chk-photo','up_photo'],
+    ['chk-cheque','up_cheque'],['chk-elec','up_elec'],['chk-cibil','up_cibil'],
+    ['chk-itr','up_itr'],['chk-bank','up_bank'],['chk-soa','up_soa'],['chk-shop-video','up_shop_video']
+  ];
+  checks.forEach(([chkId,upId])=>{
+    const inp=g(upId);const item=g(chkId);const icon=g(chkId+'-icon');
+    const has=inp&&inp.files&&inp.files.length>0;
+    item.className='doc-item'+(has?' has-doc':'');
+    icon.textContent=has?'✓':'✕';
+  });
+}
+
+function calcTotal(){
+  const emis=Array.from(document.querySelectorAll('.ob-emi')).map(e=>parseFloat(e.value)||0);
+  const total=emis.reduce((a,b)=>a+b,0);
+  g('ob-total-val').textContent='₹ '+total.toLocaleString('en-IN');
+  // ── SOA toggle: show inside obligations if any row has data ──
+  const anyOb = Array.from(document.querySelectorAll('.ob-row')).some(r => {
+    return (r.querySelector('.ob-type')?.value||'').trim() ||
+           (r.querySelector('.ob-bank')?.value||'').trim() ||
+           parseFloat(r.querySelector('.ob-emi')?.value||0) > 0;
+  });
+  const soaWrap = document.getElementById('fi-soa');
+  if (soaWrap) soaWrap.style.display = anyOb ? '' : 'none';
+  updateFoir();
+}
+
+function updateFoir(){
+  const income=parseFloat(g('f_income').value)||0;
+  const emis=Array.from(document.querySelectorAll('.ob-emi')).map(e=>parseFloat(e.value)||0);
+  const totalEmi=emis.reduce((a,b)=>a+b,0);
+  g('foir-income-disp').textContent=income?'₹ '+income.toLocaleString('en-IN'):'₹ —';
+  g('foir-emi-disp').textContent=totalEmi?'₹ '+totalEmi.toLocaleString('en-IN'):'₹ —';
+  const card=g('foir-card');const pctEl=g('foir-pct');const bar=g('foir-bar');const verdict=g('foir-verdict');
+  if(!income){card.className='foir-card';pctEl.textContent='—';bar.style.width='0%';verdict.textContent='Enter income and obligations above to see FOIR analysis';return}
+  const foir=totalEmi/income*100;
+  pctEl.textContent=foir.toFixed(1)+'%';
+  bar.style.width=Math.min(foir,100)+'%';
+  if(foir<=50){card.className='foir-card safe';bar.style.background='var(--green)';verdict.textContent='✅ Excellent FOIR — Very strong approval chances'}
+  else if(foir<=65){card.className='foir-card warn';bar.style.background='#f59e0b';verdict.textContent='⚠ Acceptable FOIR — Borderline, keep obligations low'}
+  else{card.className='foir-card danger';bar.style.background='var(--red)';verdict.textContent='❌ High FOIR — Many banks may reject. Reduce obligations.'}
+}
+
+function addOb(){
+  obCount++;
+  const id='ob-'+obCount;
+  const div=document.createElement('div');
+  div.className='ob-row';div.id=id;
+  div.innerHTML=`<button class="ob-del" onclick="removeOb('${id}')">&#x2715;</button>
+  <div class="three-col">
+    <div class="fi" style="margin-bottom:0"><label>Loan type</label><input type="text" class="ob-type" placeholder="e.g. Home Loan" oninput="calcTotal()"></div>
+    <div class="fi" style="margin-bottom:0"><label>Bank / Lender</label><input type="text" class="ob-bank" placeholder="e.g. SBI"></div>
+    <div class="fi" style="margin-bottom:0"><label>EMI (₹)</label><input type="number" class="ob-emi" placeholder="0" oninput="calcTotal()"></div>
+  </div>`;
+  g('ob-list').appendChild(div);
+}
+
+function removeOb(id){
+  const el=g(id);if(el)el.remove();calcTotal();
+}
+
+function val(id){const el=g(id);return el?el.value.trim():''}
+function files(id){const el=g(id);return el&&el.files?el.files:[]}
+function ext(f){return f.name.includes('.')?'.'+f.name.split('.').pop().toLowerCase():''}
+
+async function unlockPdf(file,password){
+  if(!password||!password.trim())return file;
+  try{
+    const ab=await file.arrayBuffer();
+    const pdfDoc=await PDFLib.PDFDocument.load(ab,{password:password.trim()});
+    const newPdf=await PDFLib.PDFDocument.create();
+    const pageCount=pdfDoc.getPageCount();
+    for(let i=0;i<pageCount;i++){const [p]=await newPdf.copyPages(pdfDoc,[i]);newPdf.addPage(p)}
+    const bytes=await newPdf.save();
+    return new File([bytes],file.name,{type:'application/pdf'});
+  }catch(e){console.warn('PDF unlock failed:',e.message);return file}
+}
+
+async function addFiles(zip,inputId,prefix,password){
+  const fs=files(inputId);
+  for(let i=0;i<fs.length;i++){
+    const fileExt=ext(fs[i]);
+    const fname=prefix+(fs.length>1?'_'+(i+1):'')+fileExt;
+    let finalFile=fs[i];
+    if(password&&fileExt==='.pdf')finalFile=await unlockPdf(fs[i],password);
+    zip.file(fname,finalFile);
+  }
+}
+
+function setProgress(pct,msg){g('pbar').style.width=pct+'%';g('progMsg').textContent=msg}
+
+async function saveFile(){
+  const name=val('f_name');
+  if(!name){alert('Please enter customer name!');return}
+
+  const btn=g('submitBtn');btn.disabled=true;
+  g('progBox').style.display='block';g('doneBox').style.display='none';
+  setProgress(5,'Starting...');
+  >

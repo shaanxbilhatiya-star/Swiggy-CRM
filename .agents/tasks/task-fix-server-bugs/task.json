@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fix-server-bugs",
+  "task_description": "Fix confirmed bugs in server.js: missing permanent flag on remove-interested endpoints, unused variable in getNextNumber, and unbounded dialedLog growth.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

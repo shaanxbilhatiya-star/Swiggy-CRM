@@ -1,0 +1,7 @@
+{
+  "task_id": "task-fix-tl-panel",
+  "task_description": "Rewrite TL panel (tl/index.html) from scratch. Agent mode must be 100% identical to agent.html. TL mode must work like admin.html but limited to allowed tabs: Agent Rankings, Interested, Overdue, Followups, Disposition Stats, Active Agents, Interested Leads, Documentation Completed, Followups.",
+  "status": "completed",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

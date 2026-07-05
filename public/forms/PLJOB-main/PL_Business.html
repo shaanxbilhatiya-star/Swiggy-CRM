@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL Businessman Application</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#2563eb;--blue-dark:#1d4ed8;--blue-light:#eff6ff;--blue-mid:#dbeafe;
+  --green:#16a34a;--green-light:#f0fdf4;--green-mid:#bbf7d0;
+  --red:#dc2626;--red-light:#fef2f2;--red-mid:#fecaca;
+  --amber:#d97706;--amber-light:#fffbeb;--amber-mid:#fde68a;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;--gray-300:#d1d5db;
+  --gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;--gray-700:#374151;--gray-900:#111827;
+  --radius:14px;--radius-sm:9px;--shadow:0 1px 4px rgba(0,0,0,0.08),0 4px 16px rgba(0,0,0,0.05);
+  --shadow-lg:0 8px 32px rgba(37,99,235,0.12),0 2px 8px rgba(0,0,0,0.08);
+}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#e0e7ff 0%,#f0f9ff 50%,#faf5ff 100%);min-height:100vh;padding:2rem 1rem 5rem;color:var(--gray-900)}
+.wrap{max-width:680px;margin:0 auto}
+
+/* HEADER */
+.form-header{background:linear-gradient(120deg,#0aa6c2 0%,#1668d6 42%,#7b2ff7 70%,#e6157b 100%);border-radius:20px;padding:2rem 2rem 1.6rem;margin-bottom:1.4rem;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.form-header::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(255,255,255,0.06);border-radius:50%}
+.form-header::after{content:'';position:absolute;bottom:-60px;left:-30px;width:220px;height:220px;background:rgba(255,255,255,0.04);border-radius:50%}
+.form-header h1{font-size:26px;font-weight:700;color:#fff;letter-spacing:-0.5px;position:relative}
+.form-header .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);color:#bfdbfe;font-size:12px;font-weight:500;border-radius:20px;padding:4px 12px;margin-top:10px;position:relative;backdrop-filter:blur(4px)}
+.form-header .badge svg{width:13px;height:13px;opacity:.8}
+
+/* SECTION */
+.sec{background:#fff;border-radius:var(--radius);padding:1.6rem 1.75rem;margin-bottom:1rem;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,0.04);transition:box-shadow 0.2s,transform 0.2s}
+.sec:hover{box-shadow:0 2px 8px rgba(37,99,235,0.08),0 4px 20px rgba(0,0,0,0.07)}
+.sec.error-highlight{box-shadow:0 0 0 2.5px var(--red),0 4px 20px rgba(220,38,38,0.15)!important;animation:shake 0.45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-7px)}30%,60%,90%{transform:translateX(7px)}}
+
+.sec-title{font-size:14px;font-weight:700;color:var(--blue);margin-bottom:1.2rem;padding-bottom:10px;border-bottom:1.5px solid var(--blue-mid);display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.5px}
+.sec-title svg{width:17px;height:17px;flex-shrink:0}
+.sec-title .chip{margin-left:auto;font-size:10px;font-weight:600;background:var(--blue-light);color:var(--blue);padding:2px 9px;border-radius:20px;letter-spacing:0;text-transform:none}
+
+/* FIELDS */
+.fi{margin-bottom:1.1rem}
+.fi:last-child{margin-bottom:0}
+.fi label{display:block;font-size:12.5px;font-weight:600;color:var(--gray-600);margin-bottom:6px;letter-spacing:0.1px}
+.fi label .r{color:var(--red);margin-left:2px}
+.fi label .opt{font-size:11px;font-weight:400;color:var(--gray-400);margin-left:4px}
+.fi input[type=text],.fi input[type=email],.fi input[type=tel],
+.fi input[type=number],.fi input[type=date],.fi input[type=password],.fi select,.fi textarea{
+  width:100%;padding:10px 13px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+  font-size:14px;color:var(--gray-900);background:#fff;outline:none;font-family:'Inter',sans-serif;
+  transition:border-color 0.15s,box-shadow 0.15s;appearance:none;-webkit-appearance:none
+}
+.fi input:focus,.fi select:focus,.fi textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,0.12)}
+.fi input::placeholder,.fi textarea::placeholder{color:var(--gray-400);font-size:13px}
+.fi select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.fi textarea{resize:vertical;min-height:68px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.addr-divider{font-size:12px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.6px;margin:1.1rem 0 0.8rem;display:flex;align-items:center;gap:8px}
+.addr-divider::before,.addr-divider::after{content:'';flex:1;height:1px;background:var(--gray-200)}
+
+/* UPLOAD BUTTON */
+.ub{margin-top:8px;border:1.5px dashed var(--gray-300);border-radius:var(--radius-sm);padding:11px 14px;background:var(--gray-50);display:flex;align-items:center;gap:11px;cursor:pointer;position:relative;transition:all 0.18s}
+.ub:hover{border-color:var(--blue);background:var(--blue-light)}
+.ub.uploaded{border-color:var(--green);background:var(--green-light);border-style:solid}
+.ub input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ub-icon{width:36px;height:36px;border-radius:8px;background:var(--blue-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s}
+.ub.uploaded .ub-icon{background:var(--green-mid)}
+.ub-icon svg{width:18px;height:18px;color:var(--blue)}
+.ub.uploaded .ub-icon svg{color:var(--green)}
+.ul strong{display:block;font-size:13px;color:var(--gray-700);font-weight:600}
+.tag{display:inline-block;font-size:10.5px;background:var(--blue-mid);color:#1e40af;padding:2px 7px;border-radius:20px;margin-top:4px;font-weight:600;margin-right:3px}
+.ub.uploaded .tag{background:var(--green-mid);color:#15803d}
+.fn{font-size:12px;color:var(--green);margin-top:6px;display:none;font-weight:500}
+.err{font-size:12px;color:var(--red);margin-top:6px;display:none;font-weight:600;display:none}
+.sec-err-banner{display:none;background:var(--red-light);border:1.5px solid var(--red-mid);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);font-weight:700}
+
+/* PASSWORD UNLOCK */
+.pw-row{background:#fafafa;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:10px 13px;margin-top:8px;display:flex;align-items:center;gap:10px}
+.pw-row label{font-size:12px;font-weight:600;color:var(--gray-500);white-space:nowrap;margin:0}
+.pw-row input{flex:1;border:1.5px solid var(--gray-200);border-radius:6px;padding:6px 10px;font-size:13px;font-family:'Inter',sans-serif;outline:none;color:var(--gray-900);background:#fff}
+.pw-row input:focus{border-color:var(--blue)}
+
+/* OBLIGATIONS */
+.ob-row{background:linear-gradient(135deg,#fffbeb,#fef9f0);border:1px solid #fed7aa;border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:10px;position:relative}
+.ob-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--red);cursor:pointer;font-size:17px;line-height:1;padding:2px 5px;border-radius:6px;font-family:inherit;transition:background 0.12s}
+.ob-del:hover{background:var(--red-light)}
+.add-btn{display:flex;align-items:center;gap:7px;background:none;border:1.5px dashed #f59e0b;color:#b45309;border-radius:var(--radius-sm);padding:10px 15px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;font-family:'Inter',sans-serif;transition:background 0.15s}
+.add-btn:hover{background:var(--amber-light)}
+.ob-total{background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1px solid #fed7aa;border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.ob-total span{font-size:13px;color:#92400e;font-weight:500}
+.ob-total strong{font-size:16px;color:#b45309;font-weight:700}
+
+/* FOIR GAUGE */
+.foir-card{margin-top:14px;border-radius:var(--radius-sm);padding:16px;background:#fff;border:1.5px solid var(--gray-200);transition:border-color 0.2s}
+.foir-card.safe{border-color:var(--green);background:var(--green-light)}
+.foir-card.warn{border-color:#f59e0b;background:#fffbeb}
+.foir-card.danger{border-color:var(--red);background:var(--red-light)}
+.foir-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.foir-label{font-size:12px;font-weight:700;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.4px}
+.foir-pct{font-size:22px;font-weight:800;color:var(--gray-400)}
+.foir-card.safe .foir-pct{color:var(--green)}
+.foir-card.warn .foir-pct{color:#d97706}
+.foir-card.danger .foir-pct{color:var(--red)}
+.foir-bar-track{width:100%;height:10px;background:var(--gray-200);border-radius:10px;overflow:hidden;position:relative}
+.foir-bar-fill{height:100%;border-radius:10px;transition:width 0.4s,background 0.4s}
+.foir-bar-line{position:absolute;top:-2px;bottom:-2px;width:2px;background:rgba(0,0,0,0.25);border-radius:2px;left:65%}
+.foir-meta{display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--gray-500)}
+.foir-verdict{margin-top:10px;font-size:13px;font-weight:600;padding:8px 12px;border-radius:7px;text-align:center}
+.foir-card.safe .foir-verdict{background:var(--green-mid);color:#14532d}
+.foir-card.warn .foir-verdict{background:var(--amber-mid);color:#78350f}
+.foir-card.danger .foir-verdict{background:var(--red-mid);color:#7f1d1d}
+
+/* DOC CHECKLIST */
+.doc-checklist{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-sm);overflow:hidden;margin-top:12px}
+.doc-checklist-title{font-size:12px;font-weight:700;color:var(--gray-600);padding:10px 14px;background:var(--gray-100);border-bottom:1px solid var(--gray-200);text-transform:uppercase;letter-spacing:0.4px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-600);transition:background 0.15s}
+.doc-item:last-child{border-bottom:none}
+.doc-item.has-doc{color:var(--gray-700)}
+.doc-status{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;font-weight:700;background:var(--gray-200);color:var(--gray-400);transition:all 0.2s}
+.doc-item.has-doc .doc-status{background:var(--green-mid);color:var(--green)}
+.doc-item.missing .doc-status{background:var(--red-mid);color:var(--red)}
+
+/* REFERENCES */
+.rb{background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px}
+.rb h4{font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px}
+
+/* SUBMIT BUTTON */
+.sbtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;margin-top:0.6rem;display:flex;align-items:center;justify-content:center;gap:9px;transition:all 0.18s;font-family:'Inter',sans-serif;letter-spacing:0.2px;box-shadow:0 4px 14px rgba(37,99,235,0.35)}
+.sbtn:hover{background:linear-gradient(135deg,var(--blue-dark),#1e3a8a);box-shadow:0 6px 20px rgba(37,99,235,0.45);transform:translateY(-1px)}
+.sbtn:active{transform:translateY(0)}
+.sbtn:disabled{background:var(--gray-300);cursor:not-allowed;box-shadow:none;transform:none}
+
+/* PROGRESS */
+.prog{display:none;background:#fff;border-radius:var(--radius);padding:1.6rem 1.75rem;margin-top:1rem;text-align:center;box-shadow:var(--shadow)}
+.prog p{font-size:14px;color:var(--gray-500);margin-bottom:12px;font-weight:500}
+.pbar{width:100%;height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--blue),#60a5fa);width:0%;transition:width 0.3s;border-radius:4px}
+.done{display:none;background:linear-gradient(135deg,var(--green-light),#ecfdf5);border:1.5px solid var(--green-mid);border-radius:var(--radius);padding:2rem 1.75rem;margin-top:1rem;text-align:center;box-shadow:0 4px 16px rgba(22,163,74,0.12)}
+.done-icon{font-size:44px;margin-bottom:10px}
+.done p{font-size:16px;color:var(--green);font-weight:700}
+.done small{font-size:13px;color:#15803d;display:block;margin-top:6px}
+
+/* TOAST */
+#val-toast{display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-size:14px;font-weight:700;border-radius:12px;padding:14px 24px;z-index:9999;box-shadow:0 8px 30px rgba(220,38,38,0.35);text-align:center;min-width:280px;animation:slideDown 0.3s ease}
+@keyframes slideDown{from{top:0;opacity:0}to{top:20px;opacity:1}}
+
+/* RS SYMBOL */
+.rs-prefix{position:relative;display:block}
+.rs-prefix input{padding-left:30px}
+.rs-prefix::before{content:'₹';position:absolute;left:12px;top:11px;font-size:14px;color:var(--gray-500);font-weight:600;pointer-events:none;z-index:1;line-height:1}
+
+@media(max-width:520px){
+  .two{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}
+  body{padding:1rem 0.5rem 4rem}
+  .sec,.form-header{padding:1.2rem 1.1rem}
+  .form-header h1{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div id="val-toast"></div>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="form-header">
+    <h1>PL — Businessman Application</h1>
+    <div class="badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Case: PL · Self-Employed / Business
+    </div>
+  </div>
+
+  <!-- ① PERSONAL DETAILS -->
+  <div class="sec" id="sec-personal">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Personal Details
+    </div>
+    <div class="two">
+      <div class="fi">
+        <label>Full name <span class="r">*</span></label>
+        <input type="text" id="f_name" placeholder="e.g. Rajesh Kumar Singh">
+      </div>
+      <div class="fi">
+        <label>Date of birth <span class="r">*</span></label>
+        <input type="date" id="f_dob">
+      </div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Father's name</label><input type="text" id="f_father" placeholder="e.g. Ramesh Kumar Singh"></div>
+      <div class="fi"><label>Mother's name</label><input type="text" id="f_mother" placeholder="e.g. Sunita Devi Singh"></div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Age</label><input type="number" id="f_age" placeholder="e.g. 30"></div>
+      <div class="fi"><label>Marital status</label>
+        <select id="f_marital"><option>Unmarried</option><option>Married</option><option>Divorced</option></select>
+      </div>
+    </div>
+    <div class="fi"><label>Education</label>
+      <select id="f_edu"><option>Graduate</option><option>Post Graduate</option><option>12th Pass</option><option>10th Pass</option><option>Other</option></select>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Mobile number <span class="r">*</span></label><input type="tel" id="f_mobile" placeholder="e.g. 9876543210"></div>
+      <div class="fi"><label>Alternate number</label><input type="tel" id="f_alt_mobile" placeholder="e.g. 9876543211"></div>
+    </div>
+    <div class="fi"><label>Personal email <span class="r">*</span></label><input type="email" id="f_email" placeholder="e.g. name@gmail.com"></div>
+    <div class="two">
+      <div class="fi"><label>Spouse name</label><input type="text" id="f_spouse" placeholder="e.g. Sunita Devi"></div>
+      <div class="fi"><label>Spouse DOB</label><input type="date" id="f_spouse_dob"></div>
+    </div>
+  </div>
+
+  <!-- ② ADDRESS (split into two sub-sections) -->
+  <div class="sec" id="sec-address">
+    <div class="sec-err-banner" id="sec-address-err">⚠ Please fill address fields and upload all required documents in this section!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Address
+    </div>
+
+    <div class="addr-divider">Current Residence — as per Electricity Bill</div>
+    <div class="fi">
+      <label>Residence address <span class="r">*</span></label>
+      <textarea id="f_addr" placeholder="e.g. House No. 12, Main Road, Village Name, Dist. XYZ, Maharashtra"></textarea>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Landmark</label><input type="text" id="f_addr_landmark" placeholder="e.g. Near SBI Bank"></div>
+      <div class="fi"><label>PIN code</label><input type="text" id="f_pin" placeholder="e.g. 440001"></div>
+    </div>
+    <div class="two">
+      <div class="fi"><label>Rented / Owned</label>
+        <select id="f_residence_type"><option value="">Select</option><option>Owned</option><option>Rented</option><option>Family-owned</option></select>
+      </div>
+      <div class="fi"><label>Residence address proof type</label>
+        <select id="f_addr_proof"><option value="">Select</option><option>Electricity Bill</option><option>Aadhaar Card</option><option>Ration Card</option><option>Rent Agreement</option><option>Gas Bill</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="fi">
+      <label>Electricity bill <span class="r">*</span></label>
+      <div class="ub" id="ub-elec">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_elec" onchange="mark(this,'elec-fn','ub-elec')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <div class="ul"><strong>Upload electricity bill (address proof)</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="elec-fn"></div>
+      <div class="err" id="elec-err">⚠ Electricity bill is required</div>
+    </div>
+
+    <div class="addr-divider">Address as per Aadhaar Card</div>
+    <div class="fi">
+      <label>Aadhaar address <span class="r">*</span></label>
+      <textarea id="f_addr_aadh" placeholder="e.g. Village Isaapur, Taluka XYZ, Dist. Yavatmal, Maharashtra — 445209"></textarea>
+    </div>
+    <div class="fi"><label>PIN code (Aadhaar)</label><input type="text" id="f_pin_aadh" placeholder="e.g. 445209"></div>
+
+    <div class="addr-divider">KYC Documents</div>
+    <div class="fi">
+      <label>Aadhaar card <span class="r">*</span></label>
+      <div class="ub" id="ub-aadhaar">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_aadhaar" onchange="mark(this,'aadh-fn','ub-aadhaar')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload Aadhaar card (front &amp; back)</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="aadh-fn"></div>
+      <div class="err" id="aadh-err">⚠ Aadhaar card is required</div>
+    </div>
+    <div class="fi">
+      <label>PAN card <span class="r">*</span></label>
+      <div class="ub" id="ub-pan">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_pan" onchange="mark(this,'pan-fn','ub-pan')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload PAN card</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="pan-fn"></div>
+      <div class="err" id="pan-err">⚠ PAN card is required</div>
+    </div>
+    <div class="fi">
+      <label>Passport-size photo <span class="r">*</span></label>
+      <div class="ub" id="ub-photo">
+        <input type="file" accept=".jpg,.jpeg,.png" id="up_photo" onchange="mark(this,'photo-fn','ub-photo')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div class="ul"><strong>Upload recent passport-size photo</strong><span class="tag">JPG / PNG only</span></div>
+      </div>
+      <div class="fn" id="photo-fn"></div>
+      <div class="err" id="photo-err">⚠ Passport-size photo is required</div>
+    </div>
+  </div>
+
+  <!-- CIBIL -->
+  <div class="sec" id="sec-cibil">
+    <div class="sec-err-banner" id="sec-cibil-err">&#9888; Please upload the CIBIL report!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      CIBIL Score
+    </div>
+    <div class="fi">
+      <label>CIBIL score</label>
+      <input type="number" id="f_cibil" placeholder="e.g. 750" min="300" max="900">
+    </div>
+    <div class="fi">
+      <label>CIBIL report <span class="r">*</span></label>
+      <div class="ub" id="ub-cibil">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_cibil" onchange="mark(this,'cibil-fn','ub-cibil')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload CIBIL report</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="cibil-fn"></div>
+      <div class="err" id="cibil-err">&#9888; CIBIL report is required</div>
+    </div>
+  </div>
+
+  <!-- ④ BUSINESS DETAILS -->
+  <div class="sec" id="sec-employment">
+    <div class="sec-err-banner" id="sec-employment-err">⚠ Please upload ITR (3 years), GST Certificate, and Bank Statements!</div>
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      Business Details
+    </div>
+
+    <div class="fi"><label>Business name</label><input type="text" id="f_company" placeholder="e.g. Sharma General Store"></div>
+    <div class="two">
+      <div class="fi"><label>Business type</label>
+        <select id="f_job"><option value="">Select</option><option>Sole Proprietorship</option><option>Partnership</option><option>Pvt. Ltd. Company</option><option>LLP</option><option>HUF</option><option>Other</option></select>
+      </div>
+      <div class="fi"><label>Total business experience</label><input type="text" id="f_exp" placeholder="e.g. 5 years"></div>
+    </div>
+    <div class="fi"><label>Business address <span class="r">*</span></label><input type="text" id="f_office_addr" placeholder="e.g. Shop No. 5, Main Market, City — 440001"></div>
+    <div class="two">
+      <div class="fi"><label>Business landmark</label><input type="text" id="f_biz_landmark" placeholder="e.g. Near City Mall"></div>
+      <div class="fi"><label>Business PIN code</label><input type="text" id="f_biz_pin" placeholder="e.g. 440001"></div>
+    </div>
+    <div class="fi"><label>Residence to business distance</label><input type="text" id="f_biz_distance" placeholder="e.g. 2 km"></div>
+    <div class="fi">
+      <label>Monthly net income / profit (₹) <span class="r">*</span></label>
+      <div class="rs-prefix">
+        <input type="number" id="f_income" placeholder="e.g. 40000" oninput="updateFoir()">
+      </div>
+    </div>
+
+    <!-- GST -->
+    <div class="fi" style="margin-top:1rem">
+      <label>GST Certificate <span class="r">*</span></label>
+      <div class="ub" id="ub-gst">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_gst" onchange="mark(this,'gst-fn','ub-gst')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div class="ul"><strong>Upload GST Registration Certificate</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="gst-fn"></div>
+      <div class="err" id="gst-err">⚠ GST Certificate is required</div>
+    </div>
+    <div class="fi"><label>GSTIN number</label><input type="text" id="f_gstin" placeholder="e.g. 27AABCU9603R1ZX" style="text-transform:uppercase"></div>
+
+    <!-- Udhyam / Gumastha — at least one required -->
+    <div class="fi" style="margin-top:1rem">
+      <label>Udhyam Certificate <span class="r">*</span> <span class="opt">(Udhyam OR Gumastha — at least one required)</span></label>
+      <div class="ub" id="ub-udhyam">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_udhyam" onchange="mark(this,'udhyam-fn','ub-udhyam'); validateUdhyamGumastha()" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
+        <div class="ul"><strong>Upload Udhyam Registration Certificate</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="udhyam-fn"></div>
+    </div>
+    <div class="fi">
+      <label>Gumastha / Shop Act License <span class="r">*</span> <span class="opt">(Udhyam OR Gumastha — at least one required)</span></label>
+      <div class="ub" id="ub-gumastha">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="up_gumastha" onchange="mark(this,'gumastha-fn','ub-gumastha'); validateUdhyamGumastha()" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
+        <div class="ul"><strong>Upload Gumastha / Shop &amp; Establishment License</strong><span class="tag">PDF / JPG / PNG</span></div>
+      </div>
+      <div class="fn" id="gumastha-fn"></div>
+      <div class="err" id="udhyam-gumastha-err">⚠ At least one of Udhyam or Gumastha is required</div>
+    </div>
+
+    <!-- ITR 3 years -->
+    <div class="fi" style="margin-top:1rem">
+      <label>ITR — Last 3 Years <span class="r">*</span></label>
+      <div class="ub" id="ub-salary">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_salary" onchange="mark(this,'sal-fn','ub-salary')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul"><strong>Upload ITR — 3 years (with computation sheets)</strong><span class="tag">Multi-select · PDF preferred</span></div>
+      </div>
+      <div class="fn" id="sal-fn"></div>
+      <div class="err" id="sal-err">⚠ ITR (3 years) is required</div>
+      <div class="pw-row" style="margin-top:10px">
+        <label>🔐 ITR PDF password (if any):</label>
+        <input type="password" id="pw_salary" placeholder="Leave blank if no password">
+      </div>
+    </div>
+
+    <!-- Bank Statement -->
+    <div class="fi">
+      <label>Bank account statement — last 6 months <span class="r">*</span></label>
+      <div class="ub" id="ub-bank">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_bank" onchange="mark(this,'bank-fn','ub-bank')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <div class="ul"><strong>Upload bank statements — last 6 months</strong><span class="tag">Multi-select</span></div>
+      </div>
+      <div class="fn" id="bank-fn"></div>
+      <div class="err" id="bank-err">⚠ Bank statements are required</div>
+      <div class="pw-row" style="margin-top:10px">
+        <label>🔐 Bank statement PDF password (if any):</label>
+        <input type="password" id="pw_bank" placeholder="Leave blank if no password">
+      </div>
+    </div>
+
+    <!-- Business Vintage / Continuity -->
+    <div class="fi" style="margin-top:1rem">
+      <label>Shop video <span class="r">*</span></label>
+
+    <!-- Statement of Account (SOA) -->
+    <div class="fi" id="fi-soa" style="margin-top:0.6rem;display:none">
+      <label>Statement of Account (SOA) <span class="opt">(if available)</span></label>
+      <div class="ub" id="ub-soa">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_soa" onchange="mark(this,'soa-fn','ub-soa')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="ul"><strong>Upload Statement of Account (SOA)</strong><span class="tag">Multi-select</span></div>
+      </div>
+      <div class="fn" id="soa-fn"></div>
+    </div>
+      <div class="ub" id="ub-vintage">
+        <input type="file" accept=".mp4,.mov,.avi,.mkv,.webm,.3gp,.pdf,.jpg,.jpeg,.png" id="up_vintage" onchange="mark(this,'vintage-fn','ub-vintage')" multiple>
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+        <div class="ul"><strong>Upload shop video / business vintage proof</strong><span class="tag">MP4 / MOV / JPG / PDF</span></div>
+      </div>
+      <div class="fn" id="vintage-fn"></div>
+      <div class="err" id="vintage-err">⚠ Shop video is required</div>
+    </div>
+  </div>
+
+  <!-- ⑤ REQUIRED AMOUNT -->
+  <div class="sec" id="sec-reqamt">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Required Amount by Customer
+    </div>
+    <div class="fi">
+      <label>Required amount (₹) <span class="r">*</span></label>
+      <input type="text" id="f_lamount" placeholder="e.g. 5,00,000">
+    </div>
+    <div class="fi"><label>Loan Facilitator</label><input type="text" id="f_lender" placeholder="e.g. Jagdish sir / Dude Finance"></div>
+  </div>
+
+
+    <!-- SOA — always visible, standalone -->
+    <div class="fi" style="margin-top:0.6rem">
+      <label>Statement of Account (SOA) <span class="opt">(Optional / If Available)</span></label>
+      <div class="ub" id="ub-soa-always">
+        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" id="up_soa_always" onchange="mark(this,'soa-always-fn','ub-soa-always')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="ul"><strong>Upload Statement of Account (SOA)</strong><span class="tag">Multi-select · Optional</span></div>
+      </div>
+      <div class="fn" id="soa-always-fn"></div>
+    </div>
+
+    <!-- ⑥ CURRENT OBLIGATIONS -->
+  <div class="sec" id="sec-obligations">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Current Obligations
+      <span class="chip">Existing loans / EMIs</span>
+    </div>
+    <div id="ob-list">
+      <div class="ob-row" id="ob-1">
+        <button class="ob-del" onclick="removeOb('ob-1')" title="Remove">&#x2715;</button>
+        <div class="three-col">
+          <div class="fi" style="margin-bottom:0"><label>Loan type</label><input type="text" class="ob-type" placeholder="e.g. Car Loan" oninput="calcTotal()"></div>
+          <div class="fi" style="margin-bottom:0"><label>Bank / lender</label><input type="text" class="ob-bank" placeholder="e.g. ICICI Bank" oninput="calcTotal()"></div>
+          <div class="fi" style="margin-bottom:0"><label>EMI (₹)</label><input type="number" class="ob-emi" placeholder="0" oninput="calcTotal()"></div>
+        </div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="addOb()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add another loan / EMI
+    </button>
+    <div class="ob-total">
+      <span>Total EMI obligation / month</span>
+      <strong id="ob-total-val">₹ 0</strong>
+    </div>
+
+    <!-- SOA — appears only when obligations are filled -->
+    <div id="fi-soa" style="display:none;margin-top:14px;border-top:1px dashed #e5e7eb;padding-top:14px">
+      <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">
+        📄 Statement of Account (SOA)
+        <span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:6px">— for each active loan above</span>
+      </label>
+      <div class="ub" id="ub-soa">
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple id="up_soa" onchange="mark(this,'soa-fn','ub-soa')">
+        <div class="ub-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+        <div class="ul"><strong>Upload SOA for existing loans</strong><span class="tag">Multi-select</span></div>
+      </div>
+      <div class="fn" id="soa-fn"></div>
+    </div>
+  </div>
+
+  <!-- ⑦ FOIR ANALYSIS (new section below obligations) -->
+  <div class="sec" id="sec-foir">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      Income vs. Obligation Analysis
+      <span class="chip">FOIR Check</span>
+    </div>
+    <div class="two" style="margin-bottom:12px">
+      <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--blue-mid)">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Monthly Income</div>
+        <div style="font-size:20px;font-weight:800;color:var(--blue)" id="foir-income-disp">₹ —</div>
+      </div>
+      <div style="background:#fff7ed;border-radius:var(--radius-sm);padding:12px 14px;border:1px solid #fed7aa">
+        <div style="font-size:11px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Total EMI / Month</div>
+        <div style="font-size:20px;font-weight:800;color:#b45309" id="foir-emi-disp">₹ —</div>
+      </div>
+    </div>
+    <div class="foir-card" id="foir-card">
+      <div class="foir-header">
+        <span class="foir-label">Fixed Obligation to Income Ratio (FOIR)</span>
+        <span class="foir-pct" id="foir-pct">—</span>
+      </div>
+      <div class="foir-bar-track">
+        <div class="foir-bar-fill" id="foir-bar" style="width:0%"></div>
+        <div class="foir-bar-line" title="65% threshold"></div>
+      </div>
+      <div class="foir-meta">
+        <span>0%</span><span style="position:relative;left:-8%">65% limit</span><span>100%</span>
+      </div>
+      <div class="foir-verdict" id="foir-verdict">Enter income and obligations above to see FOIR analysis</div>
+    </div>
+  </div>
+
+  <!-- ⑧ AGENT DETAILS -->
+  <div class="sec" id="sec-agent">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Agent Details
+    </div>
+    <div class="two">
+      <div class="fi"><label>Agent name</label><input type="text" id="f_bank" placeholder="e.g. Suresh Patil"></div>
+      <div class="fi"><label>Case type</label><input type="text" id="f_case" value="PL - Businessman" readonly style="background:var(--gray-50);color:var(--gray-500);cursor:default"></div>
+    </div>
+    <div class="fi"><label>Calling date</label><input type="date" id="f_cdate"></div>
+    <div class="fi"><label>Notes / Remarks</label><textarea id="f_notes" placeholder="Any special remarks about the case..."></textarea></div>
+  </div>
+
+  <!-- ⑨ REFERENCES -->
+  <div class="sec" id="sec-refs">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      References
+    </div>
+    <div class="rb">
+      <h4>Reference 1</h4>
+      <div class="two">
+        <div class="fi" style="margin-bottom:0"><label>Name</label><input type="text" id="f_ref1name" placeholder="e.g. Ankit Sharma"></div>
+        <div class="fi" style="margin-bottom:0"><label>Contact</label><input type="tel" id="f_ref1mob" placeholder="e.g. 9876500001"></div>
+      </div>
+    </div>
+    <div class="rb" style="margin-bottom:0">
+      <h4>Reference 2</h4>
+      <div class="two">
+        <div class="fi" style="margin-bottom:0"><label>Name</label><input type="text" id="f_ref2name" placeholder="e.g. Priya Deshmukh"></div>
+        <div class="fi" style="margin-bottom:0"><label>Contact</label><input type="tel" id="f_ref2mob" placeholder="e.g. 9876500002"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑩ DOCUMENT CHECKLIST (live, tick/cross) -->
+  <div class="sec" id="sec-checklist">
+    <div class="sec-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Document Checklist
+    </div>
+    <p style="font-size:12.5px;color:var(--gray-500);margin-bottom:10px">Status updates live as you upload documents above.</p>
+    <div class="doc-checklist">
+      <div class="doc-checklist-title">Documents Summary</div>
+      <div class="doc-item" id="chk-aadhaar"><div class="doc-status" id="chk-aadhaar-icon">✕</div>Aadhaar Card</div>
+      <div class="doc-item" id="chk-pan"><div class="doc-status" id="chk-pan-icon">✕</div>PAN Card</div>
+      <div class="doc-item" id="chk-photo"><div class="doc-status" id="chk-photo-icon">✕</div>Passport-size Photo</div>
+      <div class="doc-item" id="chk-elec"><div class="doc-status" id="chk-elec-icon">✕</div>Electricity Bill (Address Proof)</div>
+      <div class="doc-item" id="chk-cibil"><div class="doc-status" id="chk-cibil-icon">✕</div>CIBIL Report</div>
+      <div class="doc-item" id="chk-gst"><div class="doc-status" id="chk-gst-icon">✕</div>GST Certificate <strong style="color:var(--red);font-size:11px;margin-left:4px">MANDATORY</strong></div>
+      <div class="doc-item" id="chk-udhyam"><div class="doc-status" id="chk-udhyam-icon">✕</div>Udhyam Certificate <span style="font-size:11px;color:var(--amber);margin-left:4px">(Min. one of Udhyam/Gumastha)</span></div>
+      <div class="doc-item" id="chk-gumastha"><div class="doc-status" id="chk-gumastha-icon">✕</div>Gumastha / Shop Act License <span style="font-size:11px;color:var(--amber);margin-left:4px">(Min. one of Udhyam/Gumastha)</span></div>
+      <div class="doc-item" id="chk-salary"><div class="doc-status" id="chk-salary-icon">✕</div>ITR — Last 3 Years <strong style="color:var(--red);font-size:11px;margin-left:4px">MANDATORY</strong></div>
+      <div class="doc-item" id="chk-bank"><div class="doc-status" id="chk-bank-icon">✕</div>Bank Statement (last 6 months)</div>
+      <div class="doc-item" id="chk-soa" style="display:none"><div class="doc-status" id="chk-soa-icon">✕</div>Statement of Account (SOA)</div>
+      <div class="doc-item" id="chk-vintage"><div class="doc-status" id="chk-vintage-icon">✕</div>Shop Video <strong style="color:var(--red);font-size:11px;margin-left:4px">MANDATORY</strong></div>
+    </div>
+  </div>
+
+  <button class="sbtn" id="submitBtn" onclick="saveFile()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Save File
+  </button>
+
+  <div class="prog" id="progBox">
+    <p id="progMsg">Packing documents...</p>
+    <div class="pbar"><div class="pbar-fill" id="pbar"></div></div>
+  </div>
+
+  <div class="done" id="doneBox">
+    <div class="done-icon">✅</div>
+    <p id="doneMsg">ZIP downloaded!</p>
+    <small id="doneSub"></small>
+  </div>
+</div>
+
+<script>
+let obCount = 1;
+
+// ── FOIR ──────────────────────────────────────────────────────────────
+function calcTotal() {
+  const emis = Array.from(document.querySelectorAll('.ob-emi')).map(e => parseFloat(e.value)||0);
+  const total = emis.reduce((a,b)=>a+b,0);
+  document.getElementById('ob-total-val').textContent = '₹ ' + total.toLocaleString('en-IN');
+  // ── SOA toggle: show inside obligations if any row has data ──
+  const anyOb = Array.from(document.querySelectorAll('.ob-row')).some(r => {
+    return (r.querySelector('.ob-type')?.value||'').trim() ||
+           (r.querySelector('.ob-bank')?.value||'').trim() ||
+           parseFloat(r.querySelector('.ob-emi')?.value||0) > 0;
+  });
+  const soaWrap = document.getElementById('fi-soa');
+  if (soaWrap) soaWrap.style.display = anyOb ? '' : 'none';
+  updateFoir();
+}
+
+function updateFoir() {
+  const income = parseFloat(g('f_income').value) || 0;
+  const emis   = Array.from(document.querySelectorAll('.ob-emi')).map(e => parseFloat(e.value)||0);
+  const totalEmi = emis.reduce((a,b)=>a+b,0);
+
+  g('foir-income-disp').textContent = income ? '₹ ' + income.toLocaleString('en-IN') : '₹ —';
+  g('foir-emi-disp').textContent    = totalEmi ? '₹ ' + totalEmi.toLocaleString('en-IN') : '₹ —';
+
+  const card    = g('foir-card');
+  const pctEl   = g('foir-pct');
+  const bar     = g('foir-bar');
+  const verdict = g('foir-verdict');
+
+  if (!income) {
+    card.className = 'foir-card';
+    pctEl.textContent = '—';
+    bar.style.width = '0%';
+    bar.style.background = '#9ca3af';
+    verdict.textContent = 'Enter monthly income above to see FOIR analysis';
+    return;
+  }
+
+  const foir = (totalEmi / income) * 100;
+  const foirCapped = Math.min(foir, 100);
+  pctEl.textContent = foir.toFixed(1) + '%';
+  bar.style.width = foirCapped + '%';
+
+  if (foir <= 40) {
+    card.className = 'foir-card safe';
+    bar.style.background = 'linear-gradient(90deg,#16a34a,#4ade80)';
+    verdict.textContent = '✅ Excellent — FOIR is well within limit. Strong loan eligibility.';
+  } else if (foir <= 65) {
+    card.className = 'foir-card warn';
+    bar.style.background = 'linear-gradient(90deg,#d97706,#fbbf24)';
+    verdict.textContent = '⚠ Acceptable — FOIR is within the 65% limit but getting close.';
+  } else {
+    card.className = 'foir-card danger';
+    bar.style.background = 'linear-gradient(90deg,#dc2626,#f87171)';
+    verdict.textContent = '🚫 ABOVE 65% LIMIT — EMI obligations exceed safe threshold. Loan may be difficult to approve.';
+  }
+}
+
+// ── OBLIGATIONS ───────────────────────────────────────────────────────
+function addOb() {
+  obCount++;
+  const id = 'ob-' + obCount;
+  const div = document.createElement('div');
+  div.className = 'ob-row'; div.id = id;
+  div.innerHTML = `<button class="ob-del" onclick="removeOb('${id}')" title="Remove">&#x2715;</button>
+    <div class="three-col">
+      <div class="fi" style="margin-bottom:0"><label>Loan type</label><input type="text" class="ob-type" placeholder="e.g. Home Loan" oninput="calcTotal()"></div>
+      <div class="fi" style="margin-bottom:0"><label>Bank / lender</label><input type="text" class="ob-bank" placeholder="Bank name" oninput="calcTotal()"></div>
+      <div class="fi" style="margin-bottom:0"><label>EMI (₹)</label><input type="number" class="ob-emi" placeholder="0" oninput="calcTotal()"></div>
+    </div>`;
+  document.getElementById('ob-list').appendChild(div);
+}
+function removeOb(id) {
+  const el = document.getElementById(id);
+  if (el) { el.remove(); calcTotal(); }
+}
+
+// ── CHECKLIST ─────────────────────────────────────────────────────────
+const chkMap = {
+  'up_aadhaar':'chk-aadhaar',
+  'up_pan':'chk-pan',
+  'up_photo':'chk-photo',
+  'up_elec':'chk-elec',
+  'up_cibil':'chk-cibil',
+  'up_gst':'chk-gst',
+  'up_udhyam':'chk-udhyam',
+  'up_gumastha':'chk-gumastha',
+  'up_salary':'chk-salary',
+  'up_bank':'chk-bank',
+  'up_vintage':'chk-vintage',
+};
+function updateChecklist(inputId, hasFile) {
+  const rowId = chkMap[inputId];
+  if (!rowId) return;
+  const row  = g(rowId);
+  const icon = g(rowId + '-icon');
+  if (!row || !icon) return;
+  if (hasFile) {
+    row.className  = 'doc-item has-doc';
+    icon.className = 'doc-status';
+    icon.textContent = '✓';
+  } else {
+    row.className  = 'doc-item missing';
+    icon.className = 'doc-status';
+    icon.textContent = '✕';
+  }
+}
+
+// ── MARK UPLOAD ───────────────────────────────────────────────────────
+function mark(inp, fnId, ubId) {
+  const el = document.getElementById(fnId);
+  const ub = document.getElementById(ubId);
+  if (!el) return;
+  const names = Array.from(inp.files).map(f => f.name).join(', ');
+  el.textContent = names ? '✓ ' + names : '';
+  el.style.display = names ? 'block' : 'none';
+  if (ub) ub.classList.toggle('uploaded', !!names);
+  const errMap = {
+    'ub-aadhaar':'aadh-err','ub-pan':'pan-err','ub-photo':'photo-err',
+    'ub-elec':'elec-err','ub-cibil':'cibil-err',
+    'ub-gst':'gst-err',
+    'ub-salary':'sal-err','ub-bank':'bank-err',
+    'ub-vintage':'vintage-err'
+  };
+  if (ubId && errMap[ubId] && names) g(errMap[ubId]).style.display = 'none';
+  updateChecklist(inp.id, !!names);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function ext(file) { const p = file.name.split('.'); return p.length>1?'.'+p.pop().toLowerCase():''; }
+function g(id) { return document.getElementById(id); }
+function val(id) { const el = g(id); return el ? el.value.trim() : ''; }
+function files(id) { const el = g(id); return el && el.files ? Array.from(el.files) : []; }
+function setProgress(pct, msg) { g('pbar').style.width=pct+'%'; if(msg) g('progMsg').textContent=msg; }
+function showToast(msg) {
+  const t = g('val-toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3800);
+}
+
+function validateUdhyamGumastha() {
+  const hasU = g('up_udhyam') && g('up_udhyam').files && g('up_udhyam').files.length > 0;
+  const hasG = g('up_gumastha') && g('up_gumastha').files && g('up_gumastha').files.length > 0;
+  const err = g('udhyam-gumastha-err');
+  if (err) err.style.display = (hasU || hasG) ? 'none' : 'block';
+  return hasU || hasG;
+}
+
+// ── VALIDATE ──────────────────────────────────────────────────────────
+function validate() {
+  const checks = [
+    ['up_aadhaar','aadh-err','sec-address','sec-address-err','Aadhaar card'],
+    ['up_pan',    'pan-err', 'sec-address','sec-address-err','PAN card'],
+    ['up_photo',  'photo-err','sec-address','sec-address-err','Passport-size photo'],
+    ['up_elec',   'elec-err','sec-address', 'sec-address-err', 'Electricity bill'],
+    ['up_cibil',  'cibil-err','sec-cibil','sec-cibil-err','CIBIL report'],
+    ['up_gst',    'gst-err','sec-employment','sec-employment-err','GST Certificate'],
+    ['up_salary', 'sal-err', 'sec-employment','sec-employment-err','ITR (3 years)'],
+    ['up_bank',   'bank-err','sec-employment','sec-employment-err','Bank statements'],
+    ['up_vintage','vintage-err','sec-employment','sec-employment-err','Shop video'],
+  ];
+  document.querySelectorAll('.sec-err-banner').forEach(b => b.style.display='none');
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('error-highlight'));
+  let ok=true, firstSec=null, firstLabel=null;
+  checks.forEach(([inp,err,secId,bannerId,label]) => {
+    const has = g(inp) && g(inp).files && g(inp).files.length > 0;
+    g(err).style.display = has ? 'none' : 'block';
+    if (!has) {
+      ok = false;
+      const sec = g(secId); const banner = g(bannerId);
+      if (sec) sec.classList.add('error-highlight');
+      if (banner) banner.style.display = 'block';
+      if (!firstSec) { firstSec = secId; firstLabel = label; }
+    }
+    updateChecklist(inp, has);
+  });
+  // Udhyam OR Gumastha — at least one
+  const ugOk = validateUdhyamGumastha();
+  if (!ugOk) {
+    ok = false;
+    const sec = g('sec-employment'); const banner = g('sec-employment-err');
+    if (sec) sec.classList.add('error-highlight');
+    if (banner) banner.style.display = 'block';
+    if (!firstSec) { firstSec = 'sec-employment'; firstLabel = 'Udhyam or Gumastha certificate'; }
+  }
+
+    if (!ok && firstSec) {
+    g(firstSec).scrollIntoView({ behavior:'smooth', block:'center' });
+    showToast('⚠ Missing: ' + firstLabel + ' — please upload all required documents');
+  }
+  return ok;
+}
+
+// ── OBLIGATION LINES ──────────────────────────────────────────────────
+function getObligationLines() {
+  const rows = document.querySelectorAll('.ob-row');
+  const lines = []; let total = 0;
+  rows.forEach((row,i) => {
+    const type = (row.querySelector('.ob-type').value||'').trim();
+    const bank = (row.querySelector('.ob-bank').value||'').trim();
+    const emi  = parseFloat(row.querySelector('.ob-emi').value)||0;
+    if (type||bank||emi) {
+      lines.push('Loan '+(i+1)+'          : '+(type||'-')+'  |  '+(bank||'-')+'  |  EMI Rs. '+emi.toLocaleString('en-IN'));
+      total += emi;
+    }
+  });
+  if (!lines.length) lines.push('  None declared');
+  lines.push('Total EMI       : Rs. ' + total.toLocaleString('en-IN'));
+  return lines;
+}
+
+// ── DOC STATUS LINE ───────────────────────────────────────────────────
+function docStatusLine(label, inputId) {
+  const has = g(inputId) && g(inputId).files && g(inputId).files.length > 0;
+  return (has ? '  ✓  ' : '  ✕  ') + label;
+}
+
+// ── SAVE FILE (ZIP + EMAIL) ────────────────────────────────────────────
+async function saveFile() {
+  if (!validate()) return;
+  const btn = g('submitBtn');
+  btn.disabled = true;
+  g('progBox').style.display = 'block';
+  g('doneBox').style.display = 'none';
+  setProgress(5, 'Building applicant info...');
+
+  const income   = parseFloat(val('f_income'))||0;
+  const emis     = Array.from(document.querySelectorAll('.ob-emi')).map(e=>parseFloat(e.value)||0);
+  const totalEmi = emis.reduce((a,b)=>a+b,0);
+  const foir     = income ? ((totalEmi/income)*100).toFixed(1)+'%' : 'N/A';
+  const foirStatus = income ? (totalEmi/income > 0.65 ? 'ABOVE 65% LIMIT ⚠' : 'Within 65% limit ✓') : 'N/A';
+  const pwSalary = val('pw_salary');
+  const pwBank   = val('pw_bank');
+
+  const txt = [
+    '============================================================',
+    '   PERSONAL LOAN APPLICATION — BUSINESSMAN',
+    '============================================================',
+    '',
+    'Date of entry      : ' + new Date().toLocaleDateString('en-IN'),
+    'Calling date       : ' + val('f_cdate'),
+    'Case type          : ' + val('f_case'),
+    'Agent name         : ' + val('f_bank'),
+    'Loan Facilitator   : ' + (val('f_lender')||'Not specified'),
+    'Required amount    : ' + val('f_lamount'),
+    '',
+    '------------------------------------------------------------',
+    'PERSONAL DETAILS',
+    '------------------------------------------------------------',
+    'Full name          : ' + val('f_name'),
+    'Date of birth      : ' + (val('f_dob')||'—'),
+    "Father's name      : " + val('f_father'),
+    "Mother's name      : " + val('f_mother'),
+    'Age                : ' + val('f_age'),
+    'Marital status     : ' + val('f_marital'),
+    'Education          : ' + val('f_edu'),
+    'Mobile             : ' + val('f_mobile'),
+    'Alternate no.      : ' + (val('f_alt_mobile')||'—'),
+    'Personal email     : ' + val('f_email'),
+    'Spouse name        : ' + (val('f_spouse')||'—'),
+    'Spouse DOB         : ' + (val('f_spouse_dob')||'—'),
+    '',
+    '------------------------------------------------------------',
+    'ADDRESS',
+    '------------------------------------------------------------',
+    'Residence address  : ' + val('f_addr'),
+    'Res. landmark      : ' + (val('f_addr_landmark')||'—'),
+    'Residence PIN      : ' + val('f_pin'),
+    'Rented / Owned     : ' + (val('f_residence_type')||'—'),
+    'Res. addr. proof   : ' + (val('f_addr_proof')||'—'),
+    'Aadhaar address    : ' + val('f_addr_aadh'),
+    'Aadhaar PIN        : ' + val('f_pin_aadh'),
+    '',
+    '------------------------------------------------------------',
+    'CIBIL',
+    '------------------------------------------------------------',
+    'CIBIL score        : ' + val('f_cibil'),
+    '',
+    '------------------------------------------------------------',
+    'BUSINESS DETAILS',
+    '------------------------------------------------------------',
+    'Business name      : ' + val('f_company'),
+    'Business type      : ' + val('f_job'),
+    'Business address   : ' + val('f_office_addr'),
+    'Biz. landmark      : ' + (val('f_biz_landmark')||'—'),
+    'Biz. PIN code      : ' + (val('f_biz_pin')||'—'),
+    'Res. to biz. dist. : ' + (val('f_biz_distance')||'—'),
+    'Total biz. exp.    : ' + val('f_exp'),
+    'GSTIN              : ' + (val('f_gstin')||'—'),
+    'Monthly net income : ' + val('f_income'),
+    'ITR PDF password   : ' + (pwSalary?'[PROVIDED — PDFs auto-unlocked in ZIP]':'None'),
+    'Bank stmt PWD      : ' + (pwBank?'[PROVIDED — PDFs auto-unlocked in ZIP]':'None'),
+    '',
+    '------------------------------------------------------------',
+    'REQUIRED AMOUNT BY CUSTOMER',
+    '------------------------------------------------------------',
+    'Required amount    : ' + val('f_lamount'),
+    'Loan Facilitator   : ' + (val('f_lender')||'Not specified'),
+    '',
+    '------------------------------------------------------------',
+    'CURRENT OBLIGATIONS',
+    '------------------------------------------------------------',
+    ...getObligationLines(),
+    '',
+    '------------------------------------------------------------',
+    'FOIR ANALYSIS',
+    '------------------------------------------------------------',
+    'Monthly income     : ' + (income?income.toLocaleString('en-IN'):'—'),
+    'Total EMI/month    : ' + (totalEmi?totalEmi.toLocaleString('en-IN'):'0'),
+    'FOIR               : ' + foir,
+    'Status             : ' + foirStatus,
+    '',
+    '------------------------------------------------------------',
+    'REFERENCES',
+    '------------------------------------------------------------',
+    'Reference 1        : ' + val('f_ref1name') + '  |  ' + val('f_ref1mob'),
+    'Reference 2        : ' + val('f_ref2name') + '  |  ' + val('f_ref2mob'),
+    '',
+    '------------------------------------------------------------',
+    'NOTES',
+    '------------------------------------------------------------',
+    val('f_notes') || '  None',
+    '',
+    '------------------------------------------------------------',
+    'DOCUMENT STATUS',
+    '------------------------------------------------------------',
+    docStatusLine('Aadhaar Card',           'up_aadhaar'),
+    docStatusLine('PAN Card',               'up_pan'),
+    docStatusLine('Passport Photo',         'up_photo'),
+    docStatusLine('Electricity Bill',       'up_elec'),
+    docStatusLine('CIBIL Report',           'up_cibil'),
+    docStatusLine('GST Certificate',        'up_gst'),
+    docStatusLine('Udhyam Certificate',     'up_udhyam'),
+    docStatusLine('Gumastha / Shop Act',    'up_gumastha'),
+    docStatusLine('ITR (3 Years)',          'up_salary'),
+    docStatusLine('Bank Statement',         'up_bank'),
+    docStatusLine('Business Vintage Proof', 'up_vintage'),
+    '',
+    '============================================================',
+    'Generated on : ' + new Date().toLocaleString('en-IN'),
+    '============================================================',
+  ].join('\n');
+
+  // ── BUILD ZIP ────────────────────────────────────────────────────────
+  const applicantName = val('f_name') || 'Applicant';
+  const folderName = 'PL_BIZ_' + applicantName.replace(/\s+/g,'_') + '_' + new Date().toISOString().slice(0,10);
+  const zip  = new JSZip();
+  const docs = zip.folder('Documents');
+
+  function ext(file) { const p = file.name.split('.'); return p.length>1?'.'+p.pop().toLowerCase():''; }
+
+  // ── PDF PASSWORD REMOVAL (PDF.js render → pdf-lib rebuild) ───────────
+  // pdf-lib alone cannot truly strip encryption. We use PDF.js to render
+  // every page to a canvas at 2× scale, then reassemble into a brand-new
+  // unprotected PDF with pdf-lib. Result is always password-free.
+  async function unlockPdf(file, password) {
+    try {
+      const arrBuf = await file.arrayBuffer();
+
+      // 1. Open with PDF.js (supports all encryption types including AES-256)
+      const loadTask = pdfjsLib.getDocument({
+        data: new Uint8Array(arrBuf),
+        password: password,
+        verbosity: 0
+      });
+      const pdfJsDoc = await loadTask.promise;
+      const totalPages = pdfJsDoc.numPages;
+
+      // 2. Create a fresh, unencrypted PDF with pdf-lib
+      const newPdf = await PDFLib.PDFDocument.create();
+
+      for (let p = 1; p <= totalPages; p++) {
+        const page = await pdfJsDoc.getPage(p);
+        const vp = page.getViewport({ scale: 2.0 }); // 2× = ~150 dpi
+
+        // Render page to an off-screen canvas
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.floor(vp.width);
+        canvas.height = Math.floor(vp.height);
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+        // Convert canvas → JPEG bytes
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const b64     = dataUrl.split(',')[1];
+        const jpgBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+
+        // Embed JPEG into the new PDF page
+        const jpgImage = await newPdf.embedJpg(jpgBytes);
+        const newPage  = newPdf.addPage([vp.width, vp.height]);
+        newPage.drawImage(jpgImage, { x: 0, y: 0, width: vp.width, height: vp.height });
+      }
+
+      const unlockedBytes = await newPdf.save();
+      console.log(`✅ Unlocked ${file.name} (${totalPages} pages)`);
+      return new File([unlockedBytes], file.name, { type: 'application/pdf' });
+
+    } catch(e) {
+      // Surface the real error so the agent knows what went wrong
+      const msg = e?.message || String(e);
+      const isWrongPw = /password/i.test(msg) || /incorrect/i.test(msg) || /PasswordException/i.test(msg);
+      const label = isWrongPw
+        ? `❌ Wrong password for "${file.name}" — PDF added as-is (still locked).`
+        : `⚠ Could not unlock "${file.name}": ${msg} — PDF added as-is.`;
+      console.warn(label);
+      // Show a brief non-blocking toast so the user is aware
+      const toast = document.getElementById('val-toast');
+      if (toast) {
+        toast.style.background = isWrongPw
+          ? 'linear-gradient(135deg,#dc2626,#b91c1c)'
+          : 'linear-gradient(135deg,#d97706,#b45309)';
+        toast.textContent = label;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 5000);
+      }
+      return file; // fallback: original locked file
+    }
+  }
+
+  async function addFiles(inputId, prefix, password) {
+    const fs = files(inputId);
+    for (let i=0;i<fs.length;i++) {
+      const fileExt = ext(fs[i]);
+      const fname = prefix + (fs.length>1?'_'+(i+1):'') + fileExt;
+      let finalFile = fs[i];
+      if (password && fileExt === '.pdf') {
+        finalFile = await unlockPdf(fs[i], password);
+      }
+      docs.file(fname, finalFile);
+    }
+  }
+
+  setProgress(15,'Adding Aadhaar...');     await addFiles('up_aadhaar','Aadhaar_Card');
+  setProgress(22,'Adding PAN...');         await addFiles('up_pan','PAN_Card');
+  setProgress(29,'Adding photo...');       await addFiles('up_photo','Passport_Photo');
+  setProgress(36,'Adding elec bill...');   await addFiles('up_elec','Electricity_Bill');
+  setProgress(43,'Adding CIBIL...');       await addFiles('up_cibil','CIBIL_Report');
+  setProgress(50,'Adding GST...');         await addFiles('up_gst','GST_Certificate');
+  setProgress(55,'Adding Udhyam...');      await addFiles('up_udhyam','Udhyam_Certificate');
+  setProgress(58,'Adding Gumastha...');    await addFiles('up_gumastha','Gumastha_Shop_Act');
+  setProgress(63,'Unlocking & adding ITR...'); await addFiles('up_salary','ITR_3Years', val('pw_salary'));
+  setProgress(73,'Unlocking & adding bank stmt...');   await addFiles('up_bank','Bank_Statement', val('pw_bank'));
+  setProgress(75,'Adding SOA...');            await addFiles('up_soa','SOA_Statement');
+  setProgress(77,'Adding vintage proof...'); await addFiles('up_vintage','Business_Vintage_Proof');
+
+  zip.file('Applicant_Info.txt', txt);
+  setProgress(82, 'Compressing ZIP...');
+  const zipBlob = await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+  const zipName = folderName + '.zip';
+  // ── SAVE ZIP TO DESKTOP ────────────────────────────────────────────
+  setProgress(85, 'Saving ZIP...');
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: zipName,
+        startIn: 'desktop',
+        types: [{ description: 'ZIP Archive', accept: { 'application/zip': ['.zip'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(zipBlob);
+      await writable.close();
+    } catch(e) {
+      if (e.name !== 'AbortError') saveAs(zipBlob, zipName);
+    }
+  } else {
+    saveAs(zipBlob, zipName);
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>

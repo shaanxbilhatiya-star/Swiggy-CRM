@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingfisher x Ruralift CRM — Client Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* CLIENT theme: bright Kingfisher x TaskUs — colorful light */
+    --bg: #eef4fc; --surface: #ffffff; --surface2: #f2f8ff; --border: #d5e6f5;
+    --accent: #0aa6c2; --accent2: #1668d6; --magenta: #e6157b; --orange: #ff7a18;
+    --danger: #ef4444; --warn: #f59e0b; --text: #12293f; --muted: #5b7488;
+    --green: #10b981; --mono: 'JetBrains Mono', monospace; --sans: 'Space Grotesk', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: linear-gradient(160deg, #eaf3fd 0%, #f2ecfb 46%, #fdeef5 100%); background-attachment: fixed; color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  header { background: linear-gradient(120deg, #0aa6c2 0%, #1668d6 42%, #7b2ff7 70%, #e6157b 100%); border-bottom: 3px solid var(--orange); box-shadow: 0 6px 24px rgba(22,104,214,.30); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+  .logo h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); }
+  .logo-img {
+    width: 272px; height: 70px; object-fit: contain; padding: 10px 18px; border-radius: 14px;
+    border: 2px solid rgba(37,99,235,.4); background: rgba(255,255,255,.04);
+    filter: drop-shadow(0 0 12px rgba(37,99,235,.65)) drop-shadow(0 0 24px rgba(37,99,235,.3));
+    animation: logo-glow 2.5s ease-in-out infinite;
+    box-shadow: 0 4px 16px rgba(37,99,235,.2), 0 1px 4px rgba(0,0,0,.3);
+  }
+  @keyframes logo-glow {
+    0%,100% { filter: drop-shadow(0 0 8px rgba(37,99,235,.55)) drop-shadow(0 0 18px rgba(37,99,235,.25)); }
+    50%      { filter: drop-shadow(0 0 20px rgba(37,99,235,.95)) drop-shadow(0 0 40px rgba(29,78,216,.55)); }
+  }
+  .badge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px; box-shadow: 0 0 10px rgba(37,99,235,.4); }
+  .today-badge { background: rgba(37,99,235,.1); color: var(--accent); border: 1px solid rgba(37,99,235,.2); border-radius: 6px; padding: 4px 12px; font-size: 12px; font-family: var(--mono); }
+
+  .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 2px 12px rgba(0,0,0,.4); transition: transform .2s, box-shadow .2s; }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(37,99,235,.2); }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .stat-value { font-family: var(--mono); font-size: 36px; font-weight: 700; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.blue { color: var(--accent2); }
+  .stat-value.amber { color: var(--warn); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.red { color: var(--danger); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.4); margin-bottom: 20px; }
+  .panel-header { padding: 16px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .panel-header h2 { font-size: 14px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
+  .panel-body { padding: 20px; }
+
+  .empty { color: var(--muted); font-size: 13px; text-align: center; padding: 24px; }
+  .btn-del { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: var(--sans); transition: all .2s; }
+  .btn-del:hover { background: var(--danger); color: #fff; }
+
+  .panel-interested .panel-header { background: rgba(76,175,80,.06); }
+  .panel-interested .panel-header h2 { color: var(--green); }
+  .panel-followups .panel-header { background: rgba(37,99,235,.06); }
+  .panel-followups .panel-header h2 { color: var(--accent); }
+  .panel-completed .panel-header { background: rgba(76,175,80,.06); }
+  .panel-completed .panel-header h2 { color: var(--accent); }
+
+  .leads-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .leads-table th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; background: var(--surface2); color: var(--muted); border-bottom: 1px solid var(--border); }
+  .leads-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .leads-table tr:last-child td { border-bottom: none; }
+  .leads-table tr.overdue-row { background: rgba(244,67,54,.06); }
+  .leads-table tr.overdue-row:hover { background: rgba(244,67,54,.10); }
+  .phone-number { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+  .overdue-text { color: var(--danger); font-weight: 700; font-family: var(--mono); font-size: 12px; letter-spacing: .5px; }
+  .time-remaining { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); }
+
+  .doc-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: .5px; }
+  .doc-badge.complete { background: rgba(76,175,80,.1); color: var(--green); border: 1px solid rgba(76,175,80,.25); }
+  .doc-badge.pending { background: rgba(255,152,0,.08); color: var(--warn); border: 1px solid rgba(255,152,0,.2); }
+
+  .admin-stats-tabs { display: flex; gap: 4px; }
+  .admin-stats-tab { padding: 5px 14px; border-radius: 6px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); font-family: var(--sans); font-size: 12px; font-weight: 700; cursor: pointer; transition: all .2s; }
+  .admin-stats-tab:hover { border-color: var(--accent2); color: var(--accent); }
+  .admin-stats-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .dispo-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+  .dispo-stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; position: relative; }
+  .dispo-stat-card.dispo-stat-total { background: rgba(37,99,235,.08); border-color: rgba(37,99,235,.3); }
+  .dispo-stat-indicator { width: 8px; height: 8px; border-radius: 50%; position: absolute; top: 12px; left: 12px; }
+  .dispo-stat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--accent); }
+  .dispo-stat-card.dispo-stat-total .dispo-stat-val { font-size: 36px; }
+  .dispo-stat-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+
+  input, select, textarea { background: var(--surface2) !important; color: var(--text) !important; border-color: var(--border) !important; }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent) !important; outline: none !important; }
+
+  /* ── Login screen ── */
+  #loginScreen {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px;
+  }
+  .login-wrap { width: 100%; max-width: 420px; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px; box-shadow: 0 2px 16px rgba(0,0,0,.5); }
+  .login-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .login-card .sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 7px; }
+  .field input { width: 100%; padding: 12px 16px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); font-family: var(--sans); font-size: 15px; outline: none; transition: border-color .2s; }
+  .field input:focus { border-color: var(--accent); }
+  .err { color: var(--danger); font-size: 12px; margin-top: 5px; display: none; }
+  .btn-login { width: 100%; padding: 14px; border-radius: 10px; border: none; background: var(--accent); color: #fff; font-family: var(--sans); font-size: 16px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 4px; }
+  .btn-login:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  #mainScreen { display: none; }
+
+  #toast { position: fixed; bottom: 28px; right: 28px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 14px 20px; font-size: 14px; transform: translateY(100px); opacity: 0; transition: all .3s; z-index: 999; box-shadow: 0 4px 20px rgba(0,0,0,.5); }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--accent); }
+  #toast.error { border-color: var(--danger); }
+
+  @media(max-width:900px){ .stats-grid{grid-template-columns:1fr 1fr} }
+
+  /* ============================================================
+     KINGFISHER x TASKUS — COLORFUL THEME OVERRIDES (light)
+     ============================================================ */
+  header .logo h1 { color: #ffffff; text-shadow: 0 1px 8px rgba(0,0,0,.28); }
+  header .today-badge { background: rgba(255,255,255,.20); color: #ffffff; border: 1px solid rgba(255,255,255,.45); backdrop-filter: blur(4px); }
+  header .badge, .badge { background: #ffffff; color: var(--magenta); box-shadow: 0 2px 10px rgba(0,0,0,.18); letter-spacing: 1px; }
+  .logo-img { border: 2px solid rgba(255,255,255,.55); background: rgba(255,255,255,.14);
+    filter: drop-shadow(0 0 12px rgba(255,255,255,.55)); animation: none;
+    box-shadow: 0 4px 18px rgba(0,0,0,.22); }
+  .logo-dot { background: var(--orange); box-shadow: 0 0 10px var(--orange); }
+
+  .stat-card { position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(22,104,214,.08); }
+  .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent); }
+  .stat-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #0aa6c2, #22d3ee); }
+  .stat-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #1668d6, #60a5fa); }
+  .stat-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #e6157b, #ff7ab6); }
+  .stat-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #ff7a18, #ffb454); }
+  .stat-card:hover { box-shadow: 0 8px 26px rgba(22,104,214,.20); }
+
+  .panel-header { background: linear-gradient(90deg, rgba(10,166,194,.10), rgba(230,21,123,.06)); }
+  .panel-header h2 { color: var(--accent2); }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #0aa6c2, #1668d6); border-radius: 10px; }
+  ::-webkit-scrollbar-track { background: #e6eef8; }
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h2>Client Login</h2>
+      <p class="sub">Enter your Employee ID to view the dashboard</p>
+      <div class="field">
+        <label>Employee ID</label>
+        <input type="number" id="clientEmpId" placeholder="e.g. 9000" min="1" autocomplete="off" value="9000">
+        <div class="err" id="clientErrEmpId">Please enter a valid Employee ID</div>
+      </div>
+      <button class="btn-login" onclick="clientLogin()">Enter Dashboard &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN DASHBOARD SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="mainScreen">
+<header>
+  <div style="min-width:110px;display:flex;align-items:center;">
+    <span class="today-badge" id="todayBadge">&#8212;</span>
+  </div>
+  <div class="logo">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
+        <img src="/logo.png" alt="Ruralift" style="max-width:100%;max-height:100%;object-fit:contain">
+      </div>
+      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
+        <img src="/kingfisher-logo.png" alt="Kingfisher" style="max-width:100%;max-height:100%;object-fit:contain">
+      </div>
+    </div>
+    <h1>Kingfisher x Ruralift CRM</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="today-badge" id="liveClock" style="min-width:96px;text-align:center">--:--:--</span>
+    <span class="badge">CLIENT</span>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- PAGE INTRO (Hindi) -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-body" style="padding:16px 20px">
+      <p style="margin:0;font-size:14px;line-height:1.7;color:var(--text)">
+        👋 <strong>यह पेज क्या है?</strong> यहाँ आप अपने Kingfisher कॉलिंग टीम का रोज़ का काम लाइव देख सकते हैं —
+        किस नंबर पर कॉल हुई, कौन Interested है, किसका Followup बाकी है, कौन ग्राहक बन चुका है, और रोज़ की PDF Report भी यहीं से मिलेगी।
+        सब कुछ अपने आप अपडेट होता रहता है, कुछ भी manually refresh करने की ज़रूरत नहीं।
+      </p>
+    </div>
+  </div>
+
+  <!-- DISPOSITION STATS -->
+  <div class="panel dispo-stats-panel">
+    <div class="panel-header" style="background:rgba(76,175,80,.04)">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex:1;min-width:0">
+        <h2 style="color:var(--accent);margin:0">&#128202; Disposition Stats</h2>
+      </div>
+      <div class="admin-stats-tabs">
+        <button class="admin-stats-tab active" data-period="daily" onclick="switchStatsPeriod('daily')">Daily</button>
+        <button class="admin-stats-tab" data-period="weekly" onclick="switchStatsPeriod('weekly')">Weekly</button>
+        <button class="admin-stats-tab" data-period="monthly" onclick="switchStatsPeriod('monthly')">Monthly</button>
+        <button class="admin-stats-tab" data-period="yearly" onclick="switchStatsPeriod('yearly')">Yearly</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <p style="margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.6">
+        यहाँ टीम ने आज (या हफ़्ते/महीने/साल में) कितनी कॉल की और हर कॉल का नतीजा क्या रहा — यह सब दिखता है। ऊपर Daily/Weekly/Monthly/Yearly बटन से समय बदल सकते हैं।
+      </p>
+      <div class="dispo-stats-grid">
+        <div class="dispo-stat-card dispo-stat-total">
+          <div class="dispo-stat-val" id="statsTotalCalls">0</div>
+          <div class="dispo-stat-lbl">Total Calls</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:var(--danger)"></div>
+          <div class="dispo-stat-val" id="statsDead">0</div>
+          <div class="dispo-stat-lbl">Call Not Connected</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:var(--warn)"></div>
+          <div class="dispo-stat-val" id="statsNotReceived">0</div>
+          <div class="dispo-stat-lbl">Call Not Received</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:var(--muted)"></div>
+          <div class="dispo-stat-val" id="statsNotInterested">0</div>
+          <div class="dispo-stat-lbl">Not Interested</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:#2563eb"></div>
+          <div class="dispo-stat-val" id="statsFollowup">0</div>
+          <div class="dispo-stat-lbl">Followup</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:#f59e0b"></div>
+          <div class="dispo-stat-val" id="statsSwitchOff">0</div>
+          <div class="dispo-stat-lbl">Switch OFF</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:#78350f"></div>
+          <div class="dispo-stat-val" id="statsDiscard">0</div>
+          <div class="dispo-stat-lbl">Not-Eligible</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:var(--green)"></div>
+          <div class="dispo-stat-val" id="statsInterested">0</div>
+          <div class="dispo-stat-lbl">Interested</div>
+        </div>
+        <div class="dispo-stat-card">
+          <div class="dispo-stat-indicator" style="background:#c62828"></div>
+          <div class="dispo-stat-val" id="statsDnd">0</div>
+          <div class="dispo-stat-lbl">DND</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS GRID: Interested / Overdue / Followups / Redialing Tomorrow -->
+  <p style="margin:16px 4px 8px;font-size:13px;color:var(--muted);line-height:1.6">
+    इस समय टीम की स्थिति एक नज़र में — कितने ग्राहक Interested हैं, कितने Overdue (72 घंटे से ज़्यादा पुराने) हैं, कितने Followup बाकी हैं, और कितने कल दोबारा डायल होंगे।
+  </p>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-label">Interested</span>
+      <span class="stat-value green" id="statInterested">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Overdue</span>
+      <span class="stat-value red" id="statOverdue">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Followups</span>
+      <span class="stat-value blue" id="statFollowups">0</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Redialing Tomorrow</span>
+      <span class="stat-value amber" id="statComingBack">0</span>
+    </div>
+  </div>
+
+  <!-- CONVERTED CUSTOMERS -->
+  <div class="panel panel-completed">
+    <div class="panel-header">
+      <h2>Converted Customers</h2>
+      <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 leads</span>
+    </div>
+    <div class="panel-body" style="padding:0;overflow-x:auto">
+      <p style="margin:14px 20px 10px;font-size:13px;color:var(--muted);line-height:1.6">
+        जो ग्राहक इंटरेस्टेड होने के बाद पूरी तरह बुकिंग/डील कन्फर्म कर चुके हैं, उनकी लिस्ट — किस एजेंट ने डील की, कौन सा पैकेज लिया, कब कन्फर्म हुआ।
+      </p>
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Phone</th>
+            <th>Name</th>
+            <th>Agent</th>
+            <th>Package Type</th>
+            <th>Converted At</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="completedTable">
+          <tr><td colspan="6" class="empty">No converted customers yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FOLLOWUPS -->
+  <div class="panel panel-followups">
+    <div class="panel-header">
+      <h2>Followups</h2>
+      <span style="font-size:12px;color:var(--muted)" id="followupsCountBadge">0 followups</span>
+    </div>
+    <div class="panel-body" style="padding:0;overflow-x:auto">
+      <p style="margin:14px 20px 10px;font-size:13px;color:var(--muted);line-height:1.6">
+        जिन नंबरों पर बाद में दोबारा कॉल करनी है (ग्राहक ने अभी हाँ/ना नहीं बताया), उनकी लिस्ट — किस दिन और किस समय दोबारा कॉल होगी।
+      </p>
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Phone</th>
+            <th>Name</th>
+            <th>Agent</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="followupsTable">
+          <tr><td colspan="5" class="empty">No followups yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- GENERATED REPORTS ARCHIVE (permanent PDF storage, searchable by date) -->
+  <div class="panel">
+    <div class="panel-header" style="background:rgba(230,21,123,.06)">
+      <h2 style="color:var(--magenta)">&#128196; Generated Reports Archive</h2>
+    </div>
+    <div class="panel-body">
+      <p style="margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.6">
+        हर दिन शाम 6:30 बजे (IST) एक PDF रिपोर्ट अपने आप बन जाती है जिसमें उस दिन की पूरी कॉलिंग का सारांश होता है। नीचे तारीख डालकर पुरानी रिपोर्ट भी ढूँढ और डाउनलोड कर सकते हैं।
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <label style="font-size:12px;color:var(--muted);font-weight:600">From</label>
+        <input type="date" id="reportFromDate" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
+        <label style="font-size:12px;color:var(--muted);font-weight:600">To</label>
+        <input type="date" id="reportToDate" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;outline:none">
+        <button onclick="searchReports()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer">&#128269; Search</button>
+        <button onclick="clearReportSearch()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer">Clear</button>
+      </div>
+      <div id="reportsList" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto">
+        <div class="empty">No reports available yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DND NUMBERS -->
+  <div class="panel">
+    <div class="panel-header" style="background:rgba(198,40,40,.06)">
+      <h2 style="color:#c62828">&#128277; DND (Do Not Disturb) Numbers</h2>
+      <span style="font-size:12px;color:var(--muted)" id="dndCountBadge">0 numbers</span>
+    </div>
+    <div class="panel-body">
+      <p style="margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.6">
+        जिन नंबरों ने कॉल न करने के लिए मना किया है, उनकी लिस्ट — इन नंबरों पर दोबारा कॉल नहीं की जाती।
+      </p>
+      <div id="dndList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">
+        <div class="empty">No DND numbers</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+</div><!-- end #mainScreen -->
+
+<div id="toast"></div>
+
+<script>
+// ── XSS Protection ────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function formatPhone(phone) {
+  if (!phone) return '—';
+  const str = String(phone);
+  if (str.length === 10) return str.slice(0,5) + ' ' + str.slice(5);
+  if (str.length > 10) return str.slice(0, str.length-10) + ' ' + str.slice(str.length-10, str.length-5) + ' ' + str.slice(str.length-5);
+  return str;
+}
+
+function formatTimestamp(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' }) + ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+  } catch(e) { return iso; }
+}
+
+function formatTimeAmPm(timeStr) {
+  if (!timeStr) return '';
+  try {
+    const [h, m] = timeStr.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return hour12 + ':' + String(m).padStart(2,'0') + ' ' + period;
+  } catch(e) { return timeStr; }
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3000);
+}
+
+const PKG_LABELS = {Kitty_Party:'Kitty Party', Family_Fun_Day:'Family Fun Day- Water Park', Dream_Wedding:'Dream Wedding', Pool_Party:'Private Pool Party'};
+
+// ── Client Login ──────────────────────────────────────────────────────────────
+let clientEmpIdVal = sessionStorage.getItem('clientEmpId') || '';
+let clientAgentId  = sessionStorage.getItem('clientAgentId') || '';
+let clientName     = sessionStorage.getItem('clientName') || '';
+
+async function clientLogin() {
+  const empVal = document.getElementById('clientEmpId').value.trim();
+  const errEl = document.getElementById('clientErrEmpId');
+  errEl.style.display = 'none';
+  if (!empVal || !/^\d+$/.test(empVal)) {
+    errEl.textContent = 'Please enter a valid numeric Employee ID';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    const r = await fetch('/api/client/auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ employeeId: empVal })
+    });
+    const d = await r.json();
+    if (d.error) {
+      errEl.textContent = d.error;
+      errEl.style.display = 'block';
+      return;
+    }
+    clientEmpIdVal = empVal;
+    clientAgentId = d.agentId;
+    clientName = d.name;
+    sessionStorage.setItem('clientEmpId', empVal);
+    sessionStorage.setItem('clientAgentId', clientAgentId);
+    sessionStorage.setItem('clientName', clientName);
+    showMainScreen();
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+  }
+}
+
+function showMainScreen() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainScreen').style.display = 'block';
+  initDashboard();
+}
+
+document.getElementById('clientEmpId').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') clientLogin();
+});
+
+// ── Auto-login (no manual entry required) ──────────────────────────────────────
+// The Employee ID field is pre-filled with the default "9000" client login and the
+// page logs in automatically on load — no click required. A URL override like
+// /client?eid=1234 is still honored for handing out a different login via link/bookmark.
+const DEFAULT_CLIENT_EID = '9000';
+
+async function autoLogin(eid) {
+  try {
+    const r = await fetch('/api/client/auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ employeeId: eid })
+    });
+    const d = await r.json();
+    if (d.error) {
+      const errEl = document.getElementById('clientErrEmpId');
+      errEl.textContent = d.error;
+      errEl.style.display = 'block';
+      return false;
+    }
+    clientEmpIdVal = eid;
+    clientAgentId = d.agentId;
+    clientName = d.name;
+    sessionStorage.setItem('clientEmpId', eid);
+    sessionStorage.setItem('clientAgentId', clientAgentId);
+    sessionStorage.setItem('clientName', clientName);
+    showMainScreen();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+if (clientEmpIdVal && clientAgentId) {
+  showMainScreen();
+} else {
+  const params = new URLSearchParams(window.location.search);
+  const urlEid = params.get('eid');
+  const eidToUse = (urlEid && /^\d+$/.test(urlEid)) ? urlEid : DEFAULT_CLIENT_EID;
+  document.getElementById('clientEmpId').value = eidToUse;
+  autoLogin(eidToUse);
+}
+
+// ── Dashboard init ────────────────────────────────────────────────────────────
+let _dashboardInitialized = false;
+function initDashboard() {
+  if (_dashboardInitialized) return;
+  _dashboardInitialized = true;
+
+  fetchTopStats();
+  fetchFollowups();
+  fetchCompletedLeads();
+  fetchDispoStats();
+  loadDndNumbers();
+  loadReports();
+  tickLiveClock();
+
+  setInterval(fetchTopStats, 5000);
+  setInterval(fetchFollowups, 5000);
+  setInterval(fetchCompletedLeads, 5000);
+  setInterval(fetchDispoStats, 5000);
+  setInterval(loadDndNumbers, 15000);
+  setInterval(tickLiveClock, 1000);
+}
+
+// ── Top stats (Interested / Overdue / Followups / Redialing Tomorrow) ────────
+async function fetchTopStats() {
+  try {
+    const r = await fetch('/api/admin/stats');
+    const d = await r.json();
+    document.getElementById('statInterested').textContent = d.interestedCount || 0;
+    document.getElementById('statOverdue').textContent = d.overdueInterestedCount || 0;
+    document.getElementById('statFollowups').textContent = d.followupCount || 0;
+    document.getElementById('statComingBack').textContent = d.comingBackTomorrow || 0;
+    document.getElementById('todayBadge').textContent = formatDateBadge(d.today);
+  } catch (e) { /* silent */ }
+}
+
+function formatDateBadge(isoDate) {
+  if (!isoDate) return '\u2014';
+  const [y, m, day] = isoDate.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return day + ' ' + months[parseInt(m, 10) - 1] + ' ' + y;
+}
+
+// ── Converted Customers ───────────────────────────────────────────────────────
+async function fetchCompletedLeads() {
+  try {
+    const r = await fetch('/api/admin/completed');
+    const leads = await r.json();
+    renderCompletedLeads(leads);
+  } catch (e) { /* silent */ }
+}
+
+function renderCompletedLeads(leads) {
+  const tbody = document.getElementById('completedTable');
+  const badge = document.getElementById('completedCountBadge');
+  badge.textContent = leads.length + ' lead' + (leads.length !== 1 ? 's' : '');
+  if (!leads || leads.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No converted customers yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = leads.map(l => {
+    const completedAt = l.documentationCompletedAt ? formatTimestamp(l.documentationCompletedAt) : '\u2014';
+    const displayStatus = l.adminStatus || 'In Process';
+    return '<tr>' +
+      '<td><span class="phone-number">' + escapeHtml(formatPhone(l.phone)) + '</span></td>' +
+      '<td>' + (escapeHtml(l.name) || '\u2014') + '</td>' +
+      '<td style="font-weight:500">' + (escapeHtml(l.interestedBy) || '\u2014') + '</td>' +
+      '<td>' + escapeHtml(PKG_LABELS[l.loanType] || l.loanType || '\u2014') + '</td>' +
+      '<td style="font-size:12px;font-family:var(--mono)">' + completedAt + '</td>' +
+      '<td><span class="doc-badge complete">' + escapeHtml(displayStatus) + '</span></td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ── Followups ─────────────────────────────────────────────────────────────────
+async function fetchFollowups() {
+  try {
+    const r = await fetch('/api/admin/followups');
+    const followups = await r.json();
+    renderFollowups(followups);
+  } catch (e) { /* silent */ }
+}
+
+function renderFollowups(followups) {
+  const tbody = document.getElementById('followupsTable');
+  const badge = document.getElementById('followupsCountBadge');
+  badge.textContent = followups.length + ' followup' + (followups.length !== 1 ? 's' : '');
+  if (!followups || followups.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No followups yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = followups.map(f => {
+    const overdueTag = f.overdue ? ' <span style="background:#3d1a1a;color:#ff8a80;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px">OVERDUE</span>' : '';
+    return '<tr>' +
+      '<td><span class="phone-number">' + escapeHtml(formatPhone(f.phone)) + '</span></td>' +
+      '<td>' + (escapeHtml(f.name) || '\u2014') + '</td>' +
+      '<td style="font-weight:500">' + (escapeHtml(f.followupLockedBy) || '\u2014') + '</td>' +
+      '<td>' + (escapeHtml(f.followupDate) || '\u2014') + overdueTag + '</td>' +
+      '<td style="font-family:var(--mono);font-size:12px">' + formatTimeAmPm(f.followupTime) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// ── DND Numbers ────────────────────────────────────────────────────────────────
+async function loadDndNumbers() {
+  try {
+    const r = await fetch('/api/admin/dnd');
+    const d = await r.json();
+    renderDndList(d.dndNumbers || []);
+  } catch(e) { /* silent */ }
+}
+
+function renderDndList(dndNumbers) {
+  const el = document.getElementById('dndList');
+  const badge = document.getElementById('dndCountBadge');
+  badge.textContent = dndNumbers.length + ' number' + (dndNumbers.length !== 1 ? 's' : '');
+  if (!dndNumbers || dndNumbers.length === 0) {
+    el.innerHTML = '<div class="empty">No DND numbers</div>';
+    return;
+  }
+  const roleColors = { tl: '#60a5fa', admin: '#94a3b8', agent: '#2563eb', client: '#60a5fa' };
+  const roleLabels = { tl: 'TL', admin: 'Admin', agent: 'Agent', client: 'Client' };
+  el.innerHTML = dndNumbers.map(d => {
+    const addedDate = d.addedAt ? formatTimestamp(d.addedAt) : '';
+    const role = d.addedByRole || 'admin';
+    const who = escapeHtml(d.addedByName || (role === 'admin' ? 'Admin' : d.addedBy || 'Unknown'));
+    const noteColor = roleColors[role] || '#2563eb';
+    const noteLabel = roleLabels[role] || 'Agent';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;">' +
+      '<div><span style="font-family:var(--mono);font-weight:700;color:var(--accent)">' + escapeHtml(formatPhone(d.phone)) + '</span>' +
+      '<span style="font-size:11px;color:var(--muted);margin-left:10px">' + addedDate + '</span>' +
+      '<div style="font-size:11px;margin-top:3px;color:' + noteColor + '">&#128221; Added by ' + who + ' &middot; <b>' + noteLabel + '</b></div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Disposition Stats ─────────────────────────────────────────────────────────
+let statsPeriod = 'daily';
+
+function switchStatsPeriod(period) {
+  statsPeriod = period;
+  document.querySelectorAll('.admin-stats-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.admin-stats-tab[data-period="' + period + '"]').classList.add('active');
+  fetchDispoStats();
+}
+
+async function fetchDispoStats() {
+  try {
+    const r = await fetch('/api/stats/dispositions?period=' + statsPeriod);
+    const d = await r.json();
+    document.getElementById('statsTotalCalls').textContent    = d.totalCalls    || 0;
+    document.getElementById('statsDead').textContent          = d.dead          || 0;
+    document.getElementById('statsNotReceived').textContent   = d.not_received  || 0;
+    document.getElementById('statsNotInterested').textContent = d.not_interested|| 0;
+    document.getElementById('statsFollowup').textContent      = d.followup      || 0;
+    document.getElementById('statsSwitchOff').textContent     = d.switch_off    || 0;
+    document.getElementById('statsDiscard').textContent       = d.discard       || 0;
+    document.getElementById('statsInterested').textContent    = d.interested    || 0;
+    document.getElementById('statsDnd').textContent           = d.dnd           || 0;
+  } catch (e) { /* silent */ }
+}
+
+// ─── Live IST Clock (header) ───────────────────────────────────────────────
+function tickLiveClock() {
+  const el = document.getElementById('liveClock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour12: true }) + ' IST';
+}
+
+// ── Generated Reports Archive (read-only search + download) ──────────────────
+async function loadReports(fromDate, toDate) {
+  try {
+    let url = '/api/reports?';
+    if (fromDate) url += 'from=' + encodeURIComponent(fromDate) + '&';
+    if (toDate) url += 'to=' + encodeURIComponent(toDate) + '&';
+    const r = await fetch(url);
+    const reports = await r.json();
+    renderReportsList(reports);
+  } catch (e) { /* silent */ }
+}
+
+function renderReportsList(reports) {
+  const el = document.getElementById('reportsList');
+  if (!el) return;
+  if (!reports || reports.length === 0) {
+    el.innerHTML = '<div class="empty">No reports found</div>';
+    return;
+  }
+  el.innerHTML = reports.map(r => {
+    const sizeKb = r.sizeBytes ? Math.round(r.sizeBytes / 1024) + ' KB' : '';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;">' +
+      '<div><span style="font-family:var(--mono);font-weight:700;color:var(--magenta)">' + escapeHtml(r.reportDate) + '</span>' +
+      '<span style="font-size:13px;font-weight:600;margin-left:12px">' + escapeHtml(r.title) + '</span>' +
+      '<span style="font-size:11px;color:var(--muted);margin-left:10px">' + escapeHtml(r.scope || '') + (sizeKb ? ' &middot; ' + sizeKb : '') + '</span></div>' +
+      '<a href="/api/reports/' + escapeHtml(r.id) + '/download" download style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;border:1px solid var(--accent);background:rgba(37,99,235,.1);color:var(--accent);text-decoration:none">&#128229; Download</a>' +
+    '</div>';
+  }).join('');
+}
+
+function searchReports() {
+  const from = document.getElementById('reportFromDate').value;
+  const to = document.getElementById('reportToDate').value;
+  loadReports(from, to);
+}
+
+function clearReportSearch() {
+  document.getElementById('reportFromDate').value = '';
+  document.getElementById('reportToDate').value = '';
+  loadReports();
+}
+</script>
+</body>
+</html>

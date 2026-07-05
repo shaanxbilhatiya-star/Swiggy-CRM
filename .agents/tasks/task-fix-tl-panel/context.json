@@ -1,0 +1,21 @@
+{
+  "project_type": "Node.js Express CRM app with Socket.IO for real-time updates",
+  "language": "JavaScript (vanilla frontend, Node.js backend)",
+  "build_system": "npm - no build step, just npm install + node server.js",
+  "test_framework": "None - no test files exist in the project",
+  "build_command": "npm install",
+  "test_command": "node -c server.js && node -c public/tl/index.html 2>/dev/null || echo 'HTML not JS-checkable'",
+  "verification_instructions": "1. Run npm install to confirm dependencies resolve. 2. Run node -e \"require('./server')\" with a timeout to confirm server.js loads without crash. 3. Verify tl/index.html is valid HTML with all required sections present.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/CRM && npm install",
+  "environment_constraints": "No browser available for manual testing. Validate by checking file structure, syntax, and completeness of features.",
+  "contribution_requirements": "Single HTML files with embedded CSS and JS. No frameworks. Uses Socket.IO for real-time, fetch API for REST calls.",
+  "key_patterns": "Each panel (admin, agent, tl) is a single self-contained HTML file with embedded <style> and <script> blocks. Socket.IO client loaded from /socket.io/socket.io.js. REST API calls use fetch(). Real-time updates via socket events (stats-update, show-number, no-numbers, break-started, break-ended, etc.). Agent identification via 'emp_' + employeeId pattern. TL has role=tl in allowedEids. Admin dark theme uses Space Grotesk font, agent light theme uses DM Sans.",
+  "relevant_files": [
+    "/projects/sandbox/CRM/public/tl/index.html",
+    "/projects/sandbox/CRM/public/agent/index.html",
+    "/projects/sandbox/CRM/public/admin/index.html",
+    "/projects/sandbox/CRM/server.js"
+  ],
+  "directory_structure": "public/admin/index.html - Admin panel (dark theme, full access), public/agent/index.html - Agent dialer (light theme), public/tl/index.html - TL panel (dual mode: agent mode + TL monitoring mode), server.js - Express+Socket.IO backend, data/state.json - persistent state"
+}

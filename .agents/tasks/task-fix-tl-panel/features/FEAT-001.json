@@ -1,0 +1,25 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Create the new tl/index.html with the complete structure: HTML head with both themes (light for agent mode, dark for TL mode), all CSS styles for both modes, login screen, agent mode screen (copied from agent.html), TL mode screen (from admin.html limited sections), and all modals. Then add the JavaScript for login, mode switching, agent mode logic, and TL mode logic.",
+  "status": "completed",
+  "steps": [
+    "Read the complete agent/index.html and admin/index.html to understand all features",
+    "Delete existing public/tl/index.html",
+    "Create a new public/tl/index.html that combines: (1) Agent mode = exact clone of agent.html features/UI with light theme, (2) TL mode = admin.html dark theme but only with allowed sections (Agent Rankings, stats cards for Interested/Overdue/Followups, Disposition Stats, Active Agents, Interested Leads, Documentation Completed, Followups), (3) Login screen that validates TL role, (4) Mode switching with TL time tracking",
+    "The doc ZIP upload modal in agent mode must work with drag-drop, progress bar, and proper XHR upload",
+    "Verify the file has no JS syntax errors and contains all required sections"
+  ],
+  "acceptance_criteria": [
+    "File exists and is valid HTML with no JS syntax errors",
+    "Agent mode has all features from agent.html including doc ZIP upload with drag-drop and progress",
+    "TL mode has exactly the 9 allowed sections from admin.html with dark theme",
+    "Login validates TL role, mode toggle works, session persists in sessionStorage"
+  ],
+  "verification": [
+    "node -e \"const fs=require('fs'); const html=fs.readFileSync('public/tl/index.html','utf8'); console.log('Size:', html.length); console.log('Has login:', html.includes('loginScreen')); console.log('Has agent:', html.includes('agentScreen')); console.log('Has TL:', html.includes('tlScreen')); console.log('Has docZip:', html.includes('docZip'));\"",
+    "cd /projects/sandbox/CRM && npm install"
+  ],
+  "blocked_reason": null,
+  "findings": "File size is ~208KB combining both agent and admin functionality. Used Python script to extract and merge both source files. Renamed conflicting IDs and function names between agent/admin JS (showToast->tlShowToast, formatMs->tlFormatMs, etc). Admin sections hidden via JS DOM manipulation in hideTlForbiddenSections(). Socket shared between both modes. Agent auto-login bypassed since TL login handles authentication. Post-completion fixes applied: (1) socket.on stats-update was referencing non-existent renderStats instead of tlRenderStats, breaking all real-time stat updates in TL mode. (2) Added initial /api/admin/stats fetch in fetchTlData() so stats populate immediately on TL mode switch. (3) Fixed TL mode dark-theme CSS - was using CSS nesting with :root inside #tlModeScreen which doesn't cascade variables properly. Replaced with explicit #tlModeScreen-prefixed selectors and variables defined directly on #tlModeScreen element. Also namespaced @keyframes to avoid conflicts with agent mode animations (tl-pulse, tl-logo-glow-admin, tl-latePulse, tl-rank1-pulse, tl-rank1-row-pulse, tl-blink-glow)."
+}
