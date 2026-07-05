@@ -444,15 +444,56 @@
 
 
 
-    <!-- DAILY REPORT PDF -->
-    <div class="panel panel-full" style="margin-bottom:20px">
-      <div class="panel-header accent-h">
-        <h2>📋 Daily Report</h2>
-        <span style="font-size:12px;color:var(--muted)">Send to client daily</span>
+    <!-- DAILY REPORT PDF (Swiggy graphical hero) -->
+    <style>
+      .rpt-hero{position:relative;overflow:hidden;border-radius:18px;margin-bottom:20px;
+        background:linear-gradient(120deg,#FC8019 0%,#f2690b 55%,#c15806 100%);
+        box-shadow:0 18px 40px -14px rgba(252,128,25,.65);color:#fff;padding:26px 28px}
+      .rpt-hero::before{content:"";position:absolute;right:-60px;top:-70px;width:230px;height:230px;
+        border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)}
+      .rpt-hero::after{content:"";position:absolute;left:-40px;bottom:-80px;width:180px;height:180px;
+        border-radius:50%;background:radial-gradient(circle,rgba(255,209,102,.35),transparent 70%)}
+      .rpt-hero-top{display:flex;align-items:center;gap:16px;position:relative;z-index:1;flex-wrap:wrap}
+      .rpt-hero-badge{width:58px;height:58px;flex:none;border-radius:16px;display:grid;place-items:center;
+        font-size:28px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+        backdrop-filter:blur(4px);box-shadow:0 8px 20px -6px rgba(0,0,0,.35)}
+      .rpt-hero h2{font-size:22px;font-weight:700;letter-spacing:.3px;margin:0;color:#fff;text-transform:none}
+      .rpt-hero p{margin:3px 0 0;font-size:13px;color:rgba(255,255,255,.9);max-width:520px;line-height:1.5}
+      .rpt-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22e07a;
+        margin-right:6px;box-shadow:0 0 0 0 rgba(34,224,122,.7);animation:rptPulse 1.6s infinite}
+      @keyframes rptPulse{0%{box-shadow:0 0 0 0 rgba(34,224,122,.6)}70%{box-shadow:0 0 0 9px rgba(34,224,122,0)}100%{box-shadow:0 0 0 0 rgba(34,224,122,0)}}
+      .rpt-chips{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 4px;position:relative;z-index:1}
+      .rpt-chip{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+        background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:6px 12px}
+      .rpt-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;position:relative;z-index:1}
+      .rpt-btn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:14px;font-weight:700;
+        border-radius:12px;padding:13px 22px;cursor:pointer;border:none;transition:transform .15s,box-shadow .15s}
+      .rpt-btn:hover{transform:translateY(-2px)}
+      .rpt-btn-primary{background:#fff;color:#e8720f;box-shadow:0 10px 24px -8px rgba(0,0,0,.45)}
+      .rpt-btn-primary:hover{box-shadow:0 14px 28px -8px rgba(0,0,0,.55)}
+      .rpt-btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.55)}
+      .rpt-btn-ghost:hover{background:rgba(255,255,255,.24)}
+      .rpt-note{font-size:11.5px;color:rgba(255,255,255,.82);margin-top:12px;position:relative;z-index:1}
+    </style>
+    <div class="rpt-hero">
+      <div class="rpt-hero-top">
+        <div class="rpt-hero-badge">📋</div>
+        <div>
+          <h2>Daily Report</h2>
+          <p><span class="rpt-live-dot"></span>Live, client-ready PDF — charts, KPIs & full call log, generated in one click. Send it to the client every evening before logout.</p>
+        </div>
       </div>
-      <div class="panel-body" style="display:flex;gap:12px;flex-wrap:wrap">
-        <button class="btn-add-lead" onclick="downloadLiveReport()" style="background:var(--accent)">📄 Download Live Report (PDF)</button>
+      <div class="rpt-chips">
+        <span class="rpt-chip">🍩 Disposition donut</span>
+        <span class="rpt-chip">📊 Performance funnel</span>
+        <span class="rpt-chip">⭐ Interested & follow-ups</span>
+        <span class="rpt-chip">🛵 Onboarded riders</span>
       </div>
+      <div class="rpt-actions">
+        <button class="rpt-btn rpt-btn-primary" onclick="downloadLiveReport()">📄 Download Live Report</button>
+        <button class="rpt-btn rpt-btn-ghost" onclick="SwiggyReport.downloadDemo()">✨ Download Sample Report</button>
+      </div>
+      <div class="rpt-note">No calls dialed yet? Grab the <strong>Sample Report</strong> to preview exactly how your daily PDF will look.</div>
     </div>
 
     <!-- END OF DAY RULES (Hindi) -->
@@ -2892,6 +2933,7 @@ setInterval(tickLiveClock, 1000);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/shared/report-demo.js"></script>
 
 </body>
 </html>
