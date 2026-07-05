@@ -638,11 +638,11 @@
       </div>
     </div><!-- end grid-2 -->
 
-    <!-- INTERESTED LEADS (full width) -->
+    <!-- RECRUITED RIDERS - DELIVERY TRACKING (full width) -->
     <div class="panel panel-full">
       <div class="panel-header green-h">
-        <h2>⭐ My Interested Leads</h2>
-        <span style="font-size:12px;color:var(--muted)" id="interestedCountBadge">0 leads</span>
+        <h2>🚲 Recruited Riders (Delivery Tracking)</h2>
+        <span style="font-size:12px;color:var(--muted)" id="interestedCountBadge">0 riders</span>
       </div>
       <div class="panel-body" style="padding:0;overflow-x:auto">
         <table class="leads-table">
@@ -651,12 +651,14 @@
               <th>Phone</th>
               <th>Rider Name</th>
               <th>Vehicle Type</th>
-              <th>Deliveries</th>
+              <th>Deliveries (Target: 31)</th>
+              <th>Days Left</th>
+              <th>Update Count</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="interestedTable">
-            <tr><td colspan="5" class="empty">No interested leads yet</td></tr>
+            <tr><td colspan="7" class="empty">No recruited riders yet</td></tr>
           </tbody>
         </table>
       </div>
@@ -746,13 +748,13 @@
       </div>
     </div>
 
-    <!-- CONVERTED CUSTOMERS (full width) -->
+    <!-- DELIVERY COMPLETED (31/31) (full width) -->
     <div class="panel panel-full">
       <div class="panel-header accent-h">
-        <h2>✅ Converted Customers</h2>
+        <h2>✅ Delivery Completed (31/31)</h2>
         <div style="display:flex;align-items:center;gap:12px">
-          <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 leads</span>
-          <span style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono)" id="totalRevenueBadge">Total Deliveries: 0</span>
+          <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 riders</span>
+          <span style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono)" id="totalRevenueBadge">Total Completed: 0</span>
         </div>
       </div>
       <div class="panel-body" style="padding:0;overflow-x:auto">
@@ -763,13 +765,13 @@
               <th>Rider Name</th>
               <th>Vehicle Type</th>
               <th>Area</th>
-              <th>Converted At</th>
-              <th>Elapsed</th>
+              <th>Total Deliveries</th>
+              <th>Completed At</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="completedTable">
-            <tr><td colspan="7" class="empty">No converted customers yet</td></tr>
+            <tr><td colspan="7" class="empty">No completed riders yet</td></tr>
           </tbody>
         </table>
       </div>
@@ -1620,25 +1622,65 @@ const PACKAGE_LABELS = {
 
 function renderInterestedTable(leads) {
   const tbody = document.getElementById('interestedTable');
-  document.getElementById('interestedCountBadge').textContent = leads.length + ' lead' + (leads.length !== 1 ? 's' : '');
+  document.getElementById('interestedCountBadge').textContent = leads.length + ' rider' + (leads.length !== 1 ? 's' : '');
   if (!leads || leads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty">No interested leads yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No recruited riders yet</td></tr>';
     return;
   }
   tbody.innerHTML = leads.map(l => {
-    const pkgSelect = `<select onchange="updateInterestedPackage('${escapeHtml(l.id)}', this.value)" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface2);font-family:var(--sans)">
-      ${Object.keys(PACKAGE_LABELS).map(k => `<option value="${k}" ${(l.loanType===k||l.vehicleType===k)?'selected':''}>${PACKAGE_LABELS[k]}</option>`).join('')}
-    </select>`;
-    const deliveries = Math.floor(Math.random() * 31) + '/31';
+    const deliveryCount = l.deliveryCount || 0;
+    const deliveryTarget = l.deliveryTarget || 31;
+    const pct = Math.round((deliveryCount / deliveryTarget) * 100);
+    const canComplete = deliveryCount >= 31;
+
+    // Days left calculation
+    let daysLeftHtml = '—';
+    const recruitedAt = l.recruitedAt || l.interestedAt;
+    if (recruitedAt) {
+      const elapsed = Date.now() - new Date(recruitedAt).getTime();
+      const totalMs = 7 * 24 * 60 * 60 * 1000;
+      const remaining = totalMs - elapsed;
+      if (remaining <= 0) {
+        daysLeftHtml = '<span style="color:var(--danger);font-weight:700;font-size:12px">OVERDUE</span>';
+      } else {
+        const daysLeft = Math.floor(remaining / (24*60*60*1000));
+        const hoursLeft = Math.floor((remaining % (24*60*60*1000)) / (60*60*1000));
+        daysLeftHtml = '<span style="font-family:var(--mono);font-size:12px;font-weight:700">' + daysLeft + 'd ' + hoursLeft + 'h</span>';
+      }
+    }
+
+    // Delivery progress bar
+    const progressColor = canComplete ? 'var(--green)' : 'var(--accent)';
+    const deliveryHtml = `<div style="display:flex;align-items:center;gap:8px">
+      <div style="width:80px;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${progressColor};border-radius:4px;transition:width .3s"></div>
+      </div>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:${progressColor}">${deliveryCount}/${deliveryTarget}</span>
+    </div>`;
+
+    // Update count input (agent enters today's deliveries to add)
+    const updateHtml = `<div style="display:flex;align-items:center;gap:6px">
+      <input type="number" id="deliveryInput_${escapeHtml(l.id)}" min="0" max="31" placeholder="Today" 
+        style="width:60px;padding:6px 8px;border-radius:6px;border:1px solid var(--border-strong);font-family:var(--mono);font-size:13px;text-align:center;background:var(--bg);color:var(--text)" />
+      <button class="btn-sm green" onclick="updateDeliveryCount('${escapeHtml(l.id)}')">+ Add</button>
+    </div>`;
+
+    // Complete button - only enabled when deliveryCount >= 31
+    const completeBtn = canComplete
+      ? `<button class="btn-sm green" onclick="markRiderCompleted('${escapeHtml(l.id)}')" style="background:var(--green);color:#fff;border:none;padding:6px 12px;font-weight:700">✅ Mark Complete</button>`
+      : `<button class="btn-sm" disabled style="opacity:.4;cursor:not-allowed;padding:6px 12px;border:1px solid var(--border);color:var(--muted)">🔒 Complete (need ${31 - deliveryCount} more)</button>`;
+
     return `<tr>
       <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
       <td style="font-weight:600">${escapeHtml(l.name || l.riderName) || '—'}</td>
-      <td>${pkgSelect}</td>
-      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${deliveries}</td>
+      <td><span class="loan-pill">${escapeHtml(PACKAGE_LABELS[l.vehicleType || l.loanType] || l.vehicleType || l.loanType || '—')}</span></td>
+      <td>${deliveryHtml}</td>
+      <td>${daysLeftHtml}</td>
+      <td>${updateHtml}</td>
       <td>
         <div class="action-cell">
-          <button class="btn-sm blue"  onclick="markConverted('${escapeHtml(l.id)}')">✅ Converted</button>
-          <button class="btn-sm red"   onclick="removeInterestedLead('${escapeHtml(l.id)}')">🗑</button>
+          ${completeBtn}
+          <button class="btn-sm red" onclick="removeInterestedLead('${escapeHtml(l.id)}')">🗑</button>
         </div>
       </td>
     </tr>`;
@@ -1684,7 +1726,7 @@ function copyWhatsappMessage(numberId) {
 }
 
 async function markConverted(numberId) {
-  if (!confirm('Mark this lead as Converted? It will move to Converted Customers.')) return;
+  if (!confirm('Mark this rider as Delivery Completed (31/31)?')) return;
   try {
     const r = await fetch('/api/agent/mark-documentation-complete', {
       method: 'POST', headers: {'Content-Type':'application/json'},
@@ -1692,9 +1734,61 @@ async function markConverted(numberId) {
     });
     const d = await r.json();
     if (d.error) { alert(d.error); return; }
-    showToast('Lead moved to Delivery Completed ✅', 'success');
+    showToast('Rider moved to Delivery Completed ✅', 'success');
     refreshLeadSections();
-  } catch (e) { alert('Failed to mark as converted'); }
+  } catch (e) { alert('Failed to mark as completed'); }
+}
+
+// Update delivery count for a rider (add today's deliveries)
+async function updateDeliveryCount(numberId) {
+  const input = document.getElementById('deliveryInput_' + numberId);
+  if (!input) return;
+  const todayDeliveries = parseInt(input.value);
+  if (isNaN(todayDeliveries) || todayDeliveries < 0) {
+    showToast('Enter a valid number of deliveries (0 or more)', 'error');
+    return;
+  }
+  if (todayDeliveries === 0) {
+    showToast('Enter deliveries greater than 0', 'error');
+    return;
+  }
+  try {
+    const r = await fetch('/api/agent/update-delivery', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentId, numberId, todayDeliveries })
+    });
+    const d = await r.json();
+    if (d.error) { showToast(d.error, 'error'); return; }
+    input.value = '';
+    if (d.deliveriesCompleted) {
+      showToast('🎉 Rider completed 31 deliveries! Moved to Delivery Completed.', 'success');
+    } else {
+      showToast('Updated! Total deliveries: ' + d.deliveryCount + '/31', 'success');
+    }
+    refreshLeadSections();
+  } catch (e) { showToast('Failed to update deliveries: ' + e.message, 'error'); }
+}
+
+// Mark rider as completed (only works if deliveryCount >= 31)
+async function markRiderCompleted(numberId) {
+  const lead = interestedLeadsData.find(l => l.id === numberId);
+  if (!lead) return;
+  const count = lead.deliveryCount || 0;
+  if (count < 31) {
+    showToast('Cannot complete: rider has only ' + count + '/31 deliveries', 'error');
+    return;
+  }
+  if (!confirm('Confirm: This rider has completed 31 deliveries. Move to Delivery Completed?')) return;
+  try {
+    const r = await fetch('/api/agent/mark-documentation-complete', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ agentId, numberId })
+    });
+    const d = await r.json();
+    if (d.error) { alert(d.error); return; }
+    showToast('🎉 Rider moved to Delivery Completed (31/31) ✅', 'success');
+    refreshLeadSections();
+  } catch (e) { alert('Failed to mark as completed'); }
 }
 
 function renderFollowupsTable(leads) {
@@ -1751,38 +1845,32 @@ async function removeFollowup(numberId) {
 
 function renderCompletedTable(leads) {
   const tbody = document.getElementById('completedTable');
-  document.getElementById('completedCountBadge').textContent = (leads||[]).length + ' lead' + ((leads||[]).length !== 1 ? 's' : '');
+  document.getElementById('completedCountBadge').textContent = (leads||[]).length + ' rider' + ((leads||[]).length !== 1 ? 's' : '');
   
-  // Calculate total deliveries
-  const totalDeliveries = (leads || []).length;
-  document.getElementById('totalRevenueBadge').textContent = 'Total Deliveries: ' + totalDeliveries;
+  // Calculate total completed
+  const totalCompleted = (leads || []).length;
+  document.getElementById('totalRevenueBadge').textContent = 'Total Completed: ' + totalCompleted;
 
   if (!leads || leads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">No completed leads yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No completed riders yet</td></tr>';
     return;
   }
   tbody.innerHTML = leads.map(l => {
-    const completedDate = l.documentationCompletedAt
-      ? new Date(l.documentationCompletedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+    const completedDate = (l.completedAt || l.documentationCompletedAt)
+      ? new Date(l.completedAt || l.documentationCompletedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
       : '—';
     const statusBadge = l.adminStatus
       ? `<span class="completed-badge status">${escapeHtml(l.adminStatus)}</span>`
-      : '<span class="completed-badge done">Delivery Completed</span>';
-    let elapsedStr = '—';
-    if (l.documentationCompletedAt) {
-      const elapsedMs = Date.now() - new Date(l.documentationCompletedAt).getTime();
-      const elapsedDays = Math.floor(elapsedMs / (24 * 60 * 60 * 1000));
-      const elapsedHrs = Math.floor((elapsedMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
-      elapsedStr = elapsedDays + 'd ' + elapsedHrs + 'h';
-    }
+      : '<span class="completed-badge done">✅ 31/31 Done</span>';
     const areaDisplay = l.area || l.employmentType || '—';
+    const deliveryCount = l.deliveryCount || 31;
     return `<tr>
       <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
       <td style="font-weight:600">${escapeHtml(l.name || l.riderName) || '—'}</td>
-      <td>${escapeHtml(PACKAGE_LABELS[l.loanType || l.vehicleType] || '—')}</td>
+      <td>${escapeHtml(PACKAGE_LABELS[l.vehicleType || l.loanType] || l.vehicleType || l.loanType || '—')}</td>
       <td style="font-size:13px;color:var(--text)">${escapeHtml(areaDisplay)}</td>
+      <td style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green)">${deliveryCount}/31</td>
       <td style="font-size:12px;font-family:var(--mono)">${completedDate}</td>
-      <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--warn)">${elapsedStr}</td>
       <td>${statusBadge}</td>
     </tr>`;
   }).join('');
