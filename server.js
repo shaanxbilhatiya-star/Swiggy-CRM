@@ -1686,36 +1686,53 @@ app.post('/api/admin/clear-all', (req, res) => {
 });
 
 app.post('/api/admin/hard-reset', (req, res) => {
-  // Preserve allowedEids (names, photos, TL roles) — always kept.
-  // Preserve ALL recruited riders (active + completed) — permanent business data.
-  // Wipe: undisposed numbers, uploadedFiles list, dialedLog, agent daily stats.
-  // Agent photos are also preserved (they belong to allowedEids, not to a session).
-  const savedEids = appState.allowedEids || {};
-  const savedInterested = appState.numbers.filter(n => n.disposition === 'interested');
-  const savedReports = appState.reports || []; // reports are permanent — always preserved, even on hard reset
+  // ─── NUCLEAR HARD RESET ─────────────────────────────────────────────────────
+  // Requires admin password. Wipes EVERYTHING: all numbers, all riders,
+  // all agents, all EIDs, all reports, all uploaded files, all logs.
+  // System becomes completely fresh — like a brand new install.
+  const { password } = req.body;
+  if (password !== PANEL_PASSWORD) {
+    return res.status(403).json({ error: 'Incorrect admin password' });
+  }
+
+  // Delete ALL uploaded files from disk
   (appState.uploadedFiles || []).forEach(f => {
     if (f.sheetPath) { try { fs.unlinkSync(f.sheetPath); } catch {} }
   });
-  appState = createFreshState(savedEids);
-  appState.numbers = savedInterested; // restore recruited riders
-  appState.reports = savedReports; // restore permanent report archive
-  // Only delete lead doc ZIPs for leads that no longer exist (orphaned files)
-  // We do NOT delete agent photos — those belong to the employee records
-  const keptDocPaths = new Set(savedInterested.map(n => n.docZipPath).filter(Boolean));
+  // Delete ALL lead doc ZIPs
   try {
     const leadFiles = fs.readdirSync(LEAD_DOCS_DIR);
-    leadFiles.forEach(f => {
-      if (f === '.gitkeep') return;
-      const fullPath = path.join(LEAD_DOCS_DIR, f);
-      if (!keptDocPaths.has(fullPath)) {
-        try { fs.unlinkSync(fullPath); } catch {}
-      }
-    });
+    leadFiles.forEach(f => { if (f === '.gitkeep') return; try { fs.unlinkSync(path.join(LEAD_DOCS_DIR, f)); } catch {} });
   } catch {}
+  // Delete ALL agent photos
+  try {
+    const agentPhotos = fs.readdirSync(AGENT_PHOTOS_DIR);
+    agentPhotos.forEach(f => { if (f === '.gitkeep') return; try { fs.unlinkSync(path.join(AGENT_PHOTOS_DIR, f)); } catch {} });
+  } catch {}
+  // Delete ALL reports from disk
+  try {
+    const reportFiles = fs.readdirSync(REPORTS_DIR);
+    reportFiles.forEach(f => { if (f === '.gitkeep') return; try { fs.unlinkSync(path.join(REPORTS_DIR, f)); } catch {} });
+  } catch {}
+  // Delete ALL number sheets
+  try {
+    const sheetFiles = fs.readdirSync(NUMBER_SHEETS_DIR);
+    sheetFiles.forEach(f => { if (f === '.gitkeep') return; try { fs.unlinkSync(path.join(NUMBER_SHEETS_DIR, f)); } catch {} });
+  } catch {}
+  // Delete scripts
+  try {
+    const scriptFiles = fs.readdirSync(SCRIPTS_DIR);
+    scriptFiles.forEach(f => { if (f === '.gitkeep') return; try { fs.unlinkSync(path.join(SCRIPTS_DIR, f)); } catch {} });
+  } catch {}
+
+  // Create completely fresh state — NO preserved data at all
+  appState = createFreshState({});
+  appState.dndNumbers = [];
+  appState.reports = [];
   saveState(appState);
   io.emit('force-stop');
   broadcastAdminStats();
-  res.json({ success: true, preserved_interested: savedInterested.length });
+  res.json({ success: true, message: 'NUCLEAR RESET COMPLETE — system is completely fresh' });
 });
 
 app.post('/api/agent/register', (req, res) => {

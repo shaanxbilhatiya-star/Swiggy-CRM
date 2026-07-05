@@ -1041,13 +1041,22 @@ async function clearAll() {
 }
 
 async function hardReset() {
-  if (!confirm('⚠️ HARD RESET: This will permanently delete ALL data including:\n\n• All numbers & uploaded files\n• All agent registrations\n• All recruited riders & followups\n• All dialed logs\n• All uploaded documents & photos\n\nThe system will be completely fresh.\n\nAre you sure?')) return;
-  if (!confirm('🚨 FINAL WARNING: This action CANNOT be undone!\n\nType OK in your head and click OK to proceed.')) return;
+  if (!confirm('☢️ NUCLEAR HARD RESET\n\nThis will PERMANENTLY DELETE:\n\n• ALL numbers & uploaded files\n• ALL recruited riders (active + completed + failed)\n• ALL agent registrations & EIDs\n• ALL followups & dialed logs\n• ALL reports & documents\n• ALL DND numbers\n• ALL photos & scripts\n\nThe system will be COMPLETELY BLANK.\nThis cannot be undone. Ever.\n\nAre you absolutely sure?')) return;
+  
+  const password = prompt('🔐 Enter Admin Password to confirm nuclear reset:');
+  if (!password) return;
+  
+  if (!confirm('🚨 LAST CHANCE — After this, EVERYTHING is gone.\n\nClick OK to destroy all data permanently.')) return;
+  
   try {
-    const r = await fetch('/api/admin/hard-reset', { method: 'POST' });
+    const r = await fetch('/api/admin/hard-reset', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
     const d = await r.json();
     if (d.success) {
-      showToast('🔄 Hard reset complete — system is now fresh', 'success');
+      showToast('☢️ Nuclear reset complete — system is completely fresh', 'success');
       setTimeout(() => location.reload(), 1500);
     } else {
       showToast('Reset failed: ' + (d.error || 'Unknown error'), 'error');
