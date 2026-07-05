@@ -1370,9 +1370,16 @@ app.get('/api/admin/agents-list', (req, res) => {
   for (const [id, a] of Object.entries(appState.agents)) {
     const eidMatch = id.match(/^emp_(\d+)$/);
     if (eidMatch && !appState.allowedEids[eidMatch[1]]) continue; // agent removed
+    // Skip client-role users from agent list
+    if (eidMatch && appState.allowedEids[eidMatch[1]]) {
+      const role = getEidRole(appState.allowedEids[eidMatch[1]]);
+      if (role === 'client') continue;
+    }
     agentMap[id] = { id, name: a.name };
   }
   for (const [eid, val] of Object.entries(appState.allowedEids)) {
+    const role = getEidRole(val);
+    if (role === 'client') continue; // Don't show client-role users in agent dropdown
     const virtualId = 'emp_' + eid;
     if (!agentMap[virtualId]) {
       agentMap[virtualId] = { id: virtualId, name: getEidName(val) };
