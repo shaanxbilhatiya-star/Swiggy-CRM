@@ -288,19 +288,25 @@ if (!appState.reports) {
   appState.reports = [];
 }
 
-// ─── Auto-create the default "swiggy" client-panel user ───────────────────────
-// The Client Panel (public/client/index.html) needs at least one working login
-// out of the box, without requiring the admin to manually add an EID first.
-// This only ever runs once: if a "swiggy" user already exists (any EID),
-// or the reserved EID below is already taken by something else, it's a no-op.
+// ─── Auto-create/update the default "Swiggy India" client-panel user ──────────
+// The Client Panel needs at least one working login out of the box.
+// If EID 9000 exists with an old name (e.g. "kingfisher"), update it.
 (function ensureDefaultSwiggyUser() {
-  const alreadyExists = Object.values(appState.allowedEids).some(
-    v => getEidName(v).toLowerCase() === 'swiggy india'
-  );
   const RESERVED_EID = '9000';
-  if (!alreadyExists && !appState.allowedEids[RESERVED_EID]) {
+  const existing = appState.allowedEids[RESERVED_EID];
+  if (!existing) {
+    // Create fresh
     appState.allowedEids[RESERVED_EID] = { name: 'Swiggy India', photo: null, role: 'client' };
     console.log('\uD83D\uDC64 Auto-created default Client Panel login -> EID ' + RESERVED_EID + ' ("Swiggy India")');
+  } else {
+    // Update name if it's still "kingfisher" or "swiggy" (old defaults)
+    const currentName = getEidName(existing).toLowerCase();
+    if (currentName === 'kingfisher' || currentName === 'swiggy') {
+      const photo = getEidPhoto(existing);
+      const role = getEidRole(existing);
+      appState.allowedEids[RESERVED_EID] = { name: 'Swiggy India', photo: photo || null, role: role || 'client' };
+      console.log('\uD83D\uDC64 Updated default Client Panel login -> EID ' + RESERVED_EID + ' ("Swiggy India")');
+    }
   }
 })();
 appState = checkDailyReset(appState);
