@@ -1482,6 +1482,17 @@ async function fetchFailedRiders() {
       const deliveryCount = l.deliveryCount || 0;
       return elapsed > totalMs && deliveryCount < 31;
     });
+    // DUMMY DATA — remove in next push
+    if (failed.length === 0) {
+      const dummyFailed = [
+        { id:'dummy1', phone:'9876543210', riderName:'Rahul Sharma', vehicleType:'Bike', area:'Koramangala', city:'Bangalore', interestedBy:'Priya', interestedAt: new Date(Date.now() - 8*24*60*60*1000).toISOString(), deliveryCount: 18 },
+        { id:'dummy2', phone:'9123456789', riderName:'Amit Patel', vehicleType:'Bicycle', area:'HSR Layout', city:'Bangalore', interestedBy:'Rohit', interestedAt: new Date(Date.now() - 9*24*60*60*1000).toISOString(), deliveryCount: 24 },
+        { id:'dummy3', phone:'8765432109', riderName:'Suresh Kumar', vehicleType:'EV_Scooter', area:'Whitefield', city:'Bangalore', interestedBy:'Priya', interestedAt: new Date(Date.now() - 10*24*60*60*1000).toISOString(), deliveryCount: 7 },
+        { id:'dummy4', phone:'7654321098', riderName:'Deepak Yadav', vehicleType:'Scooter', area:'Indiranagar', city:'Bangalore', interestedBy:'Rohit', interestedAt: new Date(Date.now() - 12*24*60*60*1000).toISOString(), deliveryCount: 29 },
+      ];
+      renderFailedRiders(dummyFailed);
+      return;
+    }
     renderFailedRiders(failed);
   } catch (e) {
     console.error('Failed to fetch failed riders:', e);
