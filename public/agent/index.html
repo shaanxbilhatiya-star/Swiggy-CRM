@@ -750,9 +750,11 @@
 
     <!-- DELIVERY COMPLETED (31/31) (full width) -->
     <div class="panel panel-full">
-      <div class="panel-header accent-h">
+      <div class="panel-header accent-h" style="flex-wrap:wrap;gap:10px">
         <h2>✅ Delivery Completed (31/31)</h2>
-        <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <select id="completedMonthFilter" onchange="filterCompletedByMonth()" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;outline:none;min-width:160px">
+          </select>
           <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 riders</span>
           <span style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono)" id="totalRevenueBadge">Total Completed: 0</span>
         </div>
@@ -1843,19 +1845,84 @@ async function removeFollowup(numberId) {
   } catch (e) { alert('Failed to remove followup'); }
 }
 
-function renderCompletedTable(leads) {
-  const tbody = document.getElementById('completedTable');
-  document.getElementById('completedCountBadge').textContent = (leads||[]).length + ' rider' + ((leads||[]).length !== 1 ? 's' : '');
-  
-  // Calculate total completed
-  const totalCompleted = (leads || []).length;
-  document.getElementById('totalRevenueBadge').textContent = 'Total Completed: ' + totalCompleted;
+// ── Month filter for Completed Riders ─────────────────────────────────────────
+const MONTH_NAMES_HINDI = ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितम्बर','अक्टूबर','नवम्बर','दिसम्बर'];
+const MONTH_NAMES_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CRM_START_MONTH = 6; // July (0-indexed)
+const CRM_START_YEAR = 2026;
 
-  if (!leads || leads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">No completed riders yet</td></tr>';
+let allCompletedLeads = [];
+let selectedCompletedMonth = ''; // '' means current month
+
+function buildMonthDropdown() {
+  const sel = document.getElementById('completedMonthFilter');
+  if (!sel) return;
+  const now = new Date();
+  const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const currentYear = istNow.getUTCFullYear();
+  const currentMonth = istNow.getUTCMonth(); // 0-indexed
+
+  const options = [];
+  let y = CRM_START_YEAR;
+  let m = CRM_START_MONTH;
+
+  while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+    const val = y + '-' + String(m + 1).padStart(2, '0');
+    const label = MONTH_NAMES_EN[m] + ' ' + y + ' (' + MONTH_NAMES_HINDI[m] + ')';
+    options.push({ val, label });
+    m++;
+    if (m > 11) { m = 0; y++; }
+  }
+
+  // Reverse so latest month is first
+  options.reverse();
+
+  sel.innerHTML = options.map((o, i) => {
+    const selected = i === 0 ? ' selected' : '';
+    return '<option value="' + o.val + '"' + selected + '>' + o.label + '</option>';
+  }).join('');
+
+  // Set default to current month
+  if (options.length > 0) {
+    selectedCompletedMonth = options[0].val;
+  }
+}
+
+function filterCompletedByMonth() {
+  const sel = document.getElementById('completedMonthFilter');
+  selectedCompletedMonth = sel.value;
+  renderCompletedTable(allCompletedLeads);
+}
+
+function getFilteredCompletedLeads(leads) {
+  if (!selectedCompletedMonth) return leads;
+  const [filterYear, filterMonth] = selectedCompletedMonth.split('-').map(Number);
+  return (leads || []).filter(l => {
+    const dateStr = l.completedAt || l.documentationCompletedAt;
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+    return ist.getUTCFullYear() === filterYear && (ist.getUTCMonth() + 1) === filterMonth;
+  });
+}
+
+// Build dropdown on load
+buildMonthDropdown();
+// Rebuild every minute to auto-add new month when month changes
+setInterval(buildMonthDropdown, 60000);
+
+function renderCompletedTable(leads) {
+  allCompletedLeads = leads || [];
+  const filtered = getFilteredCompletedLeads(allCompletedLeads);
+  const tbody = document.getElementById('completedTable');
+  document.getElementById('completedCountBadge').textContent = filtered.length + ' rider' + (filtered.length !== 1 ? 's' : '') + ' this month';
+  document.getElementById('totalRevenueBadge').textContent = 'Total Completed: ' + filtered.length;
+
+  if (!filtered || filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No completed riders in this month</td></tr>';
     return;
   }
-  tbody.innerHTML = leads.map(l => {
+  tbody.innerHTML = filtered.map(l => {
     const completedDate = (l.completedAt || l.documentationCompletedAt)
       ? new Date(l.completedAt || l.documentationCompletedAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
       : '—';
