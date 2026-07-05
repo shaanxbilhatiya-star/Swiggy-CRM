@@ -2041,7 +2041,11 @@ async function confirmAddLead() {
     const d = await r.json();
     if (d.error) { alert(d.error); return; }
     closeAddLeadModal();
-    showToast('Lead added to dialer ✅', 'success');
+    showToast('Lead added — dialing now! 📞', 'success');
+    // Immediately show this number on the dialer (no refresh needed)
+    showNumber(d.numberId, phone, name, parseInt(document.getElementById('countToday').textContent) || 0, false);
+    // Tell the server this lead is now assigned to this agent
+    socket.emit('agent-start', { agentId });
   } catch (e) { alert('Failed to add lead'); }
 }
 
