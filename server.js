@@ -804,12 +804,8 @@ button:hover{background:#e8720f;transform:translateY(-1px)}
 <script>const u=new URLSearchParams(window.location.search);if(u.get('err')==='1'){document.getElementById('err').style.display='block';document.getElementById('err').textContent='Incorrect password. Try again.'}</script></body></html>`);
 }
 
-// Block static access to /admin/ and /client/ folders without auth
+// Block static access to /admin/ folder without auth
 app.use('/admin', (req, res, next) => {
-  if (isAuthenticated(req)) return next();
-  sendPasswordPage(res);
-});
-app.use('/client', (req, res, next) => {
   if (isAuthenticated(req)) return next();
   sendPasswordPage(res);
 });
@@ -2850,10 +2846,7 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin/index.html'));
 });
 app.get('/agent', (req, res) => res.sendFile(path.join(__dirname, 'public/agent/index.html')));
-app.get('/client', (req, res) => {
-  if (!isAuthenticated(req)) return sendPasswordPage(res);
-  res.sendFile(path.join(__dirname, 'public/client/index.html'));
-});
+app.get('/client', (req, res) => res.sendFile(path.join(__dirname, 'public/client/index.html')));
 // Backward-compatible alias for old bookmarks/links pointing at the previous TL panel URL.
 app.get('/tl', (req, res) => res.redirect(301, '/client'));
 
