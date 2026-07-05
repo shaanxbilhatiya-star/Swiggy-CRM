@@ -289,29 +289,33 @@
     </div>
   </div>
 
-  <!-- CONVERTED CUSTOMERS -->
+  <!-- DELIVERY COMPLETED (31/31) -->
   <div class="panel panel-completed">
-    <div class="panel-header">
-      <h2>Converted Customers</h2>
-      <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 leads</span>
+    <div class="panel-header" style="flex-wrap:wrap;gap:10px">
+      <h2>✅ Delivery Completed (31/31)</h2>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <select id="completedMonthFilter" onchange="filterCompletedByMonth()" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;outline:none;min-width:160px">
+        </select>
+        <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 riders</span>
+      </div>
     </div>
     <div class="panel-body" style="padding:0;overflow-x:auto">
       <p style="margin:14px 20px 10px;font-size:13px;color:var(--muted);line-height:1.6">
-        जो ग्राहक इंटरेस्टेड होने के बाद पूरी तरह बुकिंग/डील कन्फर्म कर चुके हैं, उनकी लिस्ट — किस एजेंट ने डील की, कौन सा पैकेज लिया, कब कन्फर्म हुआ।
+        जिन राइडर्स ने 7 दिन में 31 डिलीवरी पूरी कर ली है — महीने के हिसाब से फ़िल्टर करें।
       </p>
       <table class="leads-table">
         <thead>
           <tr>
             <th>Phone</th>
-            <th>Name</th>
+            <th>Rider Name</th>
             <th>Agent</th>
-            <th>Package Type</th>
-            <th>Converted At</th>
+            <th>Vehicle Type</th>
+            <th>Completed At</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="completedTable">
-          <tr><td colspan="6" class="empty">No converted customers yet</td></tr>
+          <tr><td colspan="6" class="empty">No completed riders yet</td></tr>
         </tbody>
       </table>
     </div>
@@ -562,7 +566,57 @@ function formatDateBadge(isoDate) {
   return day + ' ' + months[parseInt(m, 10) - 1] + ' ' + y;
 }
 
-// ── Converted Customers ───────────────────────────────────────────────────────
+// ── Month filter for Delivery Completed ───────────────────────────────────────
+const MONTH_NAMES_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_NAMES_HI = ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितम्बर','अक्टूबर','नवम्बर','दिसम्बर'];
+const CRM_START_MONTH = 6; // July (0-indexed)
+const CRM_START_YEAR = 2026;
+let allCompletedLeads = [];
+let selectedCompletedMonth = '';
+
+function buildMonthDropdown() {
+  const sel = document.getElementById('completedMonthFilter');
+  if (!sel) return;
+  const now = new Date();
+  const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const currentYear = istNow.getUTCFullYear();
+  const currentMonth = istNow.getUTCMonth();
+  const options = [];
+  let y = CRM_START_YEAR, m = CRM_START_MONTH;
+  while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+    const val = y + '-' + String(m + 1).padStart(2, '0');
+    const label = MONTH_NAMES_EN[m] + ' ' + y + ' (' + MONTH_NAMES_HI[m] + ')';
+    options.push({ val, label });
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  options.reverse();
+  const prev = sel.value;
+  sel.innerHTML = options.map((o, i) => '<option value="' + o.val + '"' + (i === 0 ? ' selected' : '') + '>' + o.label + '</option>').join('');
+  if (prev && options.find(o => o.val === prev)) sel.value = prev;
+  if (!selectedCompletedMonth && options.length) selectedCompletedMonth = options[0].val;
+}
+
+function filterCompletedByMonth() {
+  selectedCompletedMonth = document.getElementById('completedMonthFilter').value;
+  renderCompletedLeads(allCompletedLeads);
+}
+
+function getFilteredCompleted(leads) {
+  if (!selectedCompletedMonth) return leads;
+  const [fy, fm] = selectedCompletedMonth.split('-').map(Number);
+  return (leads || []).filter(l => {
+    const ds = l.completedAt || l.documentationCompletedAt;
+    if (!ds) return false;
+    const d = new Date(ds);
+    const ist = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+    return ist.getUTCFullYear() === fy && (ist.getUTCMonth() + 1) === fm;
+  });
+}
+
+buildMonthDropdown();
+setInterval(buildMonthDropdown, 60000);
+
+// ── Delivery Completed ────────────────────────────────────────────────────────
 async function fetchCompletedLeads() {
   try {
     const r = await fetch('/api/admin/completed');
@@ -572,21 +626,23 @@ async function fetchCompletedLeads() {
 }
 
 function renderCompletedLeads(leads) {
+  allCompletedLeads = leads || [];
+  const filtered = getFilteredCompleted(allCompletedLeads);
   const tbody = document.getElementById('completedTable');
   const badge = document.getElementById('completedCountBadge');
-  badge.textContent = leads.length + ' lead' + (leads.length !== 1 ? 's' : '');
-  if (!leads || leads.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">No converted customers yet</td></tr>';
+  badge.textContent = filtered.length + ' rider' + (filtered.length !== 1 ? 's' : '') + ' this month';
+  if (!filtered || filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No completed riders in this month</td></tr>';
     return;
   }
-  tbody.innerHTML = leads.map(l => {
-    const completedAt = l.documentationCompletedAt ? formatTimestamp(l.documentationCompletedAt) : '\u2014';
-    const displayStatus = l.adminStatus || 'In Process';
+  tbody.innerHTML = filtered.map(l => {
+    const completedAt = (l.completedAt || l.documentationCompletedAt) ? formatTimestamp(l.completedAt || l.documentationCompletedAt) : '\u2014';
+    const displayStatus = l.adminStatus || 'Completed';
     return '<tr>' +
       '<td><span class="phone-number">' + escapeHtml(formatPhone(l.phone)) + '</span></td>' +
-      '<td>' + (escapeHtml(l.name) || '\u2014') + '</td>' +
-      '<td style="font-weight:500">' + (escapeHtml(l.interestedBy) || '\u2014') + '</td>' +
-      '<td>' + escapeHtml(PKG_LABELS[l.vehicleType || l.loanType] || l.vehicleType || l.loanType || '\u2014') + '</td>' +
+      '<td>' + escapeHtml(l.riderName || l.name || '\u2014') + '</td>' +
+      '<td style="font-weight:500">' + escapeHtml(l.interestedBy || '\u2014') + '</td>' +
+      '<td>' + escapeHtml(l.vehicleType || l.loanType || '\u2014') + '</td>' +
       '<td style="font-size:12px;font-family:var(--mono)">' + completedAt + '</td>' +
       '<td><span class="doc-badge complete">' + escapeHtml(displayStatus) + '</span></td>' +
     '</tr>';
