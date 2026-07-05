@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <rect x="0" y="10" width="85" height="80" rx="18" fill="#FC8019"/>
+  <path d="M42.5 28C36 28 31 33 31 39.5V42C31 42 35 41 38 42.5C41 44 42 47 42 47C42 47 43 44 46 42.5C49 41 53 42 53 42V39.5C53 33 48 28 42.5 28Z" fill="white"/>
+  <path d="M42.5 50C42.5 50 38 52 36 56C34 60 35 65 35 65C35 65 38 62 42.5 62C47 62 50 65 50 65C50 65 51 60 49 56C47 52 42.5 50 42.5 50Z" fill="white"/>
+  <circle cx="42.5" cy="72" r="4" fill="white"/>
+  <text x="100" y="68" font-family="Arial,sans-serif" font-weight="bold" font-size="52" fill="#FC8019">Swiggy</text>
+</svg>

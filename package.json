@@ -1,7 +1,7 @@
 {
-  "name": "kingfisher-ruralift-crm",
+  "name": "swiggy-rider-recruitment-crm",
   "version": "1.0.0",
-  "description": "Auto Lead Dialer for LAN",
+  "description": "Swiggy Delivery Rider Recruitment & Tracking CRM",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

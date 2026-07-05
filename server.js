@@ -1,6 +1,6 @@
 // NOTE: All timers are timestamp-based and survive server restarts:
 // - Break timer: uses breakStartedAt (epoch ms) in state.json
-// - 72h interested timer: uses interestedAt (ISO string) in state.json
+// - 7-day delivery timer: uses recruitedAt (ISO string) in state.json
 // - Daily reset: uses lastReset (YYYY-MM-DD) in state.json
 // Server can restart at any time without losing timer state.
 
@@ -123,7 +123,7 @@ console.log('\uD83D\uDCBE Data storage location: ' + DATA_ROOT);
 console.log('   (Outside the project folder — updating/re-cloning the code will never touch this.)');
 
 const BREAK_DURATION_MS = 60 * 60 * 1000; // 1 hour
-const DOC_DEADLINE_MS = 72 * 60 * 60 * 1000; // 72 hours (changed from 48)
+const DELIVERY_DEADLINE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days for delivery completion
 
 // ─── State Management ─────────────────────────────────────────────────────────
 function getTodayStr() {
@@ -244,6 +244,34 @@ function checkDailyReset(state) {
   return state;
 }
 
+// ─── Delivery Status Check ────────────────────────────────────────────────────
+// Evaluate all recruited riders and auto-mark completed/failed based on time and deliveries
+function evaluateRecruitedRiders(state) {
+  const now = Date.now();
+  state.numbers.forEach(n => {
+    if (n.disposition !== 'interested') return;
+    if (!n.recruitedAt) return;
+    if (n.riderStatus === 'completed' || n.riderStatus === 'removed') return;
+
+    const elapsedMs = now - new Date(n.recruitedAt).getTime();
+    const deliveryCount = n.deliveryCount || 0;
+
+    // If deliveryCount >= 31, mark completed
+    if (deliveryCount >= 31) {
+      n.riderStatus = 'completed';
+      n.deliveriesCompleted = true;
+      n.completedAt = new Date().toISOString();
+      return;
+    }
+
+    // If 7 days passed and deliveryCount < 31, mark failed
+    if (elapsedMs >= DELIVERY_DEADLINE_MS && deliveryCount < 31) {
+      n.riderStatus = 'failed';
+      return;
+    }
+  });
+}
+
 let appState = loadState();
 // NOTE: We do NOT overwrite allowedEids here anymore.
 // If allowedEids is missing entirely (truly fresh install), start empty and let admin add EIDs.
@@ -260,22 +288,25 @@ if (!appState.reports) {
   appState.reports = [];
 }
 
-// ─── Auto-create the default "kingfisher" client-panel user ───────────────────
+// ─── Auto-create the default "swiggy" client-panel user ───────────────────────
 // The Client Panel (public/client/index.html) needs at least one working login
 // out of the box, without requiring the admin to manually add an EID first.
-// This only ever runs once: if a "kingfisher" user already exists (any EID),
+// This only ever runs once: if a "swiggy" user already exists (any EID),
 // or the reserved EID below is already taken by something else, it's a no-op.
-(function ensureDefaultKingfisherUser() {
+(function ensureDefaultSwiggyUser() {
   const alreadyExists = Object.values(appState.allowedEids).some(
-    v => getEidName(v).toLowerCase() === 'kingfisher'
+    v => getEidName(v).toLowerCase() === 'swiggy'
   );
   const RESERVED_EID = '9000';
   if (!alreadyExists && !appState.allowedEids[RESERVED_EID]) {
-    appState.allowedEids[RESERVED_EID] = { name: 'kingfisher', photo: null, role: 'client' };
-    console.log('\uD83D\uDC64 Auto-created default Client Panel login -> EID ' + RESERVED_EID + ' ("kingfisher")');
+    appState.allowedEids[RESERVED_EID] = { name: 'swiggy', photo: null, role: 'client' };
+    console.log('\uD83D\uDC64 Auto-created default Client Panel login -> EID ' + RESERVED_EID + ' ("swiggy")');
   }
 })();
 appState = checkDailyReset(appState);
+
+// Evaluate recruited riders on startup
+evaluateRecruitedRiders(appState);
 
 for (const id in appState.agents) {
   const a = appState.agents[id];
@@ -295,6 +326,11 @@ setInterval(() => {
 setInterval(() => {
   try { broadcastAdminStats(); } catch {}
 }, 5000);
+
+// Evaluate recruited riders every 60 seconds for auto-completion/failure
+setInterval(() => {
+  try { evaluateRecruitedRiders(appState); saveState(appState); } catch {}
+}, 60000);
 
 // ─── Number helpers ───────────────────────────────────────────────────────────
 function getNextNumber(agentId) {
@@ -364,7 +400,7 @@ function releaseNumber(agentId, numberId) {
 
 // ─── Disposition System ───────────────────────────────────────────────────────
 const VALID_DISPOSITIONS = ['dead', 'not_received', 'not_interested', 'followup', 'switch_off', 'interested', 'discard', 'dnd'];
-const VALID_LOAN_TYPES = ['Kitty_Party', 'Family_Fun_Day', 'Dream_Wedding', 'Pool_Party'];
+const VALID_RIDER_CATEGORIES = ['Bike', 'Bicycle', 'EV_Scooter', 'Scooter'];
 
 function applyDisposition(agentId, numberId, disposition, extra) {
   appState = checkDailyReset(appState);
@@ -442,8 +478,8 @@ function applyDisposition(agentId, numberId, disposition, extra) {
         num.followupTime = extra && extra.followupTime ? extra.followupTime : null;
         num.followupName = extra && extra.followupName ? extra.followupName : '';
         num.followupLockedBy = agentId;
-        if (extra && extra.loanType && VALID_LOAN_TYPES.includes(extra.loanType)) {
-          num.loanType = extra.loanType;
+        if (extra && extra.vehicleType && VALID_RIDER_CATEGORIES.includes(extra.vehicleType)) {
+          num.vehicleType = extra.vehicleType;
         }
       }
       num.dialedBy = agentId;
@@ -471,20 +507,24 @@ function applyDisposition(agentId, numberId, disposition, extra) {
       num.assignedTo = null;
       break;
     case 'interested':
+      // "Interested" now means "Recruited" — rider has been recruited
       num.disposition = 'interested';
       num.interestedBy = agentId;
       num.interestedAt = now;
-      num.leadName = extra && extra.leadName ? extra.leadName : '';
-      num.loanType = extra && extra.loanType && VALID_LOAN_TYPES.includes(extra.loanType) ? extra.loanType : '';
+      num.recruitedAt = now;
+      num.riderName = extra && extra.riderName ? extra.riderName : '';
+      num.vehicleType = extra && extra.vehicleType && VALID_RIDER_CATEGORIES.includes(extra.vehicleType) ? extra.vehicleType : '';
       num.remarks = extra && extra.remarks ? extra.remarks : '';
-      num.loanAmount = extra && extra.loanAmount ? extra.loanAmount : '';
-      num.employmentType = extra && extra.employmentType ? extra.employmentType : '';
+      num.area = extra && extra.area ? extra.area : '';
       num.city = extra && extra.city ? extra.city : '';
-      num.revenueGenerated = extra && extra.revenueGenerated ? String(extra.revenueGenerated) : '';
-      num.documentationComplete = false;
-      num.documentationCompletedAt = null;
-      num.docZipPath = null;
-      num.docZipName = null;
+      num.riderPhone = num.phone; // phone already exists on the number
+      num.deliveryCount = 0;
+      num.deliveryTarget = 31;
+      num.daysLimit = 7;
+      num.deliveryLog = [];
+      num.riderStatus = 'active';
+      num.deliveriesCompleted = false;
+      num.completedAt = null;
       num.dialedBy = agentId;
       num.dialedAt = now;
       num.assignedTo = null;
@@ -647,6 +687,9 @@ function broadcastAdminStats() {
 
 function getAdminStats() {
   appState = checkDailyReset(appState);
+  // Evaluate recruited riders on every stats check
+  evaluateRecruitedRiders(appState);
+
   const total = appState.numbers.length;
   const dialed = appState.numbers.filter(n => n.dialedBy).length;
   const assigned = appState.numbers.filter(n => n.assignedTo && !n.dialedBy).length;
@@ -707,12 +750,15 @@ function getAdminStats() {
     total, dialed, assigned, remaining, agentStats, fileStats,
     today: getTodayStr(),
     interestedCount: appState.numbers.filter(n => n.disposition === 'interested').length,
+    recruitedCount: appState.numbers.filter(n => n.disposition === 'interested' && n.riderStatus === 'active').length,
+    deliveryCompletedCount: appState.numbers.filter(n => n.disposition === 'interested' && n.riderStatus === 'completed').length,
+    deliveryFailedCount: appState.numbers.filter(n => n.disposition === 'interested' && n.riderStatus === 'failed').length,
     followupCount: appState.numbers.filter(n => n.disposition === 'followup').length,
     discardCount: appState.numbers.filter(n => n.disposition === 'discard').length,
     notInterestedCount: appState.numbers.filter(n => n.disposition === 'not_interested').length,
     dndCount: (appState.dndNumbers || []).length,
     comingBackTomorrow: appState.numbers.filter(n => (n.disposition === 'not_received' || n.disposition === 'switch_off' || n.disposition === 'dead') && n.retryAfter && !n.permanent && (n.retryCount || 0) < 2 && getTodayStr() < n.retryAfter).length,
-    overdueInterestedCount: appState.numbers.filter(n => n.disposition === 'interested' && !n.documentationComplete && (Date.now() - new Date(n.interestedAt).getTime()) >= DOC_DEADLINE_MS).length
+    overdueRecruitedCount: appState.numbers.filter(n => n.disposition === 'interested' && !n.deliveriesCompleted && n.riderStatus === 'active' && (Date.now() - new Date(n.recruitedAt || n.interestedAt).getTime()) >= DELIVERY_DEADLINE_MS).length
   };
 }
 
@@ -810,15 +856,15 @@ app.post('/api/agent/upload-doc-zip/:numberId', docUpload.single('docZip'), (req
     const num = appState.numbers.find(n => n.id === numberId);
     if (!num) {
       if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(404).json({ error: 'Lead not found' });
+      return res.status(404).json({ error: 'Rider not found' });
     }
     if (num.disposition !== 'interested') {
       if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(400).json({ error: 'Lead is not marked as interested' });
+      return res.status(400).json({ error: 'Rider is not marked as recruited' });
     }
     if (num.interestedBy !== agentId) {
       if (req.file) fs.unlinkSync(req.file.path);
-      return res.status(403).json({ error: 'This lead is not assigned to you' });
+      return res.status(403).json({ error: 'This rider is not assigned to you' });
     }
     if (!req.file) {
       return res.status(400).json({ error: 'No ZIP file uploaded' });
@@ -829,19 +875,14 @@ app.post('/api/agent/upload-doc-zip/:numberId', docUpload.single('docZip'), (req
       try { fs.unlinkSync(num.docZipPath); } catch {}
     }
 
-    // Mark documentation complete now that ZIP is uploaded
+    // Store ZIP (kept for documentation purposes)
     num.docZipPath = req.file.path;
     num.docZipName = req.file.originalname || 'documents.zip';
     num.docZipUploadedAt = new Date().toISOString();
-    num.documentationComplete = true;
-    num.documentationCompletedAt = new Date().toISOString();
-    // Auto-mark as Completed the moment documentation is uploaded — admin can still
-    // override the status later (e.g. Rejected/On Hold) via the dropdown if needed.
-    num.adminStatus = num.adminStatus || 'Completed';
 
     saveState(appState);
     broadcastAdminStats();
-    res.json({ success: true, docZipName: num.docZipName, documentationCompletedAt: num.documentationCompletedAt });
+    res.json({ success: true, docZipName: num.docZipName, docZipUploadedAt: num.docZipUploadedAt });
   } catch (e) {
     if (req.file) { try { fs.unlinkSync(req.file.path); } catch {} }
     res.status(500).json({ error: e.message });
@@ -852,9 +893,9 @@ app.post('/api/agent/upload-doc-zip/:numberId', docUpload.single('docZip'), (req
 app.get('/api/admin/download-doc-zip/:numberId', (req, res) => {
   const { numberId } = req.params;
   const num = appState.numbers.find(n => n.id === numberId);
-  if (!num) return res.status(404).json({ error: 'Lead not found' });
+  if (!num) return res.status(404).json({ error: 'Rider not found' });
   if (!num.docZipPath || !fs.existsSync(num.docZipPath)) {
-    return res.status(404).json({ error: 'No document ZIP found for this lead' });
+    return res.status(404).json({ error: 'No document ZIP found for this rider' });
   }
   const downloadName = num.docZipName || 'documents.zip';
   res.download(num.docZipPath, downloadName);
@@ -864,14 +905,14 @@ app.get('/api/admin/stats', (req, res) => res.json(getAdminStats()));
 
 // ─── Disposition API Endpoints ────────────────────────────────────────────────
 app.post('/api/agent/disposition', (req, res) => {
-  const { agentId, numberId, disposition, followupDate, followupTime, followupName, leadName, loanType, remarks, loanAmount, employmentType, city } = req.body;
+  const { agentId, numberId, disposition, followupDate, followupTime, followupName, riderName, vehicleType, remarks, area, city } = req.body;
   if (!agentId || !numberId || !disposition) {
     return res.status(400).json({ error: 'agentId, numberId, and disposition are required' });
   }
   if (!VALID_DISPOSITIONS.includes(disposition)) {
     return res.status(400).json({ error: 'Invalid disposition. Must be one of: ' + VALID_DISPOSITIONS.join(', ') });
   }
-  applyDisposition(agentId, numberId, disposition, { followupDate, followupTime, followupName, leadName, loanType, remarks, loanAmount, employmentType, city });
+  applyDisposition(agentId, numberId, disposition, { followupDate, followupTime, followupName, riderName, vehicleType, remarks, area, city });
   const nextNum = getNextNumber(agentId);
   const agent = appState.agents[agentId];
   if (nextNum && agent) {
@@ -881,29 +922,187 @@ app.post('/api/agent/disposition', (req, res) => {
   res.json({ success: true, nextNumber: nextNum ? { numberId: nextNum.id, phone: nextNum.phone, name: nextNum.name || '' } : null });
 });
 
-app.get('/api/admin/interested', (req, res) => {
+// ─── Delivery Tracking Endpoints ──────────────────────────────────────────────
+
+// POST /api/agent/update-delivery - Agent updates a rider's delivery count for today
+app.post('/api/agent/update-delivery', (req, res) => {
+  const { agentId, numberId, todayDeliveries } = req.body;
+  if (!agentId || !numberId) {
+    return res.status(400).json({ error: 'agentId and numberId are required' });
+  }
+  if (todayDeliveries === undefined || todayDeliveries === null || isNaN(Number(todayDeliveries))) {
+    return res.status(400).json({ error: 'todayDeliveries must be a valid number' });
+  }
+  const deliveries = Number(todayDeliveries);
+  if (deliveries < 0) {
+    return res.status(400).json({ error: 'todayDeliveries cannot be negative' });
+  }
+  const num = appState.numbers.find(n => n.id === numberId);
+  if (!num) return res.status(404).json({ error: 'Rider not found' });
+  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Rider is not marked as recruited' });
+  if (num.riderStatus === 'completed') return res.status(400).json({ error: 'Rider already completed deliveries' });
+  if (num.riderStatus === 'removed') return res.status(400).json({ error: 'Rider has been removed' });
+
+  const today = getTodayStr();
+
+  // Initialize deliveryLog if needed
+  if (!num.deliveryLog) num.deliveryLog = [];
+
+  // Check if there's already an entry for today — update it instead of adding duplicate
+  const existingEntry = num.deliveryLog.find(entry => entry.date === today);
+  if (existingEntry) {
+    // Update existing entry
+    const oldCount = existingEntry.count;
+    existingEntry.count = deliveries;
+    existingEntry.updatedBy = agentId;
+    // Adjust deliveryCount: subtract old, add new
+    num.deliveryCount = (num.deliveryCount || 0) - oldCount + deliveries;
+  } else {
+    // Add new entry
+    num.deliveryLog.push({ date: today, count: deliveries, updatedBy: agentId });
+    num.deliveryCount = (num.deliveryCount || 0) + deliveries;
+  }
+
+  // Check if delivery target reached
+  if (num.deliveryCount >= 31) {
+    num.riderStatus = 'completed';
+    num.deliveriesCompleted = true;
+    num.completedAt = new Date().toISOString();
+  }
+
+  saveState(appState);
+  broadcastAdminStats();
+  res.json({
+    success: true,
+    numberId,
+    deliveryCount: num.deliveryCount,
+    deliveryTarget: num.deliveryTarget || 31,
+    riderStatus: num.riderStatus,
+    deliveriesCompleted: num.deliveriesCompleted || false
+  });
+});
+
+// GET /api/admin/recruited - Returns all recruited riders (active, delivery in progress)
+app.get('/api/admin/recruited', (req, res) => {
   const now = Date.now();
-  const interested = appState.numbers.filter(n => n.disposition === 'interested' && !n.documentationComplete).map(n => {
+  evaluateRecruitedRiders(appState);
+  const recruited = appState.numbers.filter(n => n.disposition === 'interested' && n.riderStatus === 'active').map(n => {
     const agent = appState.agents[n.interestedBy];
-    const elapsedMs = now - new Date(n.interestedAt).getTime();
+    const elapsedMs = now - new Date(n.recruitedAt || n.interestedAt).getTime();
     const hoursElapsed = elapsedMs / (1000 * 60 * 60);
-    const hoursRemaining = Math.max(0, 72 - hoursElapsed);
+    const hoursRemaining = Math.max(0, (7 * 24) - hoursElapsed);
     const overdue = hoursRemaining <= 0;
     return {
-      id: n.id, phone: n.phone, name: n.leadName || n.name || '',
-      loanType: n.loanType || '',
+      id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+      riderName: n.riderName || '',
+      vehicleType: n.vehicleType || '',
       remarks: n.remarks || '',
-      loanAmount: n.loanAmount || '',
-      employmentType: n.employmentType || '',
+      area: n.area || '',
       city: n.city || '',
+      riderPhone: n.riderPhone || n.phone,
+      interestedBy: agent ? agent.name : n.interestedBy,
+      interestedByAgentId: n.interestedBy,
+      recruitedAt: n.recruitedAt || n.interestedAt,
+      interestedAt: n.interestedAt,
+      deliveryCount: n.deliveryCount || 0,
+      deliveryTarget: n.deliveryTarget || 31,
+      daysLimit: n.daysLimit || 7,
+      deliveryLog: n.deliveryLog || [],
+      riderStatus: n.riderStatus || 'active',
+      deliveriesCompleted: n.deliveriesCompleted || false,
+      completedAt: n.completedAt || null,
+      hoursRemaining: Math.round(hoursRemaining * 100) / 100,
+      overdue
+    };
+  });
+  res.json(recruited);
+});
+
+// GET /api/admin/delivery-completed - Riders who completed 31 deliveries
+app.get('/api/admin/delivery-completed', (req, res) => {
+  evaluateRecruitedRiders(appState);
+  const completed = appState.numbers.filter(n => n.disposition === 'interested' && n.riderStatus === 'completed').map(n => {
+    const agent = appState.agents[n.interestedBy];
+    return {
+      id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+      riderName: n.riderName || '',
+      vehicleType: n.vehicleType || '',
+      remarks: n.remarks || '',
+      area: n.area || '',
+      city: n.city || '',
+      riderPhone: n.riderPhone || n.phone,
+      interestedBy: agent ? agent.name : n.interestedBy,
+      interestedByAgentId: n.interestedBy,
+      recruitedAt: n.recruitedAt || n.interestedAt,
+      deliveryCount: n.deliveryCount || 0,
+      deliveryTarget: n.deliveryTarget || 31,
+      deliveryLog: n.deliveryLog || [],
+      riderStatus: 'completed',
+      deliveriesCompleted: true,
+      completedAt: n.completedAt || null,
+      adminStatus: n.adminStatus || ''
+    };
+  });
+  res.json(completed);
+});
+
+// GET /api/admin/delivery-failed - Riders who failed (7 days passed, <31 deliveries)
+app.get('/api/admin/delivery-failed', (req, res) => {
+  evaluateRecruitedRiders(appState);
+  const failed = appState.numbers.filter(n => n.disposition === 'interested' && n.riderStatus === 'failed').map(n => {
+    const agent = appState.agents[n.interestedBy];
+    return {
+      id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+      riderName: n.riderName || '',
+      vehicleType: n.vehicleType || '',
+      remarks: n.remarks || '',
+      area: n.area || '',
+      city: n.city || '',
+      riderPhone: n.riderPhone || n.phone,
+      interestedBy: agent ? agent.name : n.interestedBy,
+      interestedByAgentId: n.interestedBy,
+      recruitedAt: n.recruitedAt || n.interestedAt,
+      deliveryCount: n.deliveryCount || 0,
+      deliveryTarget: n.deliveryTarget || 31,
+      deliveryLog: n.deliveryLog || [],
+      riderStatus: 'failed',
+      deliveriesCompleted: false,
+      adminStatus: n.adminStatus || ''
+    };
+  });
+  res.json(failed);
+});
+
+// Legacy endpoint - still returns all interested (recruited) riders pending delivery
+app.get('/api/admin/interested', (req, res) => {
+  const now = Date.now();
+  evaluateRecruitedRiders(appState);
+  const interested = appState.numbers.filter(n => n.disposition === 'interested' && !n.deliveriesCompleted).map(n => {
+    const agent = appState.agents[n.interestedBy];
+    const elapsedMs = now - new Date(n.recruitedAt || n.interestedAt).getTime();
+    const hoursElapsed = elapsedMs / (1000 * 60 * 60);
+    const hoursRemaining = Math.max(0, (7 * 24) - hoursElapsed);
+    const overdue = hoursRemaining <= 0;
+    return {
+      id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+      riderName: n.riderName || '',
+      vehicleType: n.vehicleType || '',
+      remarks: n.remarks || '',
+      area: n.area || '',
+      city: n.city || '',
+      riderPhone: n.riderPhone || n.phone,
       interestedBy: agent ? agent.name : n.interestedBy,
       interestedByAgentId: n.interestedBy,
       interestedAt: n.interestedAt,
-      documentationComplete: n.documentationComplete || false,
-      documentationCompletedAt: n.documentationCompletedAt || null,
+      recruitedAt: n.recruitedAt || n.interestedAt,
+      deliveryCount: n.deliveryCount || 0,
+      deliveryTarget: n.deliveryTarget || 31,
+      daysLimit: n.daysLimit || 7,
+      riderStatus: n.riderStatus || 'active',
+      deliveriesCompleted: n.deliveriesCompleted || false,
+      completedAt: n.completedAt || null,
       hoursRemaining: Math.round(hoursRemaining * 100) / 100,
-      overdue,
-      revenueGenerated: n.revenueGenerated || ''
+      overdue
     };
   });
   res.json(interested);
@@ -928,7 +1127,7 @@ app.get('/api/admin/followups', (req, res) => {
       followupTime: n.followupTime,
       followupName: n.followupName || '',
       followupCount: n.followupCount || 0,
-      loanType: n.loanType || '',
+      vehicleType: n.vehicleType || '',
       overdue
     };
   });
@@ -944,22 +1143,29 @@ app.get('/api/admin/followups', (req, res) => {
 app.get('/api/agent/interested/:agentId', (req, res) => {
   const agentId = req.params.agentId;
   const now = Date.now();
-  const interested = appState.numbers.filter(n => n.disposition === 'interested' && n.interestedBy === agentId && !n.documentationComplete).map(n => {
-    const elapsedMs = now - new Date(n.interestedAt).getTime();
+  evaluateRecruitedRiders(appState);
+  const interested = appState.numbers.filter(n => n.disposition === 'interested' && n.interestedBy === agentId && !n.deliveriesCompleted).map(n => {
+    const elapsedMs = now - new Date(n.recruitedAt || n.interestedAt).getTime();
     const hoursElapsed = elapsedMs / (1000 * 60 * 60);
-    const hoursRemaining = Math.max(0, 72 - hoursElapsed);
+    const hoursRemaining = Math.max(0, (7 * 24) - hoursElapsed);
     return {
-      id: n.id, phone: n.phone, name: n.leadName || n.name || '',
-      loanType: n.loanType || '',
+      id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+      riderName: n.riderName || '',
+      vehicleType: n.vehicleType || '',
       remarks: n.remarks || '',
-      loanAmount: n.loanAmount || '',
-      employmentType: n.employmentType || '',
+      area: n.area || '',
       city: n.city || '',
+      riderPhone: n.riderPhone || n.phone,
+      recruitedAt: n.recruitedAt || n.interestedAt,
       interestedAt: n.interestedAt,
-      documentationComplete: n.documentationComplete || false,
-      documentationCompletedAt: n.documentationCompletedAt || null,
-      hoursRemaining: Math.round(hoursRemaining * 100) / 100,
-      revenueGenerated: n.revenueGenerated || ''
+      deliveryCount: n.deliveryCount || 0,
+      deliveryTarget: n.deliveryTarget || 31,
+      daysLimit: n.daysLimit || 7,
+      deliveryLog: n.deliveryLog || [],
+      riderStatus: n.riderStatus || 'active',
+      deliveriesCompleted: n.deliveriesCompleted || false,
+      completedAt: n.completedAt || null,
+      hoursRemaining: Math.round(hoursRemaining * 100) / 100
     };
   });
   res.json(interested);
@@ -982,7 +1188,7 @@ app.get('/api/agent/followups/:agentId', (req, res) => {
       followupTime: n.followupTime,
       followupName: n.followupName || '',
       followupCount: n.followupCount || 0,
-      loanType: n.loanType || '',
+      vehicleType: n.vehicleType || '',
       overdue
     };
   });
@@ -995,7 +1201,7 @@ app.get('/api/agent/followups/:agentId', (req, res) => {
   res.json(followups);
 });
 
-// Agent marks documentation complete (ONLY after uploading ZIP via upload endpoint above)
+// Agent marks deliveries completed (manual override if needed)
 app.post('/api/agent/mark-documentation-complete', (req, res) => {
   const { agentId, numberId } = req.body;
   if (!agentId || !numberId) {
@@ -1003,29 +1209,15 @@ app.post('/api/agent/mark-documentation-complete', (req, res) => {
   }
   const num = appState.numbers.find(n => n.id === numberId);
   if (!num) return res.status(404).json({ error: 'Number not found' });
-  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Number is not marked as interested' });
-  if (num.interestedBy !== agentId) return res.status(403).json({ error: 'This lead is not assigned to you' });
-  num.documentationComplete = true;
-  num.documentationCompletedAt = new Date().toISOString();
+  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Rider is not marked as recruited' });
+  if (num.interestedBy !== agentId) return res.status(403).json({ error: 'This rider is not assigned to you' });
+  num.deliveriesCompleted = true;
+  num.completedAt = new Date().toISOString();
+  num.riderStatus = 'completed';
   num.adminStatus = num.adminStatus || 'Completed';
   saveState(appState);
   broadcastAdminStats();
-  res.json({ success: true, numberId, documentationComplete: true, documentationCompletedAt: num.documentationCompletedAt });
-});
-
-// ─── Revenue Generated (Agent input) ─────────────────────────────────────────
-app.post('/api/agent/update-revenue', (req, res) => {
-  const { agentId, numberId, revenueGenerated } = req.body;
-  if (!agentId || !numberId) {
-    return res.status(400).json({ error: 'agentId and numberId are required' });
-  }
-  const num = appState.numbers.find(n => n.id === numberId);
-  if (!num) return res.status(404).json({ error: 'Number not found' });
-  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Number is not marked as interested' });
-  num.revenueGenerated = revenueGenerated ? String(revenueGenerated) : '';
-  saveState(appState);
-  broadcastAdminStats();
-  res.json({ success: true, numberId, revenueGenerated: num.revenueGenerated });
+  res.json({ success: true, numberId, deliveriesCompleted: true, completedAt: num.completedAt });
 });
 
 app.post('/api/admin/transfer-interested', (req, res) => {
@@ -1056,7 +1248,7 @@ app.post('/api/admin/transfer-interested', (req, res) => {
   }
   const num = appState.numbers.find(n => n.id === numberId);
   if (!num) return res.status(404).json({ error: 'Number not found' });
-  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Number is not marked as interested' });
+  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Rider is not marked as recruited' });
   num.interestedBy = newAgentId;
   num.interestedAt = new Date().toISOString();
   saveState(appState);
@@ -1065,23 +1257,23 @@ app.post('/api/admin/transfer-interested', (req, res) => {
 });
 
 app.post('/api/agent/add-interested', (req, res) => {
-  const { agentId, phone, leadName, loanType, remarks, loanAmount, employmentType, city, revenueGenerated } = req.body;
+  const { agentId, phone, riderName, vehicleType, remarks, area, city } = req.body;
   if (!agentId || !phone) {
     return res.status(400).json({ error: 'agentId and phone are required' });
   }
   if (!appState.agents[agentId]) {
     return res.status(404).json({ error: 'Agent not found' });
   }
-  if (loanType && !VALID_LOAN_TYPES.includes(loanType)) {
-    return res.status(400).json({ error: 'Invalid loan type' });
+  if (vehicleType && !VALID_RIDER_CATEGORIES.includes(vehicleType)) {
+    return res.status(400).json({ error: 'Invalid vehicle type. Must be one of: ' + VALID_RIDER_CATEGORIES.join(', ') });
   }
   const existingNumber = appState.numbers.find(n => n.phone === phone);
   if (existingNumber) {
-    // Feature 4: If existing number was marked as not_interested, switch_off, dead (CNC), or discard
-    // allow overriding to interested
+    // If existing number was marked as not_interested, switch_off, dead (CNC), or discard
+    // allow overriding to interested (recruited)
     const overridableDispositions = ['not_interested', 'switch_off', 'dead', 'discard', 'not_received'];
     if (overridableDispositions.includes(existingNumber.disposition) || existingNumber.permanent) {
-      // Override: convert to interested
+      // Override: convert to interested (recruited)
       const now = new Date().toISOString();
       existingNumber.disposition = 'interested';
       existingNumber.permanent = false;
@@ -1089,16 +1281,21 @@ app.post('/api/agent/add-interested', (req, res) => {
       existingNumber.blockedUntil = null;
       existingNumber.interestedBy = agentId;
       existingNumber.interestedAt = now;
-      existingNumber.leadName = leadName || '';
-      existingNumber.name = leadName || existingNumber.name || '';
-      existingNumber.loanType = loanType || '';
+      existingNumber.recruitedAt = now;
+      existingNumber.riderName = riderName || '';
+      existingNumber.name = riderName || existingNumber.name || '';
+      existingNumber.vehicleType = vehicleType || '';
       existingNumber.remarks = remarks || '';
-      existingNumber.loanAmount = loanAmount || '';
-      existingNumber.employmentType = employmentType || '';
+      existingNumber.area = area || '';
       existingNumber.city = city || '';
-      existingNumber.revenueGenerated = revenueGenerated ? String(revenueGenerated) : '';
-      existingNumber.documentationComplete = false;
-      existingNumber.documentationCompletedAt = null;
+      existingNumber.riderPhone = existingNumber.phone;
+      existingNumber.deliveryCount = 0;
+      existingNumber.deliveryTarget = 31;
+      existingNumber.daysLimit = 7;
+      existingNumber.deliveryLog = [];
+      existingNumber.riderStatus = 'active';
+      existingNumber.deliveriesCompleted = false;
+      existingNumber.completedAt = null;
       existingNumber.docZipPath = null;
       existingNumber.docZipName = null;
       existingNumber.dialedBy = agentId;
@@ -1125,7 +1322,7 @@ app.post('/api/agent/add-interested', (req, res) => {
   const newEntry = {
     id: uuidv4(),
     phone,
-    name: leadName || '',
+    name: riderName || '',
     file: null,
     assignedTo: null,
     dialedBy: agentId,
@@ -1133,15 +1330,20 @@ app.post('/api/agent/add-interested', (req, res) => {
     disposition: 'interested',
     interestedBy: agentId,
     interestedAt: now,
-    leadName: leadName || '',
-    loanType: loanType || '',
+    recruitedAt: now,
+    riderName: riderName || '',
+    vehicleType: vehicleType || '',
     remarks: remarks || '',
-    loanAmount: loanAmount || '',
-    employmentType: employmentType || '',
+    area: area || '',
     city: city || '',
-    revenueGenerated: revenueGenerated ? String(revenueGenerated) : '',
-    documentationComplete: false,
-    documentationCompletedAt: null,
+    riderPhone: phone,
+    deliveryCount: 0,
+    deliveryTarget: 31,
+    daysLimit: 7,
+    deliveryLog: [],
+    riderStatus: 'active',
+    deliveriesCompleted: false,
+    completedAt: null,
     docZipPath: null,
     docZipName: null
   };
@@ -1173,7 +1375,7 @@ app.get('/api/admin/agents-list', (req, res) => {
   res.json(Object.values(agentMap));
 });
 
-// ─── Feature 2,3,4: Remove interested/completed leads COMPLETELY from system ──
+// ─── Remove recruited/completed riders COMPLETELY from system ──────────────────
 app.post('/api/agent/remove-interested', (req, res) => {
   const { agentId, numberId } = req.body;
   if (!agentId || !numberId) {
@@ -1182,8 +1384,8 @@ app.post('/api/agent/remove-interested', (req, res) => {
   const idx = appState.numbers.findIndex(n => n.id === numberId);
   if (idx === -1) return res.status(404).json({ error: 'Number not found' });
   const num = appState.numbers[idx];
-  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Number is not marked as interested' });
-  if (num.interestedBy !== agentId) return res.status(403).json({ error: 'This lead is not assigned to you' });
+  if (num.disposition !== 'interested') return res.status(400).json({ error: 'Rider is not marked as recruited' });
+  if (num.interestedBy !== agentId) return res.status(403).json({ error: 'This rider is not assigned to you' });
   // Completely remove from system
   appState.numbers.splice(idx, 1);
   saveState(appState);
@@ -1198,7 +1400,7 @@ app.post('/api/admin/remove-interested', (req, res) => {
   }
   const idx = appState.numbers.findIndex(n => n.id === numberId);
   if (idx === -1) return res.status(404).json({ error: 'Number not found' });
-  // Completely remove from system (works for interested AND documentation completed)
+  // Completely remove from system (works for recruited AND delivery completed)
   appState.numbers.splice(idx, 1);
   saveState(appState);
   broadcastAdminStats();
@@ -1206,24 +1408,22 @@ app.post('/api/admin/remove-interested', (req, res) => {
 });
 
 app.post('/api/admin/update-interested', (req, res) => {
-  const { numberId, loanType, remarks, loanAmount, status, employmentType, city, revenueGenerated } = req.body;
+  const { numberId, vehicleType, remarks, status, area, city } = req.body;
   if (!numberId) {
     return res.status(400).json({ error: 'numberId is required' });
   }
   const num = appState.numbers.find(n => n.id === numberId);
   if (!num) return res.status(404).json({ error: 'Number not found' });
-  if (loanType !== undefined) {
-    if (loanType && !VALID_LOAN_TYPES.includes(loanType)) {
-      return res.status(400).json({ error: 'Invalid loan type' });
+  if (vehicleType !== undefined) {
+    if (vehicleType && !VALID_RIDER_CATEGORIES.includes(vehicleType)) {
+      return res.status(400).json({ error: 'Invalid vehicle type' });
     }
-    num.loanType = loanType;
+    num.vehicleType = vehicleType;
   }
   if (remarks !== undefined) num.remarks = remarks;
-  if (loanAmount !== undefined) num.loanAmount = loanAmount;
   if (status !== undefined) num.adminStatus = status;
-  if (employmentType !== undefined) num.employmentType = employmentType;
+  if (area !== undefined) num.area = area;
   if (city !== undefined) num.city = city;
-  if (revenueGenerated !== undefined) num.revenueGenerated = revenueGenerated ? String(revenueGenerated) : '';
   saveState(appState);
   broadcastAdminStats();
   res.json({ success: true });
@@ -1247,18 +1447,23 @@ app.post('/api/admin/update-lead-status', (req, res) => {
 });
 
 app.get('/api/admin/completed', (req, res) => {
-  const completed = appState.numbers.filter(n => n.disposition === 'interested' && n.documentationComplete).map(n => {
+  evaluateRecruitedRiders(appState);
+  const completed = appState.numbers.filter(n => n.disposition === 'interested' && n.deliveriesCompleted).map(n => {
     const agent = appState.agents[n.interestedBy];
     return {
-      id: n.id, phone: n.phone, name: n.leadName || n.name || '',
-      loanType: n.loanType || '',
+      id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+      riderName: n.riderName || '',
+      vehicleType: n.vehicleType || '',
       remarks: n.remarks || '',
-      loanAmount: n.loanAmount || '',
-      employmentType: n.employmentType || '',
+      area: n.area || '',
       city: n.city || '',
+      riderPhone: n.riderPhone || n.phone,
       interestedBy: agent ? agent.name : n.interestedBy,
       interestedByAgentId: n.interestedBy,
-      documentationCompletedAt: n.documentationCompletedAt || null,
+      recruitedAt: n.recruitedAt || n.interestedAt,
+      deliveryCount: n.deliveryCount || 0,
+      deliveryTarget: n.deliveryTarget || 31,
+      completedAt: n.completedAt || null,
       adminStatus: n.adminStatus || '',
       hasDocZip: !!(n.docZipPath && fs.existsSync(n.docZipPath)),
       docZipName: n.docZipName || null
@@ -1269,15 +1474,19 @@ app.get('/api/admin/completed', (req, res) => {
 
 app.get('/api/agent/completed/:agentId', (req, res) => {
   const agentId = req.params.agentId;
-  const completed = appState.numbers.filter(n => n.disposition === 'interested' && n.documentationComplete && n.interestedBy === agentId).map(n => ({
-    id: n.id, phone: n.phone, name: n.leadName || n.name || '',
-    loanType: n.loanType || '',
+  evaluateRecruitedRiders(appState);
+  const completed = appState.numbers.filter(n => n.disposition === 'interested' && n.deliveriesCompleted && n.interestedBy === agentId).map(n => ({
+    id: n.id, phone: n.phone, name: n.riderName || n.name || '',
+    riderName: n.riderName || '',
+    vehicleType: n.vehicleType || '',
     remarks: n.remarks || '',
-    loanAmount: n.loanAmount || '',
-    employmentType: n.employmentType || '',
+    area: n.area || '',
     city: n.city || '',
-    revenueGenerated: n.revenueGenerated || '',
-    documentationCompletedAt: n.documentationCompletedAt || null,
+    riderPhone: n.riderPhone || n.phone,
+    recruitedAt: n.recruitedAt || n.interestedAt,
+    deliveryCount: n.deliveryCount || 0,
+    deliveryTarget: n.deliveryTarget || 31,
+    completedAt: n.completedAt || null,
     adminStatus: n.adminStatus || '',
     hasDocZip: !!(n.docZipPath && fs.existsSync(n.docZipPath)),
     docZipName: n.docZipName || null
@@ -1299,7 +1508,7 @@ app.get('/api/agent/dialed-today/:agentId', (req, res) => {
     let h = ist.getHours(); const m = String(ist.getMinutes()).padStart(2, '0');
     const ampm = h >= 12 ? 'PM' : 'AM';
     if (h === 0) h = 12; else if (h > 12) h -= 12;
-    const DISPO_MAP = { dead: 'CNC (Dead)', not_received: 'CNR', not_interested: 'Not Interested', followup: 'Followup', switch_off: 'Switch Off', interested: 'Interested', discard: 'Discard', dnd: 'DND' };
+    const DISPO_MAP = { dead: 'CNC (Dead)', not_received: 'CNR', not_interested: 'Not Interested', followup: 'Followup', switch_off: 'Switch Off', interested: 'Recruited', discard: 'Discard', dnd: 'DND' };
     return {
       phone: entry.phone || '',
       disposition: DISPO_MAP[entry.disposition] || entry.disposition || 'Dialed',
@@ -1329,8 +1538,8 @@ app.get('/api/agent/stats/:agentId', (req, res) => {
 
 app.delete('/api/admin/file/:fileId', (req, res) => {
   const fid = req.params.fileId;
-  // SAFE DELETE: never remove interested leads when deleting a file batch —
-  // they are real business data (pending docs or docs already uploaded).
+  // SAFE DELETE: never remove recruited riders when deleting a file batch —
+  // they are real business data (delivery tracking in progress or completed).
   // Only wipe undisposed / non-converting numbers from that batch.
   const fileInfo = appState.uploadedFiles.find(f => f.id === fid);
   if (fileInfo && fileInfo.sheetPath) {
@@ -1377,7 +1586,7 @@ app.post('/api/admin/reset-today', (req, res) => {
 });
 
 app.post('/api/admin/clear-all', (req, res) => {
-  // SAFE CLEAR: keep all interested leads (pending + documented) — they are permanent business data.
+  // SAFE CLEAR: keep all recruited riders (active + completed) — they are permanent business data.
   // Only wipe undisposed numbers, file registry, and dialed log.
   (appState.uploadedFiles || []).forEach(f => {
     if (f.sheetPath) { try { fs.unlinkSync(f.sheetPath); } catch {} }
@@ -1407,7 +1616,7 @@ app.post('/api/admin/clear-all', (req, res) => {
 
 app.post('/api/admin/hard-reset', (req, res) => {
   // Preserve allowedEids (names, photos, TL roles) — always kept.
-  // Preserve ALL interested leads (both pending-doc and documented) — permanent business data.
+  // Preserve ALL recruited riders (active + completed) — permanent business data.
   // Wipe: undisposed numbers, uploadedFiles list, dialedLog, agent daily stats.
   // Agent photos are also preserved (they belong to allowedEids, not to a session).
   const savedEids = appState.allowedEids || {};
@@ -1417,7 +1626,7 @@ app.post('/api/admin/hard-reset', (req, res) => {
     if (f.sheetPath) { try { fs.unlinkSync(f.sheetPath); } catch {} }
   });
   appState = createFreshState(savedEids);
-  appState.numbers = savedInterested; // restore interested leads
+  appState.numbers = savedInterested; // restore recruited riders
   appState.reports = savedReports; // restore permanent report archive
   // Only delete lead doc ZIPs for leads that no longer exist (orphaned files)
   // We do NOT delete agent photos — those belong to the employee records
@@ -1642,13 +1851,13 @@ io.on('connection', (socket) => {
     broadcastAdminStats();
   });
 
-  socket.on('agent-disposition', ({ agentId, numberId, disposition, followupDate, followupTime, followupName, leadName, loanType, remarks, loanAmount, employmentType, city, revenueGenerated }) => {
+  socket.on('agent-disposition', ({ agentId, numberId, disposition, followupDate, followupTime, followupName, riderName, vehicleType, remarks, area, city }) => {
     appState = checkDailyReset(appState);
     const agent = appState.agents[agentId];
     if (!agent) return socket.emit('error', 'Agent not found');
     if (!VALID_DISPOSITIONS.includes(disposition)) return socket.emit('error', 'Invalid disposition');
 
-    applyDisposition(agentId, numberId, disposition, { followupDate, followupTime, followupName, leadName, loanType, remarks, loanAmount, employmentType, city, revenueGenerated });
+    applyDisposition(agentId, numberId, disposition, { followupDate, followupTime, followupName, riderName, vehicleType, remarks, area, city });
 
     const num = getNextNumber(agentId);
     if (!num) {
@@ -1800,10 +2009,7 @@ app.post('/api/admin/eids', (req, res) => {
   res.json({ success: true, eid, name: name.trim(), role: finalRole });
 });
 
-// Assign / change a user's role (e.g. promote an EID to "client" so they can log into
-// the Client Panel, or assign them as "agent"/"tl"/"admin"). Used by the admin's
-// "Add User & Assign Role" UI so admin.html can manage client access without needing
-// to delete+recreate the EID.
+// Assign / change a user's role
 app.put('/api/admin/eids/:eid/role', (req, res) => {
   const eid = req.params.eid;
   const { role } = req.body;
@@ -1970,7 +2176,7 @@ app.get('/api/rankings', (req, res) => {
     else if (entry.disposition === 'switch_off') agentScores[aid].switchOff++;
   });
 
-  // New formula: MAX(0, MIN(100, (((100*Interested) + (25*FollowUp) - (10*NotInterested) - (15*NotEligible/discard) - (2*CNC) - (2*SwitchOff)) / (TotalCalls*100)) * 100))
+  // Score formula: MAX(0, MIN(100, (((100*Recruited) + (25*FollowUp) - (10*NotInterested) - (15*Discard) - (2*CNC) - (2*SwitchOff)) / (TotalCalls*100)) * 100))
   const rankings = Object.values(agentScores).map(a => {
     let score = 0;
     if (a.totalCalls > 0) {
@@ -1997,17 +2203,17 @@ app.get('/api/rankings', (req, res) => {
   rankings.forEach((r, i) => {
     r.rank = i + 1;
     if (i === 0 && r.score > 0) {
-      r.remarks = `Top performer! Score: ${r.score}/100 with ${r.interested} interested leads and ${r.followups} followups`;
+      r.remarks = `Top performer! Score: ${r.score}/100 with ${r.interested} recruited riders and ${r.followups} followups`;
     } else if (r.score === 0 && r.totalCalls === 0) {
       r.remarks = 'No calls made yet in this period';
     } else if (r.score < 20) {
-      r.remarks = 'Focus on quality calls - increase interested and followup conversions';
+      r.remarks = 'Focus on quality calls - increase recruited and followup conversions';
     } else {
-      r.remarks = `Score: ${r.score}/100. ${r.interested} interested, ${r.followups} followups. Keep improving!`;
+      r.remarks = `Score: ${r.score}/100. ${r.interested} recruited, ${r.followups} followups. Keep improving!`;
     }
   });
 
-  const formulaDescription = 'Score (0-100) = ((100 x Interested) + (25 x FollowUp) - (10 x NotInterested) - (15 x Not-Eligible) - (2 x CNC) - (2 x SwitchOff)) / (TotalCalls x 100) x 100. Higher interested and followup calls improve your score. Not Interested, Not-Eligible, CNC and SwitchOff reduce it.';
+  const formulaDescription = 'Score (0-100) = ((100 x Recruited) + (25 x FollowUp) - (10 x NotInterested) - (15 x Not-Eligible) - (2 x CNC) - (2 x SwitchOff)) / (TotalCalls x 100) x 100. Higher recruited and followup calls improve your score. Not Interested, Not-Eligible, CNC and SwitchOff reduce it.';
 
   res.json({ rankings, formulaDescription });
 });
@@ -2066,35 +2272,6 @@ app.delete('/api/agent/followup/:numberId', (req, res) => {
   saveState(appState);
   broadcastAdminStats();
   res.json({ success: true });
-});
-
-// GET /api/admin/followups-by-agent - Followups grouped by agent
-app.get('/api/admin/followups-by-agent', (req, res) => {
-  const followups = appState.numbers.filter(n => n.disposition === 'followup');
-  const grouped = {};
-  followups.forEach(n => {
-    const agentId = n.followupLockedBy || 'unassigned';
-    if (!grouped[agentId]) {
-      const agent = appState.agents[agentId];
-      grouped[agentId] = { agentId, agentName: agent ? agent.name : agentId, followups: [] };
-    }
-    grouped[agentId].followups.push({
-      id: n.id, phone: n.phone, name: n.name || '',
-      followupDate: n.followupDate,
-      followupTime: n.followupTime,
-      followupName: n.followupName || '',
-      followupCount: n.followupCount || 0
-    });
-  });
-  // Sort each agent's followups by nearest date
-  Object.values(grouped).forEach(g => {
-    g.followups.sort((a, b) => {
-      const dateA = (a.followupDate || '9999-12-31') + ' ' + (a.followupTime || '23:59');
-      const dateB = (b.followupDate || '9999-12-31') + ' ' + (b.followupTime || '23:59');
-      return dateA.localeCompare(dateB);
-    });
-  });
-  res.json(grouped);
 });
 
 // GET /api/agent/due-followups/:agentId - Followups whose date+time has arrived (popup trigger)
@@ -2220,8 +2397,8 @@ app.post('/api/admin/upload-followups', followupUpload.single('file'), (req, res
 app.get('/api/admin/download-followup-sample', (req, res) => {
   const sampleData = [
     ['Phone', 'Name', 'FollowupDate (YYYY-MM-DD)', 'FollowupTime (HH:MM)', 'AgentId (emp_XXX)', 'FollowupName'],
-    ['9876543210', 'John Doe', '2025-01-20', '10:30', 'emp_101', 'Loan discussion'],
-    ['9876543211', 'Jane Smith', '2025-01-21', '14:00', 'emp_102', 'Document collection']
+    ['9876543210', 'John Doe', '2025-01-20', '10:30', 'emp_101', 'Rider recruitment call'],
+    ['9876543211', 'Jane Smith', '2025-01-21', '14:00', 'emp_102', 'Vehicle verification']
   ];
   const ws = XLSX.utils.aoa_to_sheet(sampleData);
   const wb = XLSX.utils.book_new();
@@ -2307,7 +2484,7 @@ app.delete('/api/admin/dnd/:phone', (req, res) => {
   res.json({ success: true });
 });
 
-// ─── Script Upload & Management (Feature 5) ──────────────────────────────────
+// ─── Script Upload & Management ──────────────────────────────────────────────
 const scriptUpload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => cb(null, SCRIPTS_DIR),
@@ -2345,7 +2522,7 @@ app.get('/api/script', (req, res) => {
   }
 });
 
-// ─── Disposition Stats Copy (Feature 6) ───────────────────────────────────────
+// ─── Disposition Stats Copy ───────────────────────────────────────────────────
 app.get('/api/stats/daily-numbers', (req, res) => {
   // Returns numbers dialed today between 10:00 AM and 5:43 PM IST, grouped by disposition
   const now = new Date();
@@ -2417,8 +2594,6 @@ app.get('/api/admin/download-numbers/:fileId', (req, res) => {
 });
 
 // ─── Admin: Download the ORIGINAL uploaded sheet exactly as it was uploaded ────
-// (Distinct from /download-numbers above, which regenerates a status export —
-// this returns the literal file the admin uploaded, untouched.)
 app.get('/api/admin/original-file/:fileId', (req, res) => {
   const fid = req.params.fileId;
   const fileInfo = appState.uploadedFiles.find(f => f.id === fid);
@@ -2447,11 +2622,11 @@ app.post('/api/agent/add-manual-number', (req, res) => {
   res.json({ success: true, numberId: newNum.id });
 });
 
-// Remove a number from pool — blocked if lead is interested (real business data)
+// Remove a number from pool — blocked if rider is recruited (real business data)
 app.delete('/api/agent/number/:numberId', (req, res) => {
   const num = appState.numbers.find(n => n.id === req.params.numberId);
   if (!num) return res.status(404).json({ error: 'Number not found' });
-  if (num.disposition === 'interested') return res.status(400).json({ error: 'Cannot remove an interested lead' });
+  if (num.disposition === 'interested') return res.status(400).json({ error: 'Cannot remove a recruited rider' });
   appState.numbers = appState.numbers.filter(n => n.id !== req.params.numberId);
   const manualFile = appState.uploadedFiles.find(f => f.id === 'manual');
   if (manualFile) manualFile.total = appState.numbers.filter(n => n.file === 'manual').length;
@@ -2467,7 +2642,7 @@ app.delete('/api/agent/number/:numberId', (req, res) => {
 // and re-download at any time.
 const DISPO_LABELS = {
   dead: 'CNC (Dead)', not_received: 'CNR (Not Received)', not_interested: 'Not Interested',
-  followup: 'Followup', switch_off: 'Switch Off', interested: 'Interested',
+  followup: 'Followup', switch_off: 'Switch Off', interested: 'Recruited',
   discard: 'Not-Eligible (Discard)', dnd: 'DND'
 };
 
@@ -2492,24 +2667,26 @@ function generateDailyReport(dateStr) {
       const writeStream = fs.createWriteStream(filePath);
       doc.pipe(writeStream);
 
-      doc.fontSize(18).fillColor('#e6157b').text('Kingfisher x Ruralift CRM — Daily Report', { align: 'left' });
+      doc.fontSize(18).fillColor('#fc8019').text('Swiggy Rider Recruitment CRM — Daily Report', { align: 'left' });
       doc.moveDown(0.3);
       doc.fontSize(11).fillColor('#12293f').text('Date: ' + dateStr + '  (Auto-generated at 6:30 PM IST)');
       doc.moveDown(1);
 
-      doc.fontSize(13).fillColor('#1668d6').text('Lead Overview');
+      doc.fontSize(13).fillColor('#fc8019').text('Rider Recruitment Overview');
       doc.moveDown(0.3);
       doc.fontSize(11).fillColor('#12293f');
       doc.text('Total Numbers Uploaded: ' + (stats.total || 0));
       doc.text('Remaining To Dial: ' + (stats.remaining || 0));
-      doc.text('Interested Leads: ' + (stats.interestedCount || 0));
-      doc.text('Overdue (72h+): ' + (stats.overdueInterestedCount || 0));
+      doc.text('Recruited Riders (Active): ' + (stats.recruitedCount || 0));
+      doc.text('Delivery Completed: ' + (stats.deliveryCompletedCount || 0));
+      doc.text('Delivery Failed (7d expired): ' + (stats.deliveryFailedCount || 0));
+      doc.text('Overdue Riders: ' + (stats.overdueRecruitedCount || 0));
       doc.text('Followups Pending: ' + (stats.followupCount || 0));
       doc.text('Redialing Tomorrow: ' + (stats.comingBackTomorrow || 0));
       doc.text('DND Numbers: ' + (stats.dndCount || 0));
       doc.moveDown(1);
 
-      doc.fontSize(13).fillColor('#1668d6').text('Disposition Breakdown (Today)');
+      doc.fontSize(13).fillColor('#fc8019').text('Disposition Breakdown (Today)');
       doc.moveDown(0.3);
       doc.fontSize(11).fillColor('#12293f');
       doc.text('Total Calls: ' + (dispo.totalCalls || 0));
@@ -2523,7 +2700,7 @@ function generateDailyReport(dateStr) {
         const entry = registerReport({
           id: uuidv4(),
           fileName,
-          originalName: dateStr + '_Kingfisher_Daily_Report.pdf',
+          originalName: dateStr + '_Swiggy_Rider_Recruitment_Daily_Report.pdf',
           title: 'Daily Report',
           reportDate: dateStr,
           generatedBy: 'system-auto-6:30pm-IST',
@@ -2592,13 +2769,6 @@ app.get('/api/reports/:id/download', (req, res) => {
   res.download(filePath, entry.originalName || (entry.title + '.pdf'));
 });
 
-// NOTE: A legacy duplicate auto-report system (xlsx buffer + socket-emit-only,
-// no disk save, no archive registration) previously lived here and never
-// actually attached anything to the client. It has been removed — the single
-// source of truth for the 6:30 PM IST report is generateDailyReport() /
-// scheduleAutoDailyReport() above, which saves a PDF to disk and registers it
-// in the permanent appState.reports archive visible to both admin and client.
-
 // ─── Page Routes ──────────────────────────────────────────────────────────────
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin/index.html')));
 app.get('/agent', (req, res) => res.sendFile(path.join(__dirname, 'public/agent/index.html')));
@@ -2608,9 +2778,8 @@ app.get('/tl', (req, res) => res.redirect(301, '/client'));
 
 // ─── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n✅  Ruralift CRM running on http://0.0.0.0:${PORT}`);
+  console.log(`\n✅  Swiggy Rider Recruitment CRM running on http://0.0.0.0:${PORT}`);
   console.log(`   Admin Panel  : http://YOUR-LAN-IP:${PORT}/admin`);
   console.log(`   Agent Panel  : http://YOUR-LAN-IP:${PORT}/agent`);
   console.log(`   Client Panel : http://YOUR-LAN-IP:${PORT}/client\n`);
 });
-

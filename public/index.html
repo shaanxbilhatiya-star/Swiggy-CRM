@@ -3,222 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ruralift — Smart Loan Hub</title>
+<title>Swiggy Rider Recruitment CRM</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Kingfisher x TaskUs — colorful light hub */
-  :root{--accent:#0aa6c2;--accent2:#1668d6;--magenta:#e6157b;--orange:#ff7a18;--ink:#12293f;--muted:#5b7488}
+  :root{--accent:#FC8019;--accent2:#e8720f;--orange:#FC8019;--ink:#12293f;--muted:#5b7488;--green:#10b981}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:linear-gradient(160deg,#eaf3fd 0%,#f2ecfb 46%,#fdeef5 100%);background-attachment:fixed;color:var(--ink);font-family:'Space Grotesk',sans-serif;min-height:100vh;padding:40px 20px}
+  body{background:#ffffff;color:var(--ink);font-family:'Space Grotesk',sans-serif;min-height:100vh;padding:40px 20px}
   .wrap{max-width:960px;margin:0 auto}
-  header{text-align:center;margin-bottom:40px;background:linear-gradient(120deg,#0aa6c2 0%,#1668d6 42%,#7b2ff7 70%,#e6157b 100%);border-radius:20px;padding:30px 20px;box-shadow:0 10px 30px rgba(22,104,214,.25);border-bottom:3px solid var(--orange)}
+  header{text-align:center;margin-bottom:40px;background:linear-gradient(120deg,#FC8019 0%,#e8720f 50%,#d4650d 100%);border-radius:20px;padding:30px 20px;box-shadow:0 10px 30px rgba(252,128,25,.25);border-bottom:3px solid #d4650d}
   header img{height:56px;margin-bottom:14px;filter:drop-shadow(0 2px 10px rgba(0,0,0,.25))}
   header h1{font-size:26px;font-weight:700;letter-spacing:-.5px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.25)}
   header p{color:rgba(255,255,255,.9);font-size:14px;margin-top:6px}
   .section-title{font-size:16px;font-weight:700;color:var(--accent2);margin:36px 0 16px;letter-spacing:.5px;text-transform:uppercase}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
-  .card{position:relative;overflow:hidden;background:#fff;border:1px solid #d5e6f5;border-radius:16px;padding:28px 24px;text-decoration:none;color:var(--ink);transition:all .2s;display:block;box-shadow:0 4px 16px rgba(22,104,214,.08)}
+  .card{position:relative;overflow:hidden;background:#fff;border:1px solid #ffe0c2;border-radius:16px;padding:28px 24px;text-decoration:none;color:var(--ink);transition:all .2s;display:block;box-shadow:0 4px 16px rgba(252,128,25,.08)}
   .card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-  .card:nth-child(3n+2)::before{background:linear-gradient(90deg,var(--magenta),#ff7ab6)}
-  .card:nth-child(3n+3)::before{background:linear-gradient(90deg,var(--orange),#ffb454)}
-  .card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 12px 30px rgba(22,104,214,.20)}
+  .card:nth-child(3n+2)::before{background:linear-gradient(90deg,var(--accent),#ffb454)}
+  .card:nth-child(3n+3)::before{background:linear-gradient(90deg,#e8720f,var(--accent))}
+  .card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 12px 30px rgba(252,128,25,.20)}
   .card .icon{font-size:36px;margin-bottom:12px}
   .card h2{font-size:17px;font-weight:700;margin-bottom:4px}
   .card p{color:var(--muted);font-size:12px;margin:0}
-  .card .badge{display:inline-block;background:rgba(230,21,123,.10);color:var(--magenta);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:10px}
-
-  /* WhatsApp tool */
-  .wa-tool{background:#fff;border:1px solid #d5e6f5;border-radius:16px;padding:28px;margin-top:36px;box-shadow:0 6px 20px rgba(22,104,214,.10);border-top:4px solid var(--green,#10b981)}
-  .wa-tool h3{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--accent2)}
-  .wa-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-  .wa-form label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
-  .wa-form .field{flex:1;min-width:180px}
-  .wa-form input,.wa-form select{width:100%;background:#f2f8ff;border:1px solid #cfe1f2;color:var(--ink);padding:10px 14px;border-radius:8px;font-family:inherit;font-size:14px}
-  .wa-form input:focus,.wa-form select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(10,166,194,.15)}
-  .wa-form button{background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;border:none;padding:10px 22px;border-radius:8px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:filter .2s}
-  .wa-form button:hover{filter:brightness(1.08)}
-  .wa-output{margin-top:16px;display:none}
-  .wa-output pre{background:#f2f8ff;border:1px solid #cfe1f2;border-radius:8px;padding:16px;font-size:12px;line-height:1.6;color:#334155;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto}
-  .wa-output .btn-row{display:flex;gap:10px;margin-top:10px}
-  .wa-output .btn-row button{background:#f2f8ff;border:1px solid #cfe1f2;color:var(--ink);padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
-  .wa-output .btn-row button:hover{border-color:var(--magenta);color:var(--magenta)}
-
-  /* Footer links */
-  .footer-links{display:flex;justify-content:center;gap:24px;margin-top:48px;padding-top:24px;border-top:1px solid #d5e6f5}
+  .footer-links{display:flex;justify-content:center;gap:24px;margin-top:48px;padding-top:24px;border-top:1px solid #ffe0c2}
   .footer-links a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;transition:color .2s}
-  .footer-links a:hover{color:var(--magenta)}
-
-  @media(max-width:600px){
-    body{padding:20px 12px}
-    .cards{grid-template-columns:1fr}
-    .wa-form{flex-direction:column}
-  }
+  .footer-links a:hover{color:var(--accent)}
+  @media(max-width:600px){body{padding:20px 12px}.cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px">
-      <img src="/logo.png" alt="Ruralift" style="height:56px;filter:drop-shadow(0 2px 10px rgba(0,0,0,.25))">
-      <img src="/kingfisher-logo.png" alt="Kingfisher" style="height:56px;filter:drop-shadow(0 2px 10px rgba(0,0,0,.25));background:#fff;border-radius:8px;padding:6px 10px">
+      <img src="/swiggy-logo.svg" alt="Swiggy" style="height:56px;filter:drop-shadow(0 2px 10px rgba(0,0,0,.25));background:#fff;border-radius:12px;padding:8px 12px">
     </div>
-    <h1>Smart Loan Hub</h1>
-    <p>Auto Lead Dialing System &mdash; Support From Emerging India</p>
+    <h1>Swiggy Rider Recruitment CRM</h1>
+    <p>Delivery Rider Recruitment &amp; 31-Delivery Tracking System</p>
   </header>
-
-  <div class="section-title">&#128196; Loan Application Forms</div>
-  <div class="cards">
-    <a href="/BL_Business.html" class="card">
-      <div class="icon">&#127974;</div>
-      <h2>Business Loan</h2>
-      <p>Businessman applicants</p>
-      <span class="badge">BL_Business</span>
-    </a>
-    <a href="/LAP_Business.html" class="card">
-      <div class="icon">&#127969;</div>
-      <h2>LAP &mdash; Businessman</h2>
-      <p>Loan Against Property (Business)</p>
-      <span class="badge">LAP_Business</span>
-    </a>
-    <a href="/LAP_Salaried.html" class="card">
-      <div class="icon">&#127970;</div>
-      <h2>LAP &mdash; Salaried</h2>
-      <p>Loan Against Property (Salaried)</p>
-      <span class="badge">LAP_Salaried</span>
-    </a>
-    <a href="/PL_Business.html" class="card">
-      <div class="icon">&#128176;</div>
-      <h2>Personal Loan &mdash; Business</h2>
-      <p>PL for Businessman profile</p>
-      <span class="badge">PL_Business</span>
-    </a>
-    <a href="/PL_Salaried.html" class="card">
-      <div class="icon">&#128179;</div>
-      <h2>Personal Loan &mdash; Salaried</h2>
-      <p>PL for Salaried profile</p>
-      <span class="badge">PL_Salaried</span>
-    </a>
-  </div>
 
   <div class="section-title">&#128274; System Access</div>
   <div class="cards">
     <a href="/admin" class="card">
       <div class="icon">&#128736;&#65039;</div>
       <h2>Admin Panel</h2>
-      <p>Upload numbers, view stats, manage leads</p>
+      <p>Upload numbers, view stats, manage riders &amp; agents</p>
     </a>
     <a href="/agent" class="card">
       <div class="icon">&#128222;</div>
-      <h2>Agent Dialer</h2>
-      <p>Login and start dialing leads</p>
+      <h2>Agent Panel</h2>
+      <p>Login, dial leads, recruit riders &amp; track deliveries</p>
     </a>
     <a href="/client" class="card">
       <div class="icon">&#128200;</div>
       <h2>Client Panel</h2>
-      <p>View disposition stats, leads &amp; followups</p>
+      <p>View disposition stats, recruited riders &amp; followups</p>
     </a>
-  </div>
-
-  <!-- WhatsApp Checklist Generator Tool -->
-  <div class="wa-tool">
-    <h3>&#128172; WhatsApp Document Checklist Generator</h3>
-    <div class="wa-form">
-      <div class="field">
-        <label>Lead Name (optional)</label>
-        <input type="text" id="waLeadName" placeholder="e.g. Ramesh">
-      </div>
-      <div class="field">
-        <label>Loan Type</label>
-        <select id="waLoanType">
-          <option value="BL_Business">BL - Business Loan</option>
-          <option value="LAP_Business">LAP - Businessman</option>
-          <option value="LAP_Salaried">LAP - Salaried</option>
-          <option value="PL_Business">PL - Businessman</option>
-          <option value="PL_Salaried">PL - Salaried</option>
-        </select>
-      </div>
-      <button onclick="generateAndShowMessage()">Generate Checklist</button>
-    </div>
-    <div class="wa-output" id="waOutput">
-      <pre id="waPreview"></pre>
-      <div class="btn-row">
-        <button onclick="copyToClipboard()">&#128203; Copy to Clipboard</button>
-        <button onclick="openInWhatsApp()">&#128279; Open in WhatsApp</button>
-      </div>
-    </div>
   </div>
 
   <div class="footer-links">
     <a href="/admin">Admin</a>
-    <a href="/agent">Agent Dialer</a>
+    <a href="/agent">Agent Panel</a>
     <a href="/client">Client Panel</a>
   </div>
 </div>
-
-<script>
-function generateWhatsAppMessage(loanType, leadName) {
-  const greeting = leadName ? `\u0928\u092E\u0938\u094D\u0924\u0947 ${leadName} \u091C\u0940,\n` : `\u0928\u092E\u0938\u094D\u0924\u0947 \u0938\u0930/\u092E\u0948\u092E,\n`;
-
-  function getLoanDisplayName(code) {
-    const map = { 'BL_Business':'BL (Business Loan)', 'LAP_Business':'LAP (Businessman - Loan Against Property)', 'LAP_Salaried':'LAP (Salaried - Loan Against Property)', 'PL_Business':'Personal Loan - Businessman', 'PL_Salaried':'Personal Loan - Salaried' };
-    return map[code] || 'Loan';
-  }
-
-  let msg = `${greeting}\u0906\u092A\u0915\u0947 ${getLoanDisplayName(loanType)} \u0915\u0947 \u0932\u093F\u090F \u091C\u093C\u0930\u0942\u0930\u0940 \u0926\u0938\u094D\u0924\u093E\u0935\u0947\u091C\u093C\u094B\u0902 \u0915\u0940 \u091A\u0947\u0915\u0932\u093F\u0938\u094D\u091F \u0928\u0940\u091A\u0947 \u0926\u0940 \u0917\u0908 \u0939\u0948\u0964 \u0915\u0943\u092A\u092F\u093E \u091C\u0932\u094D\u0926 \u0938\u0947 \u091C\u0932\u094D\u0926 \u092F\u0947 \u0938\u092C share \u0915\u0930\u0947\u0902\u0964\n\n\uD83D\uDCCC **\u092E\u0941\u0916\u094D\u092F \u0926\u0938\u094D\u0924\u093E\u0935\u0947\u091C\u093C (KYC + address):**\n`;
-  msg += "\u2705 Aadhaar Card (front & back)\n\u2705 PAN Card\n\u2705 Passport size photo (recent)\n\u2705 Current Address Proof \u2013 Electricity bill / Rent agreement\n\u2705 Cancelled Cheque / Passbook first page (account holder & IFSC)\n";
-
-  msg += "\n\uD83D\uDCB0 **Income & Business Proofs:**\n";
-  if (loanType === 'BL_Business' || loanType === 'LAP_Business' || loanType === 'PL_Business') {
-    msg += "\u2705 GST Certificate (\u092E\u094C\u091C\u0942\u0926 \u0939\u094B \u0924\u094B \u0905\u0928\u093F\u0935\u093E\u0930\u094D\u092F)\n\u2705 Udhyam / Gumastha / Shop Act \u2013 \u0907\u0928\u092E\u0947\u0902 \u0938\u0947 \u0915\u094B\u0908 \u090F\u0915 \u091C\u0930\u0942\u0930\n\u2705 ITR \u2013 \u092A\u093F\u091B\u0932\u0947 3 \u0938\u093E\u0932\u094B\u0902 \u0915\u0947 (Computation sheet \u0938\u0939\u093F\u0924)\n\u2705 Bank Statement \u2013 \u092A\u093F\u091B\u0932\u0947 12 \u092E\u0939\u0940\u0928\u0947 (business account)\n\u2705 Shop / Business Video (walkthrough with board & stock)\n";
-    if (loanType === 'LAP_Business') msg += "\u2705 Business address proof (shop electricity bill / rent agreement)\n";
-  } else {
-    msg += "\u2705 Salary Slips \u2013 \u092A\u093F\u091B\u0932\u0947 6 \u092E\u0939\u0940\u0928\u0947 (latest)\n\u2705 Bank Statement \u2013 \u092A\u093F\u091B\u0932\u0947 6 \u092E\u0939\u0940\u0928\u0947 (\u091C\u0939\u093E\u0901 salary credit \u0939\u094B)\n\u2705 Form 16 / ITR (last 2 years \u2013 recommended)\n\u2705 Appointment letter / Employee ID card (if available)\n";
-  }
-
-  msg += "\n\uD83D\uDCCC **CIBIL Report** \u2013 \u0928\u0935\u0940\u0928\u0924\u092E CIBIL (\u0905\u0928\u093F\u0935\u093E\u0930\u094D\u092F)\n";
-
-  if (loanType === 'LAP_Business' || loanType === 'LAP_Salaried') {
-    msg += "\n\uD83C\uDFE0 **Property Documents:**\n\u2705 Registry / Sale Deed (\u0930\u091C\u093F\u0938\u094D\u091F\u094D\u0930\u0940)\n\u2705 Diversion Certificate (if applicable)\n\u2705 Naksha / Map / Khasra / B1\n\u2705 Property Tax Receipt\n\n\uD83D\uDCF9 **Property Video (walk-through) \u2013 \u092C\u093F\u0932\u094D\u0915\u0941\u0932 \u091C\u0930\u0942\u0930\u0940**\n  \u2192 \u091A\u093E\u0930\u094B\u0902 \u0924\u0930\u092B \u0915\u093E \u0935\u0940\u0921\u093F\u092F\u094B, \u0906\u0938\u092A\u093E\u0938 \u0915\u093E \u090F\u0930\u093F\u092F\u093E \u0938\u093E\u092B \u0926\u093F\u0916\u0947\u0964\n";
-  }
-
-  msg += "\n\uD83D\uDCCC **\u0911\u092A\u094D\u0936\u0928\u0932 \u0926\u0938\u094D\u0924\u093E\u0935\u0947\u091C\u093C (approval chances \u092C\u0922\u093C\u093E\u0928\u0947 \u0915\u0947 \u0932\u093F\u090F):**\n";
-  if (loanType === 'BL_Business' || loanType === 'PL_Business') {
-    msg += "\u2705 \u092A\u0941\u0930\u093E\u0928\u0947 \u0932\u094B\u0928 \u0915\u0940 \u0915\u094D\u0932\u094B\u091C\u0930 \u0932\u0947\u091F\u0930 / NOC\n\u2705 \u0905\u0928\u094D\u092F \u0906\u092F \u0915\u0947 \u092A\u094D\u0930\u092E\u093E\u0923 (\u0915\u093F\u0930\u093E\u092F\u093E, \u0921\u093F\u0935\u093F\u0921\u0947\u0902\u0921)\n\u2705 \u092C\u093F\u091C\u0928\u0947\u0938 \u0915\u0940 \u0924\u0938\u094D\u0935\u0940\u0930\u0947\u0902 (shop front + inside stock)\n";
-  } else if (loanType === 'PL_Salaried' || loanType === 'LAP_Salaried') {
-    msg += "\u2705 \u092A\u094D\u0930\u092E\u094B\u0936\u0928 \u0932\u0947\u091F\u0930 / \u0938\u0948\u0932\u0930\u0940 \u0930\u093F\u0935\u0940\u091C\u0928 \u0932\u0947\u091F\u0930\n\u2705 \u092A\u0941\u0930\u093E\u0928\u0947 \u0932\u094B\u0928 \u0915\u0940 \u0915\u094D\u0932\u094B\u091C\u0930 \u0938\u0930\u094D\u091F\u093F\u092B\u093F\u0915\u0947\u091F\n\u2705 \u0905\u0928\u094D\u092F \u0907\u0928\u0915\u092E \u092A\u094D\u0930\u0942\u092B (FD, rental income)\n";
-  } else {
-    msg += "\u2705 \u092A\u0941\u0930\u093E\u0928\u0947 \u0932\u094B\u0928 \u0915\u0940 \u0915\u094D\u0932\u094B\u091C\u0930 \u0938\u0930\u094D\u091F\u093F\u092B\u093F\u0915\u0947\u091F\n\u2705 \u0905\u0924\u093F\u0930\u093F\u0915\u094D\u0924 \u092A\u094D\u0930\u0949\u092A\u0930\u094D\u091F\u0940 \u0921\u0949\u0915\u094D\u092F\u0942\u092E\u0947\u0902\u091F\n";
-  }
-
-  msg += "\n\uD83D\uDCCB **\u0905\u0928\u094D\u092F \u091C\u0930\u0942\u0930\u0940 \u092C\u093E\u0924\u0947\u0902:**\n\u2705 \u0938\u092D\u0940 PDF \u0905\u0917\u0930 password protected \u0939\u0948\u0902 \u0924\u094B password \u0926\u0947\u0928\u093E \u0939\u094B\u0917\u093E\u0964\n\u2705 Existing loan / EMI \u0915\u0940 details (sanction letter / statement)\n";
-  msg += `\n\uD83D\uDE4F \u0915\u0943\u092A\u092F\u093E \u0938\u092D\u0940 \u0926\u0938\u094D\u0924\u093E\u0935\u0947\u091C\u093C WhatsApp \u092F\u093E email \u092A\u0930 share \u0915\u0930\u0947\u0902\u0964 \u0915\u093F\u0938\u0940 \u092D\u0940 \u0938\u0939\u093E\u092F\u0924\u093E \u0915\u0947 \u0932\u093F\u090F \u0938\u0902\u092A\u0930\u094D\u0915 \u0915\u0930\u0947\u0902\u0964\n_\u092F\u0939 \u0938\u0902\u0926\u0947\u0936 Ruralift loan assistant \u0926\u094D\u0935\u093E\u0930\u093E \u091C\u0928\u0930\u0947\u091F \u0915\u093F\u092F\u093E \u0917\u092F\u093E \u0939\u0948._`;
-  return msg;
-}
-
-let lastGeneratedMsg = '';
-
-function generateAndShowMessage() {
-  const leadName = document.getElementById('waLeadName').value.trim();
-  const loanType = document.getElementById('waLoanType').value;
-  lastGeneratedMsg = generateWhatsAppMessage(loanType, leadName);
-  document.getElementById('waPreview').textContent = lastGeneratedMsg;
-  document.getElementById('waOutput').style.display = 'block';
-}
-
-function copyToClipboard() {
-  if (!lastGeneratedMsg) return;
-  navigator.clipboard.writeText(lastGeneratedMsg).then(() => {
-    const btn = event.target;
-    btn.textContent = '\u2705 Copied!';
-    setTimeout(() => { btn.textContent = '\uD83D\uDCCB Copy to Clipboard'; }, 2000);
-  }).catch(() => { alert('Could not copy'); });
-}
-
-function openInWhatsApp() {
-  if (!lastGeneratedMsg) return;
-  const encoded = encodeURIComponent(lastGeneratedMsg);
-  window.open('https://wa.me/?text=' + encoded, '_blank');
-}
-</script>
 </body>
 </html>

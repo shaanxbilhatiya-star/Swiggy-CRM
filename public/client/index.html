@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kingfisher x Ruralift CRM — Client Panel</title>
+<title>Swiggy Rider Recruitment CRM — Client Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* CLIENT theme: bright Kingfisher x TaskUs — colorful light */
+    /* CLIENT theme: Swiggy Rider Recruitment — orange light */
     --bg: #eef4fc; --surface: #ffffff; --surface2: #f2f8ff; --border: #d5e6f5;
-    --accent: #0aa6c2; --accent2: #1668d6; --magenta: #e6157b; --orange: #ff7a18;
+    --accent: #FC8019; --accent2: #e8720f; --magenta: #FC8019; --orange: #FC8019;
     --danger: #ef4444; --warn: #f59e0b; --text: #12293f; --muted: #5b7488;
     --green: #10b981; --mono: 'JetBrains Mono', monospace; --sans: 'Space Grotesk', sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: linear-gradient(160deg, #eaf3fd 0%, #f2ecfb 46%, #fdeef5 100%); background-attachment: fixed; color: var(--text); font-family: var(--sans); min-height: 100vh; }
 
-  header { background: linear-gradient(120deg, #0aa6c2 0%, #1668d6 42%, #7b2ff7 70%, #e6157b 100%); border-bottom: 3px solid var(--orange); box-shadow: 0 6px 24px rgba(22,104,214,.30); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
+  header { background: linear-gradient(120deg, #FC8019 0%, #e8720f 50%, #d4650d 100%); border-bottom: 3px solid var(--orange); box-shadow: 0 6px 24px rgba(22,104,214,.30); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
   .logo { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
   .logo h1 { font-size: 15px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); }
   .logo-img {
@@ -118,7 +118,7 @@
   @media(max-width:900px){ .stats-grid{grid-template-columns:1fr 1fr} }
 
   /* ============================================================
-     KINGFISHER x TASKUS — COLORFUL THEME OVERRIDES (light)
+     SWIGGY RIDER RECRUITMENT — THEME OVERRIDES (light)
      ============================================================ */
   header .logo h1 { color: #ffffff; text-shadow: 0 1px 8px rgba(0,0,0,.28); }
   header .today-badge { background: rgba(255,255,255,.20); color: #ffffff; border: 1px solid rgba(255,255,255,.45); backdrop-filter: blur(4px); }
@@ -130,17 +130,17 @@
 
   .stat-card { position: relative; overflow: hidden; box-shadow: 0 4px 16px rgba(22,104,214,.08); }
   .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent); }
-  .stat-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #0aa6c2, #22d3ee); }
-  .stat-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #1668d6, #60a5fa); }
-  .stat-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #e6157b, #ff7ab6); }
-  .stat-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #ff7a18, #ffb454); }
+  .stat-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #FC8019, #ffb454); }
+  .stat-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #e8720f, #FC8019); }
+  .stat-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #FC8019, #ffb454); }
+  .stat-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #d4650d, #FC8019); }
   .stat-card:hover { box-shadow: 0 8px 26px rgba(22,104,214,.20); }
 
-  .panel-header { background: linear-gradient(90deg, rgba(10,166,194,.10), rgba(230,21,123,.06)); }
+  .panel-header { background: linear-gradient(90deg, rgba(252,128,25,.10), rgba(232,114,15,.06)); }
   .panel-header h2 { color: var(--accent2); }
 
   ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #0aa6c2, #1668d6); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #FC8019, #e8720f); border-radius: 10px; }
   ::-webkit-scrollbar-track { background: #e6eef8; }
 
 </style>
@@ -176,13 +176,10 @@
   <div class="logo">
     <div style="display:flex;align-items:center;gap:16px">
       <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
-        <img src="/logo.png" alt="Ruralift" style="max-width:100%;max-height:100%;object-fit:contain">
-      </div>
-      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
-        <img src="/kingfisher-logo.png" alt="Kingfisher" style="max-width:100%;max-height:100%;object-fit:contain">
+        <img src="/swiggy-logo.svg" alt="Swiggy" style="max-width:100%;max-height:100%;object-fit:contain">
       </div>
     </div>
-    <h1>Kingfisher x Ruralift CRM</h1>
+    <h1>Swiggy Rider Recruitment CRM</h1>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
     <span class="today-badge" id="liveClock" style="min-width:96px;text-align:center">--:--:--</span>
@@ -196,7 +193,7 @@
   <div class="panel" style="margin-bottom:20px">
     <div class="panel-body" style="padding:16px 20px">
       <p style="margin:0;font-size:14px;line-height:1.7;color:var(--text)">
-        👋 <strong>यह पेज क्या है?</strong> यहाँ आप अपने Kingfisher कॉलिंग टीम का रोज़ का काम लाइव देख सकते हैं —
+        👋 <strong>यह पेज क्या है?</strong> यहाँ आप अपने Swiggy Rider Recruitment कॉलिंग टीम का रोज़ का काम लाइव देख सकते हैं —
         किस नंबर पर कॉल हुई, कौन Interested है, किसका Followup बाकी है, कौन ग्राहक बन चुका है, और रोज़ की PDF Report भी यहीं से मिलेगी।
         सब कुछ अपने आप अपडेट होता रहता है, कुछ भी manually refresh करने की ज़रूरत नहीं।
       </p>
@@ -349,7 +346,7 @@
 
   <!-- GENERATED REPORTS ARCHIVE (permanent PDF storage, searchable by date) -->
   <div class="panel">
-    <div class="panel-header" style="background:rgba(230,21,123,.06)">
+    <div class="panel-header" style="background:rgba(252,128,25,.06)">
       <h2 style="color:var(--magenta)">&#128196; Generated Reports Archive</h2>
     </div>
     <div class="panel-body">
@@ -589,7 +586,7 @@ function renderCompletedLeads(leads) {
       '<td><span class="phone-number">' + escapeHtml(formatPhone(l.phone)) + '</span></td>' +
       '<td>' + (escapeHtml(l.name) || '\u2014') + '</td>' +
       '<td style="font-weight:500">' + (escapeHtml(l.interestedBy) || '\u2014') + '</td>' +
-      '<td>' + escapeHtml(PKG_LABELS[l.loanType] || l.loanType || '\u2014') + '</td>' +
+      '<td>' + escapeHtml(PKG_LABELS[l.vehicleType || l.loanType] || l.vehicleType || l.loanType || '\u2014') + '</td>' +
       '<td style="font-size:12px;font-family:var(--mono)">' + completedAt + '</td>' +
       '<td><span class="doc-badge complete">' + escapeHtml(displayStatus) + '</span></td>' +
     '</tr>';

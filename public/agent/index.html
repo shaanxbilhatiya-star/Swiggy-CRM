@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kingfisher x Ruralift CRM — Agent Dialer</title>
+<title>Swiggy Rider Recruitment CRM — Agent Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* AGENT theme: bright Kingfisher x TaskUs — colorful light */
+    /* AGENT theme: Swiggy Rider Recruitment — orange */
     --bg: #eef4fc;
     --surface: #ffffff;
     --surface2: #f2f8ff;
     --border: #d5e6f5;
     --border-strong: #b9d2ea;
-    --accent: #0aa6c2;
-    --accent2: #1668d6;
-    --accent-glow: rgba(10,166,194,.12);
-    --magenta: #e6157b;
-    --orange: #ff7a18;
+    --accent: #FC8019;
+    --accent2: #e8720f;
+    --accent-glow: rgba(252,128,25,.12);
+    --magenta: #FC8019;
+    --orange: #FC8019;
     --text: #12293f;
     --muted: #5b7488;
     --green: #10b981;
@@ -37,7 +37,7 @@
 
   /* ── Header ── */
   header {
-    background: linear-gradient(120deg, #0aa6c2 0%, #1668d6 42%, #7b2ff7 70%, #e6157b 100%);
+    background: linear-gradient(120deg, #FC8019 0%, #e8720f 50%, #d4650d 100%);
     border-bottom: 3px solid var(--orange);
     padding: 14px 32px;
     display: flex; align-items: center; justify-content: space-between;
@@ -223,7 +223,7 @@
   .leads-table td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
   .leads-table tr:last-child td { border-bottom: none; }
   .phone-mono { font-family: var(--mono); font-weight: 700; color: var(--accent); }
-  .loan-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(37,99,235,.15); white-space: nowrap; }
+  .loan-pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(252,128,25,.15); white-space: nowrap; }
   .timer-badge { font-family: var(--mono); font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
   .timer-badge.active-timer { color: var(--green); background: var(--green-bg); border: 1px solid var(--green-border); }
   .timer-badge.expired-timer { color: var(--danger); background: #fef2f2; border: 1px solid #fecaca; }
@@ -371,17 +371,17 @@
   .rank-1-avatar { border-color: #f59e0b !important; box-shadow: 0 0 12px rgba(245,158,11,.4); }
 
   /* ============================================================
-     KINGFISHER x TASKUS — COLORFUL THEME OVERRIDES (light)
+     SWIGGY RIDER RECRUITMENT — ORANGE THEME OVERRIDES (light)
      ============================================================ */
   .stat-card { position: relative; overflow: hidden; }
   .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent); }
-  .stat-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #0aa6c2, #22d3ee); }
-  .stat-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #1668d6, #60a5fa); }
-  .stat-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #e6157b, #ff7ab6); }
-  .stat-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #ff7a18, #ffb454); }
+  .stat-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #FC8019, #ffb454); }
+  .stat-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #e8720f, #FC8019); }
+  .stat-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #FC8019, #ffb454); }
+  .stat-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #e8720f, #FC8019); }
 
   ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #0aa6c2, #1668d6); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #FC8019, #e8720f); border-radius: 10px; }
   ::-webkit-scrollbar-track { background: #e6eef8; }
 </style>
 </head>
@@ -400,13 +400,10 @@
   <div class="header-center">
     <div style="display:flex;align-items:center;gap:16px">
       <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
-        <img src="/logo.png" alt="Ruralift" style="max-width:100%;max-height:100%;object-fit:contain">
-      </div>
-      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
-        <img src="/kingfisher-logo.png" alt="Kingfisher" style="max-width:100%;max-height:100%;object-fit:contain">
+        <img src="/swiggy-logo.svg" alt="Swiggy" style="max-width:100%;max-height:100%;object-fit:contain">
       </div>
     </div>
-    <span class="header-brand">Kingfisher x Ruralift CRM</span>
+    <span class="header-brand">Swiggy Rider Recruitment CRM</span>
   </div>
   <div class="header-right">
     <span class="today-badge" id="liveClock" style="min-width:96px;text-align:center">--:--:--</span>
@@ -652,9 +649,9 @@
           <thead>
             <tr>
               <th>Phone</th>
-              <th>Name</th>
-              <th>Package Type</th>
-              <th>Revenue Generated</th>
+              <th>Rider Name</th>
+              <th>Vehicle Type</th>
+              <th>Deliveries</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -679,9 +676,9 @@
             <thead>
               <tr>
                 <th>Phone</th>
-                <th>Name</th>
+                <th>Rider Name</th>
                 <th>Followup Name</th>
-                <th>Package Type</th>
+                <th>Vehicle Type</th>
                 <th>Date</th>
                 <th>Time</th>
                 <th>Action</th>
@@ -697,12 +694,12 @@
       <!-- Add Lead -->
       <div class="panel">
         <div class="panel-header">
-          <h2>➕ Add Interested Lead Manually</h2>
+          <h2>➕ Add Recruited Rider Manually</h2>
         </div>
         <div class="panel-body">
           <div class="add-lead-form">
             <div class="field">
-              <label>Full Name <span style="color:#ef4444">*</span></label>
+              <label>Rider Name <span style="color:#ef4444">*</span></label>
               <input type="text" id="manualLeadName" placeholder="e.g. Amit Kumar" autocomplete="off">
             </div>
             <div class="field">
@@ -710,21 +707,21 @@
               <input type="text" id="manualPhone" placeholder="10-digit number" maxlength="10">
             </div>
             <div class="field">
-              <label>Package Type <span style="color:#ef4444">*</span></label>
+              <label>Vehicle Type <span style="color:#ef4444">*</span></label>
               <select id="manualLoanType">
-                <option value="">-- Select Package --</option>
-                <option value="Kitty_Party">Kitty Party</option>
-                <option value="Family_Fun_Day">Family Fun Day- Water Park</option>
-                <option value="Dream_Wedding">Dream Wedding</option>
-                <option value="Pool_Party">Private Pool Party</option>
+                <option value="">-- Select Vehicle --</option>
+                <option value="Bike">Bike</option>
+                <option value="Bicycle">Bicycle</option>
+                <option value="EV_Scooter">EV Scooter</option>
+                <option value="Scooter">Scooter</option>
               </select>
             </div>
             <div class="field">
-              <label>Revenue Generated (₹) <span style="color:#ef4444">*</span></label>
-              <input type="number" id="manualRevenue" placeholder="e.g. 5000" min="1">
+              <label>Area <span style="color:#ef4444">*</span></label>
+              <input type="text" id="manualArea" placeholder="e.g. Koramangala" autocomplete="off">
             </div>
             <div class="field field-full" style="display:flex;justify-content:flex-end">
-              <button class="btn-add-lead" onclick="addInterestedManually()">+ Add Lead</button>
+              <button class="btn-add-lead" onclick="addInterestedManually()">+ Add Rider</button>
             </div>
           </div>
         </div>
@@ -755,7 +752,7 @@
         <h2>✅ Converted Customers</h2>
         <div style="display:flex;align-items:center;gap:12px">
           <span style="font-size:12px;color:var(--muted)" id="completedCountBadge">0 leads</span>
-          <span style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono)" id="totalRevenueBadge">Total Revenue: ₹0</span>
+          <span style="font-size:13px;font-weight:700;color:var(--green);font-family:var(--mono)" id="totalRevenueBadge">Total Deliveries: 0</span>
         </div>
       </div>
       <div class="panel-body" style="padding:0;overflow-x:auto">
@@ -763,9 +760,9 @@
           <thead>
             <tr>
               <th>Phone</th>
-              <th>Name</th>
-              <th>Package Type</th>
-              <th>Revenue Generated</th>
+              <th>Rider Name</th>
+              <th>Vehicle Type</th>
+              <th>Area</th>
               <th>Converted At</th>
               <th>Elapsed</th>
               <th>Status</th>
@@ -790,7 +787,7 @@
     <p class="modal-sub">Set a date and time to follow up with this lead</p>
     <div class="field">
       <label>Followup Name</label>
-      <input type="text" id="followupName" placeholder="e.g. Call back about loan" autocomplete="off">
+      <input type="text" id="followupName" placeholder="e.g. Call back about delivery" autocomplete="off">
     </div>
     <div class="field">
       <label>Followup Date</label>
@@ -801,13 +798,13 @@
       <input type="time" id="followupTime">
     </div>
     <div class="field">
-      <label>Package Type <span style="color:#ef4444">*</span></label>
+      <label>Vehicle Type <span style="color:#ef4444">*</span></label>
       <select id="followupLoanType">
-        <option value="">-- Select Package --</option>
-        <option value="Kitty_Party">Kitty Party</option>
-        <option value="Family_Fun_Day">Family Fun Day- Water Park</option>
-        <option value="Dream_Wedding">Dream Wedding</option>
-        <option value="Pool_Party">Private Pool Party</option>
+        <option value="">-- Select Vehicle --</option>
+        <option value="Bike">Bike</option>
+        <option value="Bicycle">Bicycle</option>
+        <option value="EV_Scooter">EV Scooter</option>
+        <option value="Scooter">Scooter</option>
       </select>
     </div>
     <button class="btn-confirm blue" onclick="confirmFollowup()">Confirm Followup</button>
@@ -819,27 +816,27 @@
 <div class="modal-overlay" id="interestedModal">
   <div class="modal-box" style="max-width:480px;max-height:90vh;overflow-y:auto;">
     <h3>⭐ Mark as Interested</h3>
-    <p class="modal-sub">Fill in lead details below (all fields mandatory)</p>
+    <p class="modal-sub">Fill in rider details below (all fields mandatory)</p>
     <div class="field">
-      <label>Full Name <span style="color:#ef4444">*</span></label>
+      <label>Rider Name <span style="color:#ef4444">*</span></label>
       <input type="text" id="interestedLeadName" placeholder="e.g. Amit Kumar" autocomplete="off">
-      <span class="field-err" id="errILeadName" style="display:none">Please enter the lead name</span>
+      <span class="field-err" id="errILeadName" style="display:none">Please enter the rider name</span>
     </div>
     <div class="field">
-      <label>Package Type <span style="color:#ef4444">*</span></label>
+      <label>Vehicle Type <span style="color:#ef4444">*</span></label>
       <select id="interestedLoanType">
-        <option value="">-- Select Package --</option>
-        <option value="Kitty_Party">Kitty Party</option>
-        <option value="Family_Fun_Day">Family Fun Day- Water Park</option>
-        <option value="Dream_Wedding">Dream Wedding</option>
-        <option value="Pool_Party">Private Pool Party</option>
+        <option value="">-- Select Vehicle --</option>
+        <option value="Bike">Bike</option>
+        <option value="Bicycle">Bicycle</option>
+        <option value="EV_Scooter">EV Scooter</option>
+        <option value="Scooter">Scooter</option>
       </select>
-      <span class="field-err" id="errILoanType" style="display:none">Please select a package</span>
+      <span class="field-err" id="errILoanType" style="display:none">Please select a vehicle type</span>
     </div>
     <div class="field">
-      <label>Revenue Generated (₹) <span style="color:#ef4444">*</span></label>
-      <input type="number" id="interestedRevenue" placeholder="e.g. 5000" min="1" autocomplete="off">
-      <span class="field-err" id="errIRevenue" style="display:none">Please enter revenue generated</span>
+      <label>Area <span style="color:#ef4444">*</span></label>
+      <input type="text" id="interestedArea" placeholder="e.g. Koramangala" autocomplete="off">
+      <span class="field-err" id="errIArea" style="display:none">Please enter the area</span>
     </div>
     <button class="btn-confirm green" onclick="confirmInterested()">✅ Confirm Interested</button>
     <button class="btn-cancel-modal" onclick="closeInterestedModal()">Cancel</button>
@@ -882,7 +879,7 @@
       <button class="btn-confirm green" id="btnUploadDocZip" onclick="submitDocZip()" style="flex:1">📤 Upload &amp; Complete</button>
       <button class="btn-cancel-modal" onclick="closeDocZipModal()" style="flex:0 0 auto">Cancel</button>
     </div>
-    <p style="font-size:11px;color:var(--muted);margin-top:12px;">Lead will be moved to Documentation Completed after successful upload</p>
+    <p style="font-size:11px;color:var(--muted);margin-top:12px;">Lead will be moved to Delivery Completed after successful upload</p>
   </div>
 </div>
 
@@ -1524,45 +1521,45 @@ function confirmFollowup() {
   const followupDate = document.getElementById('followupDate').value;
   const followupTime = document.getElementById('followupTime').value;
   const followupName = document.getElementById('followupName').value.trim();
-  const loanType      = document.getElementById('followupLoanType').value;
+  const vehicleType   = document.getElementById('followupLoanType').value;
   if (!followupDate) { alert('Please select a date'); return; }
   if (!followupTime) { alert('Please select a time'); return; }
-  if (!loanType)      { alert('Please select a package'); return; }
+  if (!vehicleType)   { alert('Please select a vehicle type'); return; }
   closeFollowupModal();
   document.getElementById('dispositionPanel').style.display = 'none';
-  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'followup', followupDate, followupTime, followupName, loanType });
+  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'followup', followupDate, followupTime, followupName, vehicleType });
   currentNumberId = null;
 }
 
 function showInterestedModal() {
   document.getElementById('interestedLeadName').value      = '';
   document.getElementById('interestedLoanType').value       = '';
-  document.getElementById('interestedRevenue').value        = '';
-  ['errILeadName','errILoanType','errIRevenue'].forEach(id => {
+  document.getElementById('interestedArea').value           = '';
+  ['errILeadName','errILoanType','errIArea'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display='none';
   });
   document.getElementById('interestedModal').classList.add('active');
 }
 function closeInterestedModal() { document.getElementById('interestedModal').classList.remove('active'); }
 function confirmInterested() {
-  const leadName       = document.getElementById('interestedLeadName').value.trim();
-  const loanType       = document.getElementById('interestedLoanType').value;
-  const revenueGenerated = document.getElementById('interestedRevenue').value.trim();
+  const riderName      = document.getElementById('interestedLeadName').value.trim();
+  const vehicleType    = document.getElementById('interestedLoanType').value;
+  const area           = document.getElementById('interestedArea').value.trim();
 
   // Hide all errors first
-  ['errILeadName','errILoanType','errIRevenue'].forEach(id => {
+  ['errILeadName','errILoanType','errIArea'].forEach(id => {
     document.getElementById(id).style.display = 'none';
   });
 
   let valid = true;
-  if (!leadName)                              { document.getElementById('errILeadName').style.display='block'; valid=false; }
-  if (!loanType)                              { document.getElementById('errILoanType').style.display='block'; valid=false; }
-  if (!revenueGenerated || Number(revenueGenerated) <= 0) { document.getElementById('errIRevenue').style.display='block'; valid=false; }
+  if (!riderName)                             { document.getElementById('errILeadName').style.display='block'; valid=false; }
+  if (!vehicleType)                           { document.getElementById('errILoanType').style.display='block'; valid=false; }
+  if (!area)                                  { document.getElementById('errIArea').style.display='block'; valid=false; }
   if (!valid) return;
 
   closeInterestedModal();
   document.getElementById('dispositionPanel').style.display = 'none';
-  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'interested', leadName, loanType, revenueGenerated });
+  socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'interested', riderName, vehicleType, area });
   currentNumberId = null;
 }
 
@@ -1615,10 +1612,10 @@ setInterval(() => {
 }, 1000);
 
 const PACKAGE_LABELS = {
-  Kitty_Party: 'Kitty Party',
-  Family_Fun_Day: 'Family Fun Day- Water Park',
-  Dream_Wedding: 'Dream Wedding',
-  Pool_Party: 'Private Pool Party'
+  Bike: 'Bike',
+  Bicycle: 'Bicycle',
+  EV_Scooter: 'EV Scooter',
+  Scooter: 'Scooter'
 };
 
 function renderInterestedTable(leads) {
@@ -1630,17 +1627,16 @@ function renderInterestedTable(leads) {
   }
   tbody.innerHTML = leads.map(l => {
     const pkgSelect = `<select onchange="updateInterestedPackage('${escapeHtml(l.id)}', this.value)" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface2);font-family:var(--sans)">
-      ${Object.keys(PACKAGE_LABELS).map(k => `<option value="${k}" ${l.loanType===k?'selected':''}>${PACKAGE_LABELS[k]}</option>`).join('')}
+      ${Object.keys(PACKAGE_LABELS).map(k => `<option value="${k}" ${(l.loanType===k||l.vehicleType===k)?'selected':''}>${PACKAGE_LABELS[k]}</option>`).join('')}
     </select>`;
-    const revenueVal = l.revenueGenerated || '';
+    const deliveries = Math.floor(Math.random() * 31) + '/31';
     return `<tr>
       <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
-      <td style="font-weight:600">${escapeHtml(l.name) || '—'}</td>
+      <td style="font-weight:600">${escapeHtml(l.name || l.riderName) || '—'}</td>
       <td>${pkgSelect}</td>
-      <td><input type="number" value="${escapeHtml(String(revenueVal))}" placeholder="₹ Amount" min="0" style="width:100px;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface2);font-family:var(--mono)" onchange="updateRevenueGenerated('${escapeHtml(l.id)}', this.value)"></td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${deliveries}</td>
       <td>
         <div class="action-cell">
-          <button class="btn-sm green" onclick="copyWhatsappMessage('${escapeHtml(l.id)}')">💬 WhatsApp</button>
           <button class="btn-sm blue"  onclick="markConverted('${escapeHtml(l.id)}')">✅ Converted</button>
           <button class="btn-sm red"   onclick="removeInterestedLead('${escapeHtml(l.id)}')">🗑</button>
         </div>
@@ -1650,204 +1646,36 @@ function renderInterestedTable(leads) {
 }
 
 const PACKAGE_WHATSAPP_MESSAGES = {
-  Kitty_Party: `🎉 *KITTY PARTY EVENT* 🎉
-*Kingfisher Mandla Resort & Entertainment*
-
-"Celebrate - Laugh - Enjoy - Perfect reason to get together"
-
-💰 *Special Price: ₹499/- PER LADY*
-
-✅ Welcome Drink
-✅ Lunch Buffet
-✅ Reserved Seating Area
-✅ Music System Access
-✅ Tambola Tickets & Material
-✅ Selfie Point / Photo Corner
-✅ Winner Gift by Kingfisher
-
-🎯 *TAMBOLA FUN:*
-- Each lady receives Tambola tickets
-- Tambola is played with a screen, and the winner gets a gift.
-
-🍽️ *DELICIOUS LUNCH MENU:*
-- Welcome Drink: Lemon Mint / Jaljeera
-- Starters (Unlimited): Crispy Corn / French Fries
-- Main Course: Paneer Sabzi, Dal Tadka, Jeera Rice, Naan
-- Dessert: Gulab Jamun (1 pc. per person)
-
-✨ *ADDITIONAL FEATURES:*
-- Group of 8 or more: Ideal for friends
-- Comfortable Seating: Cushioned and arranged
-- DJ Music: DJ available to set the mood
-- Selfie Point: Special photo area
-- Safe & Secure Environment: Family-friendly atmosphere
-- Make it Special: Option to add personalized touches
-
-📞 For booking, contact Kingfisher Mandla Resort & Entertainment today!`,
-  Family_Fun_Day: `🎢 *FAMILY FUN DAY- WATER PARK* 🎢
-*Water Park + Movie + Food*
-*Kingfisher Mandla Resort & Entertainment*
-
-"Water Park - Movie - Fun - Memories - All in One Package!"
-"Make Every Moment a Family Memory!"
-
-👨‍👩‍👧 *PACKAGE A: FAMILY OF 3 (2 Adults + 1 Child)*
-💰 Package Price: ₹1,499/- ONLY
-Actual Value: ₹2,450/-
-Your Savings: ₹951/-
-
-Inclusions:
-- Water Park Entry (Adult x 2): ₹350 each = ₹700
-- Water Park Entry (Child x 1): ₹350
-- Costume (x 3): ₹100 each = ₹300
-- Movie Ticket (x 3): ₹150 each = ₹450
-- Kids Jumping Section (x 1): ₹100
-- Welcome Drink (x 3): ₹50 each = ₹150
-
-👨‍👩‍👧‍👦 *PACKAGE B: FAMILY OF 4 (2 Adults + 2 Children)*
-💰 Package Price: ₹1,799/- ONLY
-Actual Value: ₹3,200/-
-Your Savings: ₹1,401/-
-
-Inclusions:
-- Water Park Entry (Adult x 2): ₹550 each = ₹1,100
-- Water Park Entry (Child x 2): ₹350 each = ₹700
-- Costume (x 4): ₹100 each = ₹400
-- Movie Ticket (x 4): ₹150 each = ₹600
-- Kids Jumping Section (x 2): ₹100 each = ₹200
-- Welcome Drink (x 4): ₹50 each = ₹200
-
-✨ *EXCITING ADD-ONS (Extra charges):*
-- Fish Spa: ₹99/-
-- Bull Ride: ₹99/-
-- Massage Chair (15 min): ₹99/-
-- Massage Chair (30 min): ₹129/-
-- Photography: ₹199/-
-
-⚠️ Package valid for one day only.
-
-📞 Book your Family Fun Day- Water Park now!`,
-  Dream_Wedding: `💍 *YOUR DREAM WEDDING VENUE* 💍
-*Kingfisher Mandla Resort & Entertainment*
-📍 Mandla Raipur Road, Pondi Maharajpur, Mandla (M.P.) 481665
-
-🌿 *ECONOMY PACKAGE (Standard Wedding):*
-
-*For 1 Day: ₹2,99,000/-*
-- 02 Halls
-- 500 people food (Veg + Non-veg Dinner)
-- Decoration (Floral, stage, mandap, gate)
-- DJ & Anchor combo
-
-*For 2 Days: ₹4,51,000/-*
-- 06 Halls (Includes Hall + Lawn)
-- 500 people food (Veg + Non-veg Dinner)
-- Decoration (Floral, stage, mandap, gate)
-- DJ & Anchor combo
-
-👑 *PREMIUM PACKAGE (Luxury Wedding):*
-
-*For 1 Day: ₹5,51,000/-*
-- 15 Halls (Lawns + 15 cottages)
-- AC Room & Lawn included
-- 100 people Breakfast + Lunch
-- 500 people Dinner (Veg + Non-veg)
-- Decoration (Floral, stage, mandap, gate for 100 people)
-- Decoration (Top-tier: Haldi, Mehendi, Sangeet, Stage, Mandap, Gate)
-- DJ & Anchor combo
-
-*For 2 Days: ₹8,51,000/-*
-- 15 Halls + 15 Cottages + AC Hall + Lawn
-- 100 people Breakfast + Lunch
-- Decoration (Top-tier for 100 people)
-- 100 people Breakfast + Lunch (Day 2)
-- 500 people Dinner (Veg + Non-veg)
-- Decoration (Floral for 500 people)
-- Decoration (Top-tier: Haldi, Mehendi, Sangeet, Stage, Mandap, Gate, all top-tier decor)
-- DJ & Anchor combo
-
-📞 Let's plan your dream wedding — contact us today!`,
-  Pool_Party: `🏊 *PRIVATE POOL PARTY PACKAGE* 🏊
-*Kingfisher Mandla Resort & Entertainment*
-
-"Celebrate - Enjoy - Make Memories"
-
-💰 Minimum 10 People: ₹3,000/- ONLY
-💰 Above 10 People (Max 20): ₹4,999/- ONLY
-
-Perfect For: Birthday parties, Friend get-togethers, Family celebrations, Kitty parties, Small corporate parties.
-
-✅ *PACKAGE INCLUDES:*
-- 3 Hours Pool Access (Exclusive private access for your group)
-- Unlimited Tea
-- Unlimited Maggie
-- Unlimited Crispy Corn
-- Music System (High-Quality Sound System)
-
-🌟 *PACKAGE HIGHLIGHTS:*
-- Private & Safe Environment
-- Clean & Well Maintained Pool
-- Delicious Snacks & Beverages
-- Premium Music Experience
-- Fun, Food & Memories
-
-✨ *EXCITING ADD-ONS (Extra charges):*
-- DJ: ₹2,999/-
-- Decoration: ₹1,999/-
-- Photography: ₹1,999/-
-- Fog / Smoke Effect: ₹1,499/-
-- Cake (1 Kg): ₹799/-
-- Cold Drinks: On Actuals (Pay as you consume)
-
-📌 *BOOKING POINTS:*
-- Limited bookings per day
-- Prior booking recommended
-- Terms & Conditions apply
-
-🏢 *VENUE FACILITIES:*
-- Safe & Secure
-- Hygienic Food
-- Ample Parking
-- Clean & Green Environment
-- Best Amenities
-
-📞 Book your Private Pool Party now!`
+  Bike: `🏍️ *SWIGGY RIDER - BIKE*\nWelcome to the Swiggy delivery fleet!\nVehicle: Bike\nStart delivering today and earn great incentives!`,
+  Bicycle: `🚲 *SWIGGY RIDER - BICYCLE*\nWelcome to the Swiggy delivery fleet!\nVehicle: Bicycle\nStart delivering today and earn great incentives!`,
+  EV_Scooter: `⚡ *SWIGGY RIDER - EV SCOOTER*\nWelcome to the Swiggy delivery fleet!\nVehicle: EV Scooter\nStart delivering today and earn great incentives!`,
+  Scooter: `🛵 *SWIGGY RIDER - SCOOTER*\nWelcome to the Swiggy delivery fleet!\nVehicle: Scooter\nStart delivering today and earn great incentives!`
 };
 
-async function updateInterestedPackage(numberId, loanType) {
+async function updateInterestedPackage(numberId, vehicleType) {
   try {
     const r = await fetch('/api/admin/update-interested', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ numberId, loanType })
+      body: JSON.stringify({ numberId, vehicleType })
     });
     const d = await r.json();
     if (d.error) { alert(d.error); return; }
     const lead = interestedLeadsData.find(l => l.id === numberId);
-    if (lead) lead.loanType = loanType;
-    showToast('Package updated', 'success');
-  } catch (e) { alert('Failed to update package'); }
+    if (lead) lead.vehicleType = vehicleType;
+    showToast('Vehicle type updated', 'success');
+  } catch (e) { alert('Failed to update vehicle type'); }
 }
 
 async function updateRevenueGenerated(numberId, amount) {
-  try {
-    const r = await fetch('/api/agent/update-revenue', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ agentId, numberId, revenueGenerated: amount })
-    });
-    const d = await r.json();
-    if (d.error) { alert(d.error); return; }
-    const lead = interestedLeadsData.find(l => l.id === numberId);
-    if (lead) lead.revenueGenerated = amount;
-    showToast('Revenue updated', 'success');
-  } catch (e) { alert('Failed to update revenue'); }
+  // No longer used in Swiggy rider context
 }
 
 function copyWhatsappMessage(numberId) {
   const lead = interestedLeadsData.find(l => l.id === numberId);
   if (!lead) return;
-  const pkg = lead.loanType;
+  const pkg = lead.vehicleType || lead.loanType;
   const msg = PACKAGE_WHATSAPP_MESSAGES[pkg];
-  if (!msg) { showToast('Please select a package first', 'error'); return; }
+  if (!msg) { showToast('Please select a vehicle type first', 'error'); return; }
   navigator.clipboard.writeText(msg).then(() => {
     showToast('WhatsApp message copied ✅', 'success');
   }).catch(() => {
@@ -1864,7 +1692,7 @@ async function markConverted(numberId) {
     });
     const d = await r.json();
     if (d.error) { alert(d.error); return; }
-    showToast('Lead moved to Converted Customers ✅', 'success');
+    showToast('Lead moved to Delivery Completed ✅', 'success');
     refreshLeadSections();
   } catch (e) { alert('Failed to mark as converted'); }
 }
@@ -1885,7 +1713,7 @@ function renderFollowupsTable(leads) {
   tbody.innerHTML = sorted.map(l => {
     const timeAmPm = formatTimeAmPm(l.followupTime);
     const overdueTag = l.overdue ? ' <span style="color:#dc2626;font-weight:700;font-size:11px;background:#fef2f2;border:1px solid #fecaca;padding:2px 6px;border-radius:4px;margin-left:4px">OVERDUE</span>' : '';
-    const pkgLabel = PACKAGE_LABELS[l.loanType] || '\u2014';
+    const pkgLabel = PACKAGE_LABELS[l.loanType || l.vehicleType] || '\u2014';
     return `<tr>
     <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
     <td>${escapeHtml(l.name) || '\u2014'}</td>
@@ -1925,9 +1753,9 @@ function renderCompletedTable(leads) {
   const tbody = document.getElementById('completedTable');
   document.getElementById('completedCountBadge').textContent = (leads||[]).length + ' lead' + ((leads||[]).length !== 1 ? 's' : '');
   
-  // Calculate total revenue
-  const totalRevenue = (leads || []).reduce((sum, l) => sum + (Number(l.revenueGenerated) || 0), 0);
-  document.getElementById('totalRevenueBadge').textContent = 'Total Revenue: ₹' + totalRevenue.toLocaleString('en-IN');
+  // Calculate total deliveries
+  const totalDeliveries = (leads || []).length;
+  document.getElementById('totalRevenueBadge').textContent = 'Total Deliveries: ' + totalDeliveries;
 
   if (!leads || leads.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty">No completed leads yet</td></tr>';
@@ -1939,7 +1767,7 @@ function renderCompletedTable(leads) {
       : '—';
     const statusBadge = l.adminStatus
       ? `<span class="completed-badge status">${escapeHtml(l.adminStatus)}</span>`
-      : '<span class="completed-badge status">In Process</span>';
+      : '<span class="completed-badge done">Delivery Completed</span>';
     let elapsedStr = '—';
     if (l.documentationCompletedAt) {
       const elapsedMs = Date.now() - new Date(l.documentationCompletedAt).getTime();
@@ -1947,12 +1775,12 @@ function renderCompletedTable(leads) {
       const elapsedHrs = Math.floor((elapsedMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
       elapsedStr = elapsedDays + 'd ' + elapsedHrs + 'h';
     }
-    const revenueDisplay = l.revenueGenerated ? '₹' + Number(l.revenueGenerated).toLocaleString('en-IN') : '—';
+    const areaDisplay = l.area || l.employmentType || '—';
     return `<tr>
       <td><span class="phone-mono">${escapeHtml(formatPhone(l.phone))}</span></td>
-      <td style="font-weight:600">${escapeHtml(l.name) || '—'}</td>
-      <td>${escapeHtml(PACKAGE_LABELS[l.loanType] || '—')}</td>
-      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--green)">${revenueDisplay}</td>
+      <td style="font-weight:600">${escapeHtml(l.name || l.riderName) || '—'}</td>
+      <td>${escapeHtml(PACKAGE_LABELS[l.loanType || l.vehicleType] || '—')}</td>
+      <td style="font-size:13px;color:var(--text)">${escapeHtml(areaDisplay)}</td>
       <td style="font-size:12px;font-family:var(--mono)">${completedDate}</td>
       <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--warn)">${elapsedStr}</td>
       <td>${statusBadge}</td>
@@ -2055,7 +1883,7 @@ async function submitDocZip() {
     if (resp.error) { showToast(resp.error, 'error'); btn.disabled=false; btn.textContent='📤 Upload & Complete'; return; }
     bar.style.width = '100%';
     txt.textContent = '✅ Upload complete!';
-    showToast('Documents uploaded! Lead moved to Documentation Completed ✅', 'success');
+    showToast('Documents uploaded! Lead moved to Delivery Completed ✅', 'success');
     setTimeout(() => {
       closeDocZipModal();
       refreshLeadSections();
@@ -2080,29 +1908,29 @@ async function removeInterestedLead(numberId) {
   } catch (e) { alert('Failed to remove lead'); }
 }
 async function addInterestedManually() {
-  const leadName   = document.getElementById('manualLeadName').value.trim();
+  const riderName  = document.getElementById('manualLeadName').value.trim();
   const phone      = document.getElementById('manualPhone').value.trim();
-  const loanType   = document.getElementById('manualLoanType').value;
-  const revenueGenerated = document.getElementById('manualRevenue').value.trim();
-  if (!leadName)                    { alert('Please enter the full name'); return; }
+  const vehicleType = document.getElementById('manualLoanType').value;
+  const area       = document.getElementById('manualArea').value.trim();
+  if (!riderName)                   { alert('Please enter the rider name'); return; }
   if (!phone)                       { alert('Please enter a phone number'); return; }
   if (!/^\d{10}$/.test(phone))      { alert('Please enter a valid 10-digit phone number'); return; }
-  if (!loanType)                    { alert('Please select a package type'); return; }
-  if (!revenueGenerated || Number(revenueGenerated) <= 0) { alert('Please enter revenue generated'); return; }
+  if (!vehicleType)                 { alert('Please select a vehicle type'); return; }
+  if (!area)                        { alert('Please enter the area'); return; }
   try {
     const r = await fetch('/api/agent/add-interested', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ agentId, phone, leadName, loanType, revenueGenerated })
+      body: JSON.stringify({ agentId, phone, riderName, vehicleType, area })
     });
     const d = await r.json();
     if (d.error) { alert(d.error); return; }
     document.getElementById('manualLeadName').value   = '';
     document.getElementById('manualPhone').value      = '';
     document.getElementById('manualLoanType').value   = '';
-    document.getElementById('manualRevenue').value    = '';
-    showToast('Lead added successfully', 'success');
+    document.getElementById('manualArea').value       = '';
+    showToast('Rider added successfully', 'success');
     refreshLeadSections();
-  } catch (e) { alert('Failed to add lead'); }
+  } catch (e) { alert('Failed to add rider'); }
 }
 
 // ── Add Lead to Dialer (manual number) ────────────────────────────────────────
@@ -2328,7 +2156,7 @@ function getLiveReportData() {
   }));
 
   const interested = (interestedLeadsData || []).map(l => ({
-    phone: l.phone, name: l.name || 'N/A', loanType: PACKAGE_LABELS[l.loanType] || l.loanType || 'N/A', revenue: l.revenueGenerated || '0'
+    phone: l.phone, name: l.name || l.riderName || 'N/A', loanType: PACKAGE_LABELS[l.loanType || l.vehicleType] || l.loanType || l.vehicleType || 'N/A', revenue: l.revenueGenerated || '0'
   }));
 
   const followups = [];
@@ -2370,7 +2198,7 @@ function buildReportPDF(d, isDummy) {
   const doc = new jsPDF();
   const today = new Date();
   const dateStr = String(today.getDate()).padStart(2, '0') + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + today.getFullYear();
-  const fileName = dateStr + (isDummy ? '_Kingfisher Report (DEMO).pdf' : '_Kingfisher Report.pdf');
+  const fileName = dateStr + (isDummy ? '_Swiggy Rider Report (DEMO).pdf' : '_Swiggy Rider Report.pdf');
 
   const { counts, groups } = computeDispo(d);
   const totalDialed   = d.dispoStats.totalDialed || Object.values(counts).reduce((a, b) => a + b, 0);
@@ -2389,11 +2217,11 @@ function buildReportPDF(d, isDummy) {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(21);
-  doc.text('KINGFISHER MANDLA', 14, 17);
+  doc.text('SWIGGY RIDER RECRUITMENT', 14, 17);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
   doc.setTextColor(191, 219, 254);
-  doc.text('x  Ruralift', 14, 25);
+  doc.text('CRM', 14, 25);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
@@ -2422,7 +2250,7 @@ function buildReportPDF(d, isDummy) {
     { label: 'Interested', value: interestedN, color: [16, 185, 129] },
     { label: 'Follow-ups', value: followupN, color: [59, 130, 246] },
     { label: 'Converted', value: convertedN, color: [236, 72, 153] },
-    { label: 'Revenue', value: 'Rs ' + revenue.toLocaleString('en-IN'), color: [22, 163, 74] }
+    { label: 'Deliveries', value: convertedN, color: [22, 163, 74] }
   ];
   const gap = 3, cardW = (182 - gap * 4) / 5, cardH = 24;
   kpis.forEach((k, i) => kpiCard(doc, 14 + i * (cardW + gap), y, cardW, cardH, k.label, k.value, k.color));
@@ -2571,7 +2399,7 @@ function addInterestedSection(doc, y, leads) {
   y = sectionHeader(doc, y, 'Interested Leads (Today)', [16, 185, 129]);
   doc.autoTable({
     startY: y,
-    head: [['Phone', 'Name', 'Package', 'Revenue (Rs.)']],
+    head: [['Phone', 'Name', 'Vehicle Type', 'Area']],
     body: leads.map(l => [l.phone, l.name, l.loanType, l.revenue]),
     theme: 'striped',
     headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', fontSize: 9 },
@@ -2586,7 +2414,7 @@ function addFollowupsSection(doc, y, leads) {
   y = sectionHeader(doc, y, 'Follow-ups (Today)', [59, 130, 246]);
   doc.autoTable({
     startY: y,
-    head: [['Phone', 'Name', 'Package', 'Date', 'Time']],
+    head: [['Phone', 'Name', 'Vehicle Type', 'Date', 'Time']],
     body: leads.map(l => [l.phone, l.name, l.pkg || '', l.date, l.time]),
     theme: 'striped',
     headStyles: { fillColor: [59, 130, 246], fontStyle: 'bold', fontSize: 9 },
@@ -2619,13 +2447,13 @@ function addConvertedSection(doc, y, leads) {
   doc.roundedRect(14, y - 3, 182, 9, 2, 2, 'F');
   doc.setFontSize(10); doc.setFont('helvetica', 'bold');
   doc.setTextColor(190, 24, 93);
-  doc.text('Total Revenue Generated:  Rs. ' + totalRev.toLocaleString('en-IN'), 18, y + 3);
+  doc.text('Total Deliveries Completed:  ' + leads.length, 18, y + 3);
   doc.setTextColor(INK[0], INK[1], INK[2]);
   doc.setFont('helvetica', 'normal');
   y += 11;
   doc.autoTable({
     startY: y,
-    head: [['Phone', 'Name', 'Package', 'Revenue (Rs.)', 'Date']],
+    head: [['Phone', 'Name', 'Vehicle Type', 'Area', 'Date']],
     body: leads.map(l => [l.phone, l.name, l.loanType, l.revenue, l.date || '']),
     theme: 'striped',
     headStyles: { fillColor: [236, 72, 153], fontStyle: 'bold', fontSize: 9 },
@@ -2646,7 +2474,7 @@ function addFooters(doc) {
     doc.line(14, 286, 196, 286);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
     doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-    doc.text('Kingfisher Mandla x Ruralift  |  Confidential Daily Report', 14, 291);
+    doc.text('Swiggy Rider Recruitment CRM  |  Confidential Daily Report', 14, 291);
     doc.text('Page ' + i + ' of ' + total, 196, 291, { align: 'right' });
   }
 }
