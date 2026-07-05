@@ -226,12 +226,15 @@
     <span class="today-badge" id="todayBadge">&#8212;</span>
   </div>
   <div class="logo">
-    <div style="display:flex;align-items:center;gap:16px">
-      <div style="width:150px;height:60px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:150px;height:56px;display:flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
         <img src="/swiggy-logo.svg" alt="Swiggy" style="max-width:100%;max-height:100%;object-fit:contain">
       </div>
+      <div style="width:150px;height:56px;display:flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:10px;background:#fff;border:2px solid rgba(255,255,255,.55)">
+        <img src="/logo.png" alt="Ruralift" style="max-width:100%;max-height:100%;object-fit:contain">
+      </div>
     </div>
-    <h1>Swiggy Rider Recruitment CRM</h1>
+    <h1>Swiggy India x Ruralift CRM</h1>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
     <span class="today-badge" id="liveClock" style="min-width:96px;text-align:center">--:--:--</span>
@@ -1482,17 +1485,6 @@ async function fetchFailedRiders() {
       const deliveryCount = l.deliveryCount || 0;
       return elapsed > totalMs && deliveryCount < 31;
     });
-    // DUMMY DATA — remove in next push
-    if (failed.length === 0) {
-      const dummyFailed = [
-        { id:'dummy1', phone:'9876543210', riderName:'Rahul Sharma', vehicleType:'Bike', area:'Koramangala', city:'Bangalore', interestedBy:'Priya', interestedAt: new Date(Date.now() - 8*24*60*60*1000).toISOString(), deliveryCount: 18 },
-        { id:'dummy2', phone:'9123456789', riderName:'Amit Patel', vehicleType:'Bicycle', area:'HSR Layout', city:'Bangalore', interestedBy:'Rohit', interestedAt: new Date(Date.now() - 9*24*60*60*1000).toISOString(), deliveryCount: 24 },
-        { id:'dummy3', phone:'8765432109', riderName:'Suresh Kumar', vehicleType:'EV_Scooter', area:'Whitefield', city:'Bangalore', interestedBy:'Priya', interestedAt: new Date(Date.now() - 10*24*60*60*1000).toISOString(), deliveryCount: 7 },
-        { id:'dummy4', phone:'7654321098', riderName:'Deepak Yadav', vehicleType:'Scooter', area:'Indiranagar', city:'Bangalore', interestedBy:'Rohit', interestedAt: new Date(Date.now() - 12*24*60*60*1000).toISOString(), deliveryCount: 29 },
-      ];
-      renderFailedRiders(dummyFailed);
-      return;
-    }
     renderFailedRiders(failed);
   } catch (e) {
     console.error('Failed to fetch failed riders:', e);

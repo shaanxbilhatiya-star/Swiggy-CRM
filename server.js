@@ -295,12 +295,12 @@ if (!appState.reports) {
 // or the reserved EID below is already taken by something else, it's a no-op.
 (function ensureDefaultSwiggyUser() {
   const alreadyExists = Object.values(appState.allowedEids).some(
-    v => getEidName(v).toLowerCase() === 'swiggy'
+    v => getEidName(v).toLowerCase() === 'swiggy india'
   );
   const RESERVED_EID = '9000';
   if (!alreadyExists && !appState.allowedEids[RESERVED_EID]) {
-    appState.allowedEids[RESERVED_EID] = { name: 'swiggy', photo: null, role: 'client' };
-    console.log('\uD83D\uDC64 Auto-created default Client Panel login -> EID ' + RESERVED_EID + ' ("swiggy")');
+    appState.allowedEids[RESERVED_EID] = { name: 'Swiggy India', photo: null, role: 'client' };
+    console.log('\uD83D\uDC64 Auto-created default Client Panel login -> EID ' + RESERVED_EID + ' ("Swiggy India")');
   }
 })();
 appState = checkDailyReset(appState);
