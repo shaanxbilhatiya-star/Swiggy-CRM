@@ -643,6 +643,33 @@
     </div>
   </div>
 
+  <!-- Active Agents Panel -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header">
+      <h2>&#128101; Active Agents</h2>
+      <span style="font-size:12px;color:var(--muted)" id="activeAgentsCount">—</span>
+    </div>
+    <div class="panel-body" style="padding:0;overflow-x:auto">
+      <table class="agents-table">
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Login</th>
+            <th>Status</th>
+            <th>Total No. Dialed</th>
+            <th style="white-space:nowrap">Net Dialing Time <span title="8h shift minus all break/washroom/meeting time" style="cursor:help;opacity:.7">ⓘ</span></th>
+            <th>Break Used</th>
+            <th>&#128699; Washroom</th>
+            <th>&#128203; Meeting</th>
+          </tr>
+        </thead>
+        <tbody id="agentsTableBody">
+          <tr><td colspan="8" class="empty">No agents logged in today</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- System Controls Panel -->
   <div class="panel" style="margin-bottom:20px">
     <div class="panel-header">
@@ -945,7 +972,8 @@ function renderStats(data) {
     }).join('');
   }
 
-  // Break/Washroom/Meeting tracking
+  // Active Agents table + break/washroom/meeting tracking
+  renderAgentsTable(data.agentStats);
   const breakAgents = data.agentStats.filter(a => a.onBreak);
   const washroomAgents = data.agentStats.filter(a => a.onWashroom);
   const meetingAgents  = data.agentStats.filter(a => a.onMeeting);
@@ -997,6 +1025,87 @@ function formatMs(ms) {
   const s = total % 60;
   if (h > 0) return h + 'h ' + m + 'm';
   return m + ':' + String(s).padStart(2, '0');
+}
+
+function renderAgentsTable(agents) {
+  const tbody = document.getElementById('agentsTableBody');
+  const countEl = document.getElementById('activeAgentsCount');
+  if (!agents || agents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No agents logged in today</td></tr>';
+    countEl.textContent = '0 agents';
+    return;
+  }
+
+  // Sort: active first, then idle
+  const sorted = [...agents].sort((a, b) => {
+    if (a.active && !b.active) return -1;
+    if (!a.active && b.active) return 1;
+    return (a.name || '').localeCompare(b.name || '');
+  });
+
+  const activeCount = sorted.filter(a => a.active).length;
+  countEl.textContent = activeCount + ' online · ' + sorted.length + ' total today';
+
+  const SHIFT_MS = 8 * 60 * 60 * 1000;
+
+  tbody.innerHTML = sorted.map(a => {
+    // ── Status badge ──
+    let statusHtml;
+    if (!a.active) {
+      statusHtml = `<span style="font-size:12px;color:var(--muted)">⚫ Offline</span>`;
+    } else if (a.onBreak) {
+      statusHtml = `<span class="break-badge">☕ Break <span class="break-timer-admin" id="break-timer-${escapeHtml(a.id)}"></span></span>`;
+    } else if (a.onWashroom) {
+      statusHtml = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,.1);color:#6366f1;border:1px solid rgba(99,102,241,.25);border-radius:20px;font-size:11px;font-weight:700;padding:2px 9px;">🚻 Washroom <span id="washroom-timer-${escapeHtml(a.id)}" style="font-family:var(--mono);font-size:11px;"></span></span>`;
+    } else if (a.onMeeting) {
+      statusHtml = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(8,145,178,.1);color:#0891b2;border:1px solid rgba(8,145,178,.25);border-radius:20px;font-size:11px;font-weight:700;padding:2px 9px;">📋 Meeting <span id="meeting-timer-${escapeHtml(a.id)}" style="font-family:var(--mono);font-size:11px;"></span></span>`;
+    } else {
+      statusHtml = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);border-radius:20px;font-size:11px;font-weight:700;padding:2px 9px;"><span class="status-dot active"></span>Active</span>`;
+    }
+
+    // ── Login time ──
+    let loginHtml;
+    if (!a.firstLoginToday) {
+      loginHtml = `<span class="login-absent">—</span>`;
+    } else {
+      const cls = a.lateLogin ? 'login-late' : 'login-ok';
+      const icon = a.lateLogin ? '⚠' : '✓';
+      loginHtml = `<span class="login-time ${cls}">${icon} ${escapeHtml(formatLoginTime(a.firstLoginToday))}</span>`;
+    }
+
+    // ── Net dialing (initial render; tickBreakTimers keeps it live) ──
+    const initNet = Math.max(0, SHIFT_MS - (a.totalBreakMs||0) - (a.totalWashroomMs||0) - (a.totalMeetingMs||0) - (a.totalTlModeMs||0));
+    const netH = Math.floor(initNet/(60*60*1000));
+    const netM = Math.floor((initNet%(60*60*1000))/(60*1000));
+
+    // ── Break used ──
+    const breakDisplay = a.onBreak
+      ? `<span id="break-timer-${escapeHtml(a.id)}" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--warn)">${formatMs(a.totalBreakMs||0)}</span>`
+      : `<span style="font-family:var(--mono);font-size:13px;">${formatMs(a.totalBreakMs||0)}</span>`;
+
+    // ── Washroom ──
+    const washroomDisplay = a.onWashroom
+      ? `<span id="washroom-timer-${escapeHtml(a.id)}" style="font-family:var(--mono);font-size:13px;color:#6366f1;font-weight:700">${formatMs(a.totalWashroomMs||0)}</span>`
+      : `<span style="font-family:var(--mono);font-size:13px;color:var(--muted)">${formatMs(a.totalWashroomMs||0)}</span>`;
+
+    // ── Meeting ──
+    const meetingDisplay = a.onMeeting
+      ? `<span id="meeting-timer-${escapeHtml(a.id)}" style="font-family:var(--mono);font-size:13px;color:#0891b2;font-weight:700">${formatMs(a.totalMeetingMs||0)}</span>`
+      : `<span style="font-family:var(--mono);font-size:13px;color:var(--muted)">${formatMs(a.totalMeetingMs||0)}</span>`;
+
+    const rowStyle = !a.active ? 'opacity:.55' : '';
+
+    return `<tr style="${rowStyle}">
+      <td style="font-weight:600">${escapeHtml(a.name || a.id)}</td>
+      <td>${loginHtml}</td>
+      <td>${statusHtml}</td>
+      <td><span class="dialed-count">${a.totalDialedToday || 0}</span></td>
+      <td><span id="net-dialing-${escapeHtml(a.id)}" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent2)">${netH}h ${netM}m</span></td>
+      <td>${breakDisplay}</td>
+      <td>${washroomDisplay}</td>
+      <td>${meetingDisplay}</td>
+    </tr>`;
+  }).join('');
 }
 
 // Upload
