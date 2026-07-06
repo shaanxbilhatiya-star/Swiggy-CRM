@@ -670,6 +670,31 @@
     </div>
   </div>
 
+  <!-- Client Panel Activity -->
+  <div class="panel" style="margin-bottom:20px">
+    <div class="panel-header">
+      <h2>&#128250; Client Panel Activity</h2>
+      <span id="clientPanelMeta" style="font-size:12px;color:var(--muted)">—</span>
+    </div>
+    <div class="panel-body" style="padding:0;overflow-x:auto">
+      <table class="agents-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>EID</th>
+            <th>Login Time</th>
+            <th>Logout Time</th>
+            <th>Duration</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="clientLogsBody">
+          <tr><td colspan="6" class="empty">No client sessions today</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- System Controls Panel -->
   <div class="panel" style="margin-bottom:20px">
     <div class="panel-header">
@@ -850,6 +875,10 @@ socket.on('timer-update', () => {
 // Live break ticks
 let lastStats = null;
 setInterval(() => { if (lastStats) tickBreakTimers(); }, 1000);
+
+// Client Panel Activity — initial load + poll every 15s
+fetchClientLogs();
+setInterval(fetchClientLogs, 15000);
 
 function tickBreakTimers() {
   if (!lastStats) return;
@@ -1099,6 +1128,68 @@ fileInput.addEventListener('change', () => uploadFile(fileInput.files[0]));
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
 dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); uploadFile(e.dataTransfer.files[0]); });
+
+// ── Client Panel Activity ─────────────────────────────────────────────────────
+async function fetchClientLogs() {
+  try {
+    const r = await fetch('/api/admin/client-logs');
+    const d = await r.json();
+    renderClientLogs(d.logs || []);
+  } catch (e) { /* silent */ }
+}
+
+function renderClientLogs(logs) {
+  const tbody = document.getElementById('clientLogsBody');
+  const meta = document.getElementById('clientPanelMeta');
+  if (!tbody) return;
+
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No client sessions today</td></tr>';
+    meta.textContent = 'No sessions today';
+    return;
+  }
+
+  const activeSessions = logs.filter(l => !l.logoutAt).length;
+  const totalMs = logs.reduce((sum, l) => {
+    if (l.durationMs) return sum + l.durationMs;
+    if (!l.logoutAt) return sum + (Date.now() - new Date(l.loginAt).getTime());
+    return sum;
+  }, 0);
+  meta.textContent = activeSessions + ' online · ' + logs.length + ' session' + (logs.length !== 1 ? 's' : '') + ' · ' + formatMs(totalMs) + ' total';
+
+  // Sort: active first, then by loginAt desc
+  const sorted = [...logs].sort((a, b) => {
+    if (!a.logoutAt && b.logoutAt) return -1;
+    if (a.logoutAt && !b.logoutAt) return 1;
+    return new Date(b.loginAt) - new Date(a.loginAt);
+  });
+
+  tbody.innerHTML = sorted.map(l => {
+    const toHHMM = iso => { const d = new Date(iso); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+    const loginTime = formatLoginTime(toHHMM(l.loginAt));
+    const logoutTime = l.logoutAt ? formatLoginTime(toHHMM(l.logoutAt)) : '—';
+    const durMs = l.durationMs || (!l.logoutAt ? Date.now() - new Date(l.loginAt).getTime() : 0);
+    const durStr = durMs ? formatMs(durMs) : '—';
+
+    let statusHtml;
+    if (!l.logoutAt) {
+      statusHtml = `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);border-radius:20px;font-size:11px;font-weight:700;padding:2px 9px;"><span class="status-dot active"></span>Online</span>`;
+    } else if (l.closedByReset) {
+      statusHtml = `<span style="font-size:11px;color:var(--muted)">⚫ Ended (midnight)</span>`;
+    } else {
+      statusHtml = `<span style="font-size:12px;color:var(--muted)">⚫ Logged out</span>`;
+    }
+
+    return `<tr>
+      <td style="font-weight:600">${escapeHtml(l.name || 'Client')}</td>
+      <td style="font-family:var(--mono);font-size:12px;color:var(--muted)">${escapeHtml(l.eid)}</td>
+      <td><span class="login-time login-ok">✓ ${escapeHtml(loginTime)}</span></td>
+      <td style="font-family:var(--mono);font-size:13px">${escapeHtml(logoutTime)}</td>
+      <td style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent2)">${escapeHtml(durStr)}</td>
+      <td>${statusHtml}</td>
+    </tr>`;
+  }).join('');
+}
 
 async function uploadFile(file) {
   if (!file) return;
