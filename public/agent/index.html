@@ -2982,6 +2982,30 @@ setInterval(tickLiveClock, 1000);
   };
 
   // ── Apply remote state onto this page ─────────────────────────────────────
+  // IMPORTANT: this function ONLY touches timer cards/state.
+  // It never calls showIdle() — each CRM's dialer state is independent.
+  // When a timer ends via sync, we just hide the card and restore buttons
+  // based on what THIS CRM already had showing (currentNumberId / dialerWasActive).
+  function restoreButtonsAfterSync() {
+    if (!breakExhausted && !onBreak && !onWashroom && !onMeeting) {
+      if (currentNumberId || dialerWasActive) {
+        document.getElementById('btnBreak').style.display    = 'block';
+        document.getElementById('btnBreak').disabled         = false;
+        document.getElementById('btnBreak').textContent      = '☕ Take a Break';
+        document.getElementById('btnWashroom').style.display = 'block';
+        document.getElementById('btnMeeting').style.display  = 'block';
+      }
+    } else if (breakExhausted && !onBreak && !onWashroom && !onMeeting) {
+      if (currentNumberId || dialerWasActive) {
+        document.getElementById('btnBreak').style.display    = 'block';
+        document.getElementById('btnBreak').disabled         = true;
+        document.getElementById('btnBreak').textContent      = '☕ No Break Time Left';
+        document.getElementById('btnWashroom').style.display = 'block';
+        document.getElementById('btnMeeting').style.display  = 'block';
+      }
+    }
+  }
+
   function applyRemoteState(remote) {
     _syncLocked = true;
     try {
@@ -2999,21 +3023,7 @@ setInterval(tickLiveClock, 1000);
         totalBreakMsUsed = remote.totalBreakMs || totalBreakMsUsed;
         breakExhausted   = totalBreakMsUsed >= breakAllowedMs;
         stopBreakCountdown(); updateBreakUsedDisplay(); hideBreakMode();
-        if (currentNumberId) {
-          document.getElementById('numberDisplay').style.display    = 'block';
-          document.getElementById('dispositionPanel').style.display = 'block';
-          if (!breakExhausted) {
-            document.getElementById('btnBreak').style.display = 'block';
-            document.getElementById('btnBreak').disabled      = false;
-            document.getElementById('btnBreak').textContent   = '☕ Take a Break';
-          } else {
-            document.getElementById('btnBreak').style.display = 'block';
-            document.getElementById('btnBreak').disabled      = true;
-            document.getElementById('btnBreak').textContent   = '☕ No Break Time Left';
-          }
-          document.getElementById('btnWashroom').style.display = 'block';
-          document.getElementById('btnMeeting').style.display  = 'block';
-        } else { showIdle(); }
+        restoreButtonsAfterSync();
       } else if (remote.onBreak && onBreak) {
         totalBreakMsUsed = remote.totalBreakMs || totalBreakMsUsed;
         if (remote.breakStartedAt && Math.abs((breakStartedAt || 0) - remote.breakStartedAt) > 5000) {
@@ -3032,13 +3042,7 @@ setInterval(tickLiveClock, 1000);
         onWashroom = false; washroomStartedAt = null;
         totalWashroomMsUsed = remote.totalWashroomMs || totalWashroomMsUsed;
         stopWashroomTimer(); updateWashroomUsedDisplay(); hideWashroomMode();
-        if (currentNumberId) {
-          document.getElementById('numberDisplay').style.display    = 'block';
-          document.getElementById('dispositionPanel').style.display = 'block';
-          if (!breakExhausted) { document.getElementById('btnBreak').style.display = 'block'; document.getElementById('btnBreak').disabled = false; }
-          document.getElementById('btnWashroom').style.display = 'block';
-          document.getElementById('btnMeeting').style.display  = 'block';
-        } else { showIdle(); }
+        restoreButtonsAfterSync();
       } else if (remote.onWashroom && onWashroom) {
         totalWashroomMsUsed = remote.totalWashroomMs || totalWashroomMsUsed;
       }
@@ -3054,18 +3058,12 @@ setInterval(tickLiveClock, 1000);
         onMeeting = false; meetingStartedAt = null;
         totalMeetingMsUsed = remote.totalMeetingMs || totalMeetingMsUsed;
         stopMeetingTimer(); updateMeetingUsedDisplay(); hideMeetingMode();
-        if (currentNumberId) {
-          document.getElementById('numberDisplay').style.display    = 'block';
-          document.getElementById('dispositionPanel').style.display = 'block';
-          if (!breakExhausted) { document.getElementById('btnBreak').style.display = 'block'; document.getElementById('btnBreak').disabled = false; }
-          document.getElementById('btnWashroom').style.display = 'block';
-          document.getElementById('btnMeeting').style.display  = 'block';
-        } else { showIdle(); }
+        restoreButtonsAfterSync();
       } else if (remote.onMeeting && onMeeting) {
         totalMeetingMsUsed = remote.totalMeetingMs || totalMeetingMsUsed;
       }
 
-      // ── Sync accumulated ms for stat cards (no active mode change) ─────────
+      // ── Sync accumulated ms for stat cards even when no mode change ────────
       if (!remote.onBreak    && !onBreak)    { totalBreakMsUsed    = remote.totalBreakMs    || totalBreakMsUsed;    updateBreakUsedDisplay(); }
       if (!remote.onWashroom && !onWashroom) { totalWashroomMsUsed = remote.totalWashroomMs || totalWashroomMsUsed; updateWashroomUsedDisplay(); }
       if (!remote.onMeeting  && !onMeeting)  { totalMeetingMsUsed  = remote.totalMeetingMs  || totalMeetingMsUsed;  updateMeetingUsedDisplay(); }
