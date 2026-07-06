@@ -719,7 +719,7 @@ function getAdminStats() {
   const remaining = total - dialed - assigned;
 
   const agentStats = Object.entries(appState.agents)
-    .filter(([id]) => (appState.allowedEids[id] || {}).role !== 'client')
+    .filter(([id]) => { const eid = id.startsWith('emp_') ? id.slice(4) : id; return (appState.allowedEids[eid] || {}).role !== 'client'; })
     .map(([id, a]) => {
     const liveBreakMs = a.onBreak ? (Date.now() - (a.breakStartedAt || Date.now())) : 0;
     const totalBreakMs = (a.totalBreakMs || 0) + liveBreakMs;
