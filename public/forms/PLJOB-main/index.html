@@ -264,10 +264,42 @@
       color: #4b5563;
     }
 
+    /* ── Responsive: Tablet (768px - 1024px) ── */
+    @media (max-width: 1024px) {
+      body { padding: 1.5rem 1.2rem 3rem; }
+      .hero { padding: 1.5rem 1.5rem 1.4rem; }
+      .hero h1 { font-size: 1.7rem; }
+      .cards-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; }
+      .whatsapp-tool { padding: 1.4rem 1.5rem; }
+      .form-row { gap: 1rem; }
+    }
+
+    /* ── Responsive: Phone (max-width: 680px) ── */
     @media (max-width: 680px) {
-      body { padding: 1rem 1rem 3rem; }
-      .hero h1 { font-size: 1.5rem; }
-      .whatsapp-tool { padding: 1.2rem; }
+      body { padding: 1rem 0.8rem 3rem; }
+      .hero { padding: 1.2rem 1rem 1rem; border-radius: 1.2rem; margin-bottom: 1.5rem; }
+      .hero h1 { font-size: 1.3rem; }
+      .hero p { font-size: 0.82rem; }
+      .cards-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .app-card { padding: 1.2rem 1rem 1.4rem; border-radius: 1.2rem; }
+      .app-card h3 { font-size: 1.15rem; }
+      .card-icon { font-size: 2rem; margin-bottom: 0.7rem; }
+      .whatsapp-tool { padding: 1.2rem 1rem; border-radius: 1.2rem; }
+      .section-title { font-size: 1.1rem; padding-left: 0.8rem; }
+      .form-row { flex-direction: column; gap: 0.8rem; }
+      .field-group { min-width: 100%; }
+      .field-group input, .field-group select, .field-group textarea { font-size: 16px; padding: 0.8rem 0.9rem; min-height: 44px; }
+      .btn-copy { width: 100%; min-height: 44px; padding: 0.8rem 1.2rem; font-size: 0.85rem; }
+      .flex-buttons { flex-direction: column; }
+      .message-preview { font-size: 0.78rem; padding: 1rem; max-height: 240px; }
+    }
+
+    /* ── Responsive: Landscape on small screens ── */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .cards-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+      body { padding: 0.8rem 1rem 2rem; }
+      .hero { padding: 1rem; margin-bottom: 1.2rem; }
+      .form-row { flex-direction: row; flex-wrap: wrap; }
     }
   </style>
 </head>

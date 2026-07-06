@@ -124,7 +124,66 @@
   .leads-table tr:last-child td { border-bottom: none; }
   .phone-number { font-family: var(--mono); font-weight: 700; color: var(--accent); }
 
-  @media(max-width:900px){ .stats-grid{grid-template-columns:1fr 1fr} .grid-2{grid-template-columns:1fr} }
+  /* ── Responsive: Tablet (768px - 1024px) ── */
+  @media(max-width:1024px){
+    .main{padding:20px 16px}
+    .grid-2{gap:12px}
+    .stats-grid{grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:12px}
+    .stat-value{font-size:28px}
+    .stat-card{padding:16px 18px}
+    .upload-zone{padding:24px}
+    .panel-body{padding:16px}
+  }
+
+  /* ── Responsive: Phone (max-width: 767px) ── */
+  @media(max-width:767px){
+    .main{padding:12px 10px}
+    header{padding:10px 12px;flex-wrap:wrap;justify-content:center;gap:8px}
+    .logo h1{font-size:13px}
+    .today-badge{font-size:11px;padding:3px 8px}
+    .badge{font-size:10px;padding:2px 8px}
+
+    .grid-2{grid-template-columns:1fr;gap:14px}
+    .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
+    .stat-card{padding:12px 14px}
+    .stat-value{font-size:22px}
+    .stat-label{font-size:10px;letter-spacing:0.5px}
+
+    .panel-header{padding:12px 14px;flex-wrap:wrap;gap:8px}
+    .panel-header h2{font-size:12px}
+    .panel-body{padding:12px}
+
+    .upload-zone{padding:20px 14px}
+    .upload-icon{font-size:28px}
+    .upload-zone p{font-size:13px}
+
+    .btn-row{flex-wrap:wrap;gap:8px}
+    .btn{min-height:44px;padding:10px 16px;font-size:13px}
+
+    .agents-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .agents-table th,.agents-table td{white-space:nowrap;padding:8px 10px;font-size:12px}
+
+    .leads-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .leads-table th,.leads-table td{white-space:nowrap;padding:8px 10px;font-size:12px}
+
+    .phone-number{font-size:14px}
+
+    .file-item{flex-direction:column;align-items:flex-start;gap:8px}
+    .progress-bar{width:100%}
+
+    .break-agents-list{gap:6px}
+    .break-agent-pill{font-size:11px;padding:3px 9px}
+
+    #toast{right:12px;left:12px;bottom:16px;font-size:13px;padding:10px 14px}
+  }
+
+  /* ── Responsive: Landscape on small screens ── */
+  @media(max-width:768px) and (orientation:landscape){
+    .grid-2{grid-template-columns:1fr 1fr;gap:10px}
+    .stats-grid{grid-template-columns:repeat(auto-fit, minmax(100px, 1fr))}
+    .main{padding:10px 12px}
+    header{padding:8px 12px}
+  }
 
   .login-time { font-family: var(--mono, monospace); font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; }
   .login-ok   { color: var(--green); background: rgba(76,175,80,.1); border: 1px solid rgba(76,175,80,.3); }
