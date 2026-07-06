@@ -2928,6 +2928,196 @@ tickLiveClock();
 setInterval(tickLiveClock, 1000);
 
 
+// ══════════════════════════════════════════════════════════════════════════════
+// CROSS-CRM TIMER SYNC
+// This CRM is: Swiggy-CRM
+// Polls the other 2 CRMs every 4 s and mirrors their break/washroom/meeting state.
+// When this CRM starts or ends a timer it also fires a POST to the other 2 CRMs.
+// The peer URLs are read from window.CROSS_CRM_PEERS (injected via /api/config/crm-urls).
+// ══════════════════════════════════════════════════════════════════════════════
+(function initCrossSync() {
+
+  // ── Peer URL config ────────────────────────────────────────────────────────
+  window.CROSS_CRM_PEERS = window.CROSS_CRM_PEERS || [];
+
+  fetch('/api/config/crm-urls')
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && Array.isArray(d.peers)) window.CROSS_CRM_PEERS = d.peers; })
+    .catch(() => {});
+
+  // ── State tracking ─────────────────────────────────────────────────────────
+  let _syncLocked  = false;
+  let _lastSyncKey = '';
+
+  // ── Helper: call every peer to perform an action ───────────────────────────
+  function notifyPeers(type, action) {
+    const peers = window.CROSS_CRM_PEERS;
+    if (!peers || !peers.length || !empId) return;
+    peers.forEach(url => {
+      fetch(url + '/api/sync/timer-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ empId, type, action })
+      }).catch(() => {});
+    });
+  }
+
+  // ── Intercept socket.emit to also notify peers ─────────────────────────────
+  const _origEmit = socket.emit.bind(socket);
+  socket.emit = function(event, ...args) {
+    _origEmit(event, ...args);
+    if (_syncLocked) return;
+    if (event === 'agent-break-start')    notifyPeers('break',    'start');
+    if (event === 'agent-break-end')      notifyPeers('break',    'end');
+    if (event === 'agent-washroom-start') notifyPeers('washroom', 'start');
+    if (event === 'agent-washroom-end')   notifyPeers('washroom', 'end');
+    if (event === 'agent-meeting-start')  notifyPeers('meeting',  'start');
+    if (event === 'agent-meeting-end')    notifyPeers('meeting',  'end');
+  };
+
+  // ── Apply remote state onto this page ─────────────────────────────────────
+  function applyRemoteState(remote) {
+    _syncLocked = true;
+    try {
+      // ── Break ──────────────────────────────────────────────────────────────
+      if (remote.onBreak && !onBreak) {
+        onBreak          = true;
+        dialerWasOnBreak = true;
+        breakStartedAt   = remote.breakStartedAt || Date.now();
+        totalBreakMsUsed = remote.totalBreakMs   || 0;
+        if (remote.breakAllowedMs) breakAllowedMs = remote.breakAllowedMs;
+        showBreakMode();
+        startBreakCountdown();
+      } else if (!remote.onBreak && onBreak) {
+        onBreak = false; dialerWasOnBreak = false; breakStartedAt = null;
+        totalBreakMsUsed = remote.totalBreakMs || totalBreakMsUsed;
+        breakExhausted   = totalBreakMsUsed >= breakAllowedMs;
+        stopBreakCountdown(); updateBreakUsedDisplay(); hideBreakMode();
+        if (currentNumberId) {
+          document.getElementById('numberDisplay').style.display    = 'block';
+          document.getElementById('dispositionPanel').style.display = 'block';
+          if (!breakExhausted) {
+            document.getElementById('btnBreak').style.display = 'block';
+            document.getElementById('btnBreak').disabled      = false;
+            document.getElementById('btnBreak').textContent   = '☕ Take a Break';
+          } else {
+            document.getElementById('btnBreak').style.display = 'block';
+            document.getElementById('btnBreak').disabled      = true;
+            document.getElementById('btnBreak').textContent   = '☕ No Break Time Left';
+          }
+          document.getElementById('btnWashroom').style.display = 'block';
+          document.getElementById('btnMeeting').style.display  = 'block';
+        } else { showIdle(); }
+      } else if (remote.onBreak && onBreak) {
+        totalBreakMsUsed = remote.totalBreakMs || totalBreakMsUsed;
+        if (remote.breakStartedAt && Math.abs((breakStartedAt || 0) - remote.breakStartedAt) > 5000) {
+          breakStartedAt = remote.breakStartedAt;
+        }
+      }
+
+      // ── Washroom ───────────────────────────────────────────────────────────
+      if (remote.onWashroom && !onWashroom && !onBreak) {
+        onWashroom          = true;
+        washroomStartedAt   = remote.washroomStartedAt || Date.now();
+        totalWashroomMsUsed = remote.totalWashroomMs   || 0;
+        showWashroomMode();
+        startWashroomTimer();
+      } else if (!remote.onWashroom && onWashroom) {
+        onWashroom = false; washroomStartedAt = null;
+        totalWashroomMsUsed = remote.totalWashroomMs || totalWashroomMsUsed;
+        stopWashroomTimer(); updateWashroomUsedDisplay(); hideWashroomMode();
+        if (currentNumberId) {
+          document.getElementById('numberDisplay').style.display    = 'block';
+          document.getElementById('dispositionPanel').style.display = 'block';
+          if (!breakExhausted) { document.getElementById('btnBreak').style.display = 'block'; document.getElementById('btnBreak').disabled = false; }
+          document.getElementById('btnWashroom').style.display = 'block';
+          document.getElementById('btnMeeting').style.display  = 'block';
+        } else { showIdle(); }
+      } else if (remote.onWashroom && onWashroom) {
+        totalWashroomMsUsed = remote.totalWashroomMs || totalWashroomMsUsed;
+      }
+
+      // ── Meeting ────────────────────────────────────────────────────────────
+      if (remote.onMeeting && !onMeeting && !onBreak && !onWashroom) {
+        onMeeting          = true;
+        meetingStartedAt   = remote.meetingStartedAt || Date.now();
+        totalMeetingMsUsed = remote.totalMeetingMs   || 0;
+        showMeetingMode();
+        startMeetingTimer();
+      } else if (!remote.onMeeting && onMeeting) {
+        onMeeting = false; meetingStartedAt = null;
+        totalMeetingMsUsed = remote.totalMeetingMs || totalMeetingMsUsed;
+        stopMeetingTimer(); updateMeetingUsedDisplay(); hideMeetingMode();
+        if (currentNumberId) {
+          document.getElementById('numberDisplay').style.display    = 'block';
+          document.getElementById('dispositionPanel').style.display = 'block';
+          if (!breakExhausted) { document.getElementById('btnBreak').style.display = 'block'; document.getElementById('btnBreak').disabled = false; }
+          document.getElementById('btnWashroom').style.display = 'block';
+          document.getElementById('btnMeeting').style.display  = 'block';
+        } else { showIdle(); }
+      } else if (remote.onMeeting && onMeeting) {
+        totalMeetingMsUsed = remote.totalMeetingMs || totalMeetingMsUsed;
+      }
+
+      // ── Sync accumulated ms for stat cards (no active mode change) ─────────
+      if (!remote.onBreak    && !onBreak)    { totalBreakMsUsed    = remote.totalBreakMs    || totalBreakMsUsed;    updateBreakUsedDisplay(); }
+      if (!remote.onWashroom && !onWashroom) { totalWashroomMsUsed = remote.totalWashroomMs || totalWashroomMsUsed; updateWashroomUsedDisplay(); }
+      if (!remote.onMeeting  && !onMeeting)  { totalMeetingMsUsed  = remote.totalMeetingMs  || totalMeetingMsUsed;  updateMeetingUsedDisplay(); }
+
+    } finally {
+      _syncLocked = false;
+    }
+  }
+
+  // ── Poll peers ─────────────────────────────────────────────────────────────
+  async function pollPeers() {
+    if (!empId) return;
+    const peers = window.CROSS_CRM_PEERS;
+    if (!peers || !peers.length) return;
+
+    for (const url of peers) {
+      try {
+        const r = await fetch(url + '/api/sync/timer-state/' + empId, { signal: AbortSignal.timeout(4000) });
+        if (!r.ok) continue;
+        const remote = await r.json();
+        if (!remote || !remote.found) continue;
+
+        const key = url + '|' + remote.onBreak + '|' + remote.onWashroom + '|' + remote.onMeeting
+          + '|' + remote.breakStartedAt + '|' + remote.washroomStartedAt + '|' + remote.meetingStartedAt
+          + '|' + remote.totalBreakMs + '|' + remote.totalWashroomMs + '|' + remote.totalMeetingMs;
+
+        if (remote.onBreak || remote.onWashroom || remote.onMeeting) {
+          applyRemoteState(remote);
+          break;
+        } else {
+          if (!onBreak && !onWashroom && !onMeeting) {
+            const prevKey = _lastSyncKey;
+            _lastSyncKey = key;
+            if (key !== prevKey) applyRemoteState(remote);
+          }
+        }
+      } catch (_) { /* network error — skip this peer */ }
+    }
+  }
+
+  // ── Start polling after login ──────────────────────────────────────────────
+  let _pollTimer = null;
+  function startSyncPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(pollPeers, 4000);
+    pollPeers();
+  }
+
+  const _origShowDialer = showDialer;
+  window.showDialer = function(name, eid) {
+    _origShowDialer(name, eid);
+    startSyncPolling();
+  };
+  if (empId) startSyncPolling();
+
+})(); // end initCrossSync
+
+
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

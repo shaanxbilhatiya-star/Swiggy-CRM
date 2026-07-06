@@ -790,6 +790,15 @@ function getAdminStats() {
 // ─── Express Setup ─────────────────────────────────────────────────────────────
 app.use(express.json());
 
+// ─── CORS — allow other CRMs to call the cross-sync endpoints ─────────────────
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 // ─── Password Protection Middleware (Admin & Client) ──────────────────────────
 const PANEL_PASSWORD = process.env.PANEL_PASSWORD || 'Jaimatadi02"';
 
@@ -1836,6 +1845,57 @@ app.post('/api/agent/washroom/start', (req, res) => { const { agentId } = req.bo
 app.post('/api/agent/washroom/end',   (req, res) => { const { agentId } = req.body; if (!agentId) return res.status(400).json({ error: 'agentId required' }); res.json(endWashroom(agentId)); });
 app.post('/api/agent/meeting/start',  (req, res) => { const { agentId } = req.body; if (!agentId) return res.status(400).json({ error: 'agentId required' }); res.json(startMeeting(agentId)); });
 app.post('/api/agent/meeting/end',    (req, res) => { const { agentId } = req.body; if (!agentId) return res.status(400).json({ error: 'agentId required' }); res.json(endMeeting(agentId)); });
+
+// ─── Cross-CRM Timer Sync Endpoints ──────────────────────────────────────────
+// GET  /api/config/crm-urls  — returns peer CRM URLs from env vars (for frontend)
+// Set env vars: PEER_CRM_1=https://dsa-crm.up.railway.app
+//               PEER_CRM_2=https://kingfisher-crm.up.railway.app
+app.get('/api/config/crm-urls', (req, res) => {
+  const peers = [process.env.PEER_CRM_1, process.env.PEER_CRM_2]
+    .filter(Boolean)
+    .map(u => u.replace(/\/$/, ''));
+  res.json({ peers });
+});
+
+// GET  /api/sync/timer-state/:empId  — read current timer state for an employee
+app.get('/api/sync/timer-state/:empId', (req, res) => {
+  const agentId = 'emp_' + req.params.empId;
+  const agent = appState.agents[agentId];
+  if (!agent) return res.json({ found: false });
+  res.json({
+    found: true,
+    onBreak:          agent.onBreak         || false,
+    breakStartedAt:   agent.breakStartedAt  || null,
+    totalBreakMs:     agent.totalBreakMs    || 0,
+    breakAllowedMs:   BREAK_DURATION_MS,
+    onWashroom:        agent.onWashroom       || false,
+    washroomStartedAt: agent.washroomStartedAt || null,
+    totalWashroomMs:   agent.totalWashroomMs   || 0,
+    onMeeting:         agent.onMeeting         || false,
+    meetingStartedAt:  agent.meetingStartedAt  || null,
+    totalMeetingMs:    agent.totalMeetingMs    || 0
+  });
+});
+
+// POST /api/sync/timer-action  — trigger a timer start/end by empId (called by other CRMs)
+app.post('/api/sync/timer-action', (req, res) => {
+  const { empId, type, action } = req.body;
+  if (!empId || !type || !action) return res.status(400).json({ error: 'empId, type, action required' });
+  const agentId = 'emp_' + empId;
+  if (!appState.agents[agentId]) return res.json({ found: false });
+  let result;
+  if      (type === 'break'    && action === 'start') result = startBreak(agentId);
+  else if (type === 'break'    && action === 'end')   result = endBreak(agentId);
+  else if (type === 'washroom' && action === 'start') result = startWashroom(agentId);
+  else if (type === 'washroom' && action === 'end')   result = endWashroom(agentId);
+  else if (type === 'meeting'  && action === 'start') result = startMeeting(agentId);
+  else if (type === 'meeting'  && action === 'end')   result = endMeeting(agentId);
+  else return res.status(400).json({ error: 'Invalid type/action' });
+  // Broadcast to all sockets on this server so the agent tab here also updates
+  io.emit('timer-update', { agentId, type, action, ...result });
+  broadcastAdminStats();
+  res.json({ found: true, ...result });
+});
 
 app.get('/api/agent/state/:agentId', (req, res) => {
   const agent = appState.agents[req.params.agentId];
