@@ -156,7 +156,8 @@ function createFreshState(preserveAllowedEids) {
     dialedLog: [],
     lastReset: getTodayStr(),
     allowedEids: eids,
-    reports: []
+    reports: [],
+    clientLogs: []
   };
 }
 
@@ -238,6 +239,19 @@ function checkDailyReset(state) {
     if (state.dialedLog && state.dialedLog.length > 0) {
       state.dialedLog = state.dialedLog.filter(entry => entry.timestamp && entry.timestamp >= cutoffDate);
     }
+    // Close any client sessions that were still "open" at midnight (tab left open overnight)
+    if (state.clientLogs) {
+      const midnightMs = Date.now();
+      state.clientLogs.forEach(l => {
+        if (!l.logoutAt) {
+          l.logoutAt = new Date(midnightMs).toISOString();
+          l.durationMs = midnightMs - new Date(l.loginAt).getTime();
+          l.closedByReset = true;
+        }
+      });
+      // Trim: drop logs older than 90 days
+      state.clientLogs = state.clientLogs.filter(l => l.loginAt >= cutoffDate);
+    }
     state.lastReset = today;
     saveState(state);
   }
@@ -281,6 +295,9 @@ if (!appState.allowedEids) {
 }
 if (!appState.dndNumbers) {
   appState.dndNumbers = [];
+}
+if (!appState.clientLogs) {
+  appState.clientLogs = [];
 }
 // PDF report archive metadata — reports themselves are kept on disk forever;
 // this array just indexes them so they can be searched/downloaded by date.
@@ -2855,6 +2872,48 @@ app.get('/api/reports/:id/download', (req, res) => {
   const filePath = path.join(REPORTS_DIR, entry.fileName);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Report file missing on disk' });
   res.download(filePath, entry.originalName || (entry.title + '.pdf'));
+});
+
+// ─── Client Panel Session Tracking ────────────────────────────────────────────
+// Records each client panel login/logout so admin can see daily usage logs.
+
+app.post('/api/client/session-start', (req, res) => {
+  const { eid, name } = req.body || {};
+  if (!eid) return res.status(400).json({ error: 'eid required' });
+  const sessionId = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  const entry = {
+    sessionId,
+    eid: String(eid),
+    name: name || 'Client',
+    loginAt: new Date().toISOString(),
+    logoutAt: null,
+    durationMs: null,
+    date: getTodayStr()
+  };
+  if (!appState.clientLogs) appState.clientLogs = [];
+  appState.clientLogs.push(entry);
+  saveState(appState);
+  res.json({ ok: true, sessionId });
+});
+
+app.post('/api/client/session-end', (req, res) => {
+  const { sessionId } = req.body || {};
+  if (!sessionId) return res.json({ ok: true });
+  if (!appState.clientLogs) return res.json({ ok: true });
+  const entry = appState.clientLogs.find(l => l.sessionId === sessionId);
+  if (entry && !entry.logoutAt) {
+    entry.logoutAt = new Date().toISOString();
+    entry.durationMs = Date.now() - new Date(entry.loginAt).getTime();
+    saveState(appState);
+  }
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/client-logs', (req, res) => {
+  const { date } = req.query;
+  const target = date || getTodayStr();
+  const logs = (appState.clientLogs || []).filter(l => l.date === target);
+  res.json({ logs, date: target });
 });
 
 // ─── Page Routes ──────────────────────────────────────────────────────────────
