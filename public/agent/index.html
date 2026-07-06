@@ -1281,6 +1281,14 @@ socket.on('force-stop', () => {
   currentNumberId = null; dialerWasActive = false;
   showIdle();
 });
+socket.on('force-page-reload', ({ agentId: targetId, reason } = {}) => {
+  // Only reload if this event is for this agent (or broadcast to all)
+  if (!targetId || targetId === agentId) {
+    console.log('🔄 Admin removed break — reloading page:', reason);
+    setTimeout(() => window.location.reload(), 300);
+  }
+});
+
 
 function showIdle() {
   document.getElementById('numberDisplay').style.display     = 'none';
@@ -3137,3 +3145,4 @@ setInterval(tickLiveClock, 1000);
 
 </body>
 </html>
+
