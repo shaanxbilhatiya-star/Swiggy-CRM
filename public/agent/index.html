@@ -2938,11 +2938,17 @@ setInterval(tickLiveClock, 1000);
 (function initCrossSync() {
 
   // ── Peer URL config ────────────────────────────────────────────────────────
-  window.CROSS_CRM_PEERS = window.CROSS_CRM_PEERS || [];
+  // Hardcoded peer CRMs for this deployment (Swiggy-CRM).
+  // Override via PEER_CRM_1 / PEER_CRM_2 env vars on Railway if URLs ever change.
+  window.CROSS_CRM_PEERS = [
+    'https://crm-production-9268.up.railway.app',
+    'https://kingfisher-crm-production.up.railway.app'
+  ];
 
+  // Allow env-var override via /api/config/crm-urls (optional)
   fetch('/api/config/crm-urls')
     .then(r => r.ok ? r.json() : null)
-    .then(d => { if (d && Array.isArray(d.peers)) window.CROSS_CRM_PEERS = d.peers; })
+    .then(d => { if (d && Array.isArray(d.peers) && d.peers.length) window.CROSS_CRM_PEERS = d.peers; })
     .catch(() => {});
 
   // ── State tracking ─────────────────────────────────────────────────────────
