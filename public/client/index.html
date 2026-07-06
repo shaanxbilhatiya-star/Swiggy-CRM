@@ -523,6 +523,38 @@ const PKG_LABELS = {Kitty_Party:'Kitty Party', Family_Fun_Day:'Family Fun Day- W
 let clientEmpIdVal = sessionStorage.getItem('clientEmpId') || '';
 let clientAgentId  = sessionStorage.getItem('clientAgentId') || '';
 let clientName     = sessionStorage.getItem('clientName') || '';
+let _clientSessionId = sessionStorage.getItem('clientSessionId') || '';
+
+// ── Session tracking helpers ──────────────────────────────────────────────────
+async function startClientSession(eid, name) {
+  try {
+    const r = await fetch('/api/client/session-start', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ eid, name })
+    });
+    const d = await r.json();
+    if (d.sessionId) {
+      _clientSessionId = d.sessionId;
+      sessionStorage.setItem('clientSessionId', _clientSessionId);
+    }
+  } catch (e) { /* silent */ }
+}
+
+function endClientSession() {
+  if (!_clientSessionId) return;
+  const payload = JSON.stringify({ sessionId: _clientSessionId });
+  if (navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: 'application/json' });
+    navigator.sendBeacon('/api/client/session-end', blob);
+  } else {
+    fetch('/api/client/session-end', { method: 'POST', headers: {'Content-Type':'application/json'}, body: payload, keepalive: true }).catch(() => {});
+  }
+  _clientSessionId = '';
+  sessionStorage.removeItem('clientSessionId');
+}
+
+window.addEventListener('pagehide', endClientSession);
+window.addEventListener('beforeunload', endClientSession);
 
 async function clientLogin() {
   const empVal = document.getElementById('clientEmpId').value.trim();
@@ -550,6 +582,7 @@ async function clientLogin() {
     sessionStorage.setItem('clientEmpId', empVal);
     sessionStorage.setItem('clientAgentId', clientAgentId);
     sessionStorage.setItem('clientName', clientName);
+    startClientSession(empVal, d.name);
     showMainScreen();
   } catch (e) {
     errEl.textContent = 'Connection error. Please try again.';
@@ -592,6 +625,7 @@ async function autoLogin(eid) {
     sessionStorage.setItem('clientEmpId', eid);
     sessionStorage.setItem('clientAgentId', clientAgentId);
     sessionStorage.setItem('clientName', clientName);
+    startClientSession(eid, d.name);
     showMainScreen();
     return true;
   } catch (e) {
