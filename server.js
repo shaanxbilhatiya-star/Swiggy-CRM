@@ -718,7 +718,9 @@ function getAdminStats() {
   const assigned = appState.numbers.filter(n => n.assignedTo && !n.dialedBy).length;
   const remaining = total - dialed - assigned;
 
-  const agentStats = Object.entries(appState.agents).map(([id, a]) => {
+  const agentStats = Object.entries(appState.agents)
+    .filter(([id]) => (appState.allowedEids[id] || {}).role !== 'client')
+    .map(([id, a]) => {
     const liveBreakMs = a.onBreak ? (Date.now() - (a.breakStartedAt || Date.now())) : 0;
     const totalBreakMs = (a.totalBreakMs || 0) + liveBreakMs;
     const breakRemaining = Math.max(0, BREAK_DURATION_MS - totalBreakMs);
