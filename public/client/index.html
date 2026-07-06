@@ -115,7 +115,66 @@
   #toast.success { border-color: var(--accent); }
   #toast.error { border-color: var(--danger); }
 
-  @media(max-width:900px){ .stats-grid{grid-template-columns:1fr 1fr} }
+  /* ── Responsive: Tablet (768px - 1024px) ── */
+  @media(max-width:1024px){
+    .main{padding:20px 16px}
+    .stats-grid{grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));gap:12px}
+    .stat-value{font-size:28px}
+    .stat-card{padding:16px 18px}
+    .dispo-stats-grid{grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:10px}
+    .dispo-stat-val{font-size:24px}
+    .panel-body{padding:16px}
+    .login-card{padding:28px 24px}
+  }
+
+  /* ── Responsive: Phone (max-width: 767px) ── */
+  @media(max-width:767px){
+    .main{padding:12px 10px}
+    header{padding:10px 12px;flex-wrap:wrap;justify-content:center;gap:8px}
+    .logo h1{font-size:13px}
+    .logo-img{width:100%;max-width:180px;height:auto;padding:6px 12px}
+    .today-badge{font-size:11px;padding:3px 8px}
+    .badge{font-size:10px;padding:2px 8px}
+
+    .stats-grid{grid-template-columns:1fr 1fr;gap:10px}
+    .stat-card{padding:12px 14px}
+    .stat-value{font-size:22px}
+    .stat-label{font-size:10px;letter-spacing:0.5px}
+
+    .panel-header{padding:12px 14px;flex-wrap:wrap;gap:8px}
+    .panel-header h2{font-size:12px}
+    .panel-body{padding:12px}
+
+    .dispo-stats-grid{grid-template-columns:1fr 1fr;gap:8px}
+    .dispo-stat-val{font-size:20px}
+    .dispo-stat-card.dispo-stat-total .dispo-stat-val{font-size:26px}
+    .dispo-stat-lbl{font-size:10px}
+
+    .admin-stats-tabs{flex-wrap:wrap;gap:3px}
+    .admin-stats-tab{padding:4px 10px;font-size:11px}
+
+    .leads-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .leads-table th,.leads-table td{white-space:nowrap;padding:8px 10px;font-size:12px}
+
+    .phone-number{font-size:14px}
+
+    .login-card{padding:24px 16px}
+    .login-card h2{font-size:19px}
+    .login-card .sub{font-size:13px;margin-bottom:20px}
+    .field input{font-size:16px;padding:12px 14px;min-height:44px}
+    .btn-login{min-height:44px;font-size:15px}
+    .btn-del{min-height:44px;padding:8px 14px}
+
+    #toast{right:12px;left:12px;bottom:16px;font-size:13px;padding:10px 14px}
+  }
+
+  /* ── Responsive: Landscape on small screens ── */
+  @media(max-width:768px) and (orientation:landscape){
+    .stats-grid{grid-template-columns:repeat(auto-fit, minmax(100px, 1fr))}
+    .main{padding:10px 12px}
+    header{padding:8px 12px}
+    .dispo-stats-grid{grid-template-columns:repeat(auto-fit, minmax(100px, 1fr))}
+  }
 
   /* ============================================================
      SWIGGY RIDER RECRUITMENT — THEME OVERRIDES (light)

@@ -27,7 +27,35 @@
   .footer-links{display:flex;justify-content:center;gap:24px;margin-top:48px;padding-top:24px;border-top:1px solid #ffe0c2}
   .footer-links a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;transition:color .2s}
   .footer-links a:hover{color:var(--accent)}
-  @media(max-width:600px){body{padding:20px 12px}.cards{grid-template-columns:1fr}}
+  /* ── Responsive: Tablet (768px - 1024px) ── */
+  @media(max-width:1024px){
+    body{padding:30px 16px}
+    header{padding:24px 16px}
+    header h1{font-size:22px}
+    .cards{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+    .card{padding:22px 18px}
+  }
+  /* ── Responsive: Phone (max-width: 600px) ── */
+  @media(max-width:600px){
+    body{padding:16px 10px}
+    header{padding:18px 14px;border-radius:14px;margin-bottom:28px}
+    header h1{font-size:18px}
+    header p{font-size:12px}
+    header img{height:44px}
+    .cards{grid-template-columns:1fr;gap:12px}
+    .card{padding:20px 16px}
+    .card .icon{font-size:28px;margin-bottom:8px}
+    .card h2{font-size:15px}
+    .section-title{font-size:14px;margin:24px 0 12px}
+    .footer-links{flex-wrap:wrap;gap:14px;margin-top:32px;padding-top:18px}
+    .footer-links a{font-size:12px}
+  }
+  /* ── Responsive: Landscape on small screens ── */
+  @media(max-width:768px) and (orientation:landscape){
+    body{padding:14px 12px}
+    .cards{grid-template-columns:1fr 1fr;gap:12px}
+    header{padding:16px 14px;margin-bottom:20px}
+  }
 </style>
 </head>
 <body>

@@ -155,11 +155,43 @@ body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#e0e7ff 0%
 .rs-prefix input{padding-left:30px}
 .rs-prefix::before{content:'₹';position:absolute;left:12px;top:11px;font-size:14px;color:var(--gray-500);font-weight:600;pointer-events:none;z-index:1;line-height:1}
 
+/* ── Responsive: Tablet (768px - 1024px) ── */
+@media(max-width:768px){
+  .two{grid-template-columns:1fr 1fr;gap:10px}
+  .three-col{grid-template-columns:1fr 1fr;gap:10px}
+  body{padding:1.5rem 1rem 4rem}
+  .sec{padding:1.4rem 1.3rem}
+  .form-header{padding:1.4rem 1.3rem}
+  .form-header h1{font-size:23px}
+  .ub{padding:10px 12px}
+}
+
+/* ── Responsive: Phone (max-width: 520px) ── */
 @media(max-width:520px){
-  .two{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}
-  body{padding:1rem 0.5rem 4rem}
+  .two{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr}
+  body{padding:0.8rem 0.5rem 4rem}
+  .sec,.form-header{padding:1.1rem 0.9rem}
+  .form-header h1{font-size:19px}
+  .fi input[type=text],.fi input[type=email],.fi input[type=tel],
+  .fi input[type=number],.fi input[type=date],.fi input[type=password],.fi select,.fi textarea{
+    font-size:16px;padding:12px 13px;min-height:44px
+  }
+  .sbtn{min-height:48px;font-size:14px;padding:14px}
+  .ub{width:100%;padding:12px}
+  .add-btn{min-height:44px;font-size:14px}
+  .ob-row{padding:12px}
+  .info-box{font-size:12px;padding:10px 12px}
+  .sec-title{font-size:13px}
+  .foir-pct{font-size:18px}
+}
+
+/* ── Responsive: Landscape on small screens ── */
+@media(max-width:768px) and (orientation:landscape){
+  .two{grid-template-columns:1fr 1fr;gap:10px}
+  .three-col{grid-template-columns:1fr 1fr;gap:10px}
+  body{padding:0.8rem 1rem 3rem}
   .sec,.form-header{padding:1.2rem 1.1rem}
-  .form-header h1{font-size:21px}
 }
 </style>
 </head>
