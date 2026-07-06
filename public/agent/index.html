@@ -1336,6 +1336,8 @@ socket.on('break-ended', (data) => {
     document.getElementById('btnWashroom').style.display = 'block';
     document.getElementById('btnMeeting').style.display  = 'block';
   } else { showIdle(); }
+  // Auto-refresh page after break ends
+  setTimeout(() => location.reload(), 500);
 });
 
 function showBreakMode() {
@@ -3028,6 +3030,8 @@ setInterval(tickLiveClock, 1000);
         breakExhausted   = totalBreakMsUsed >= breakAllowedMs;
         stopBreakCountdown(); updateBreakUsedDisplay(); hideBreakMode();
         restoreButtonsAfterSync();
+        // Auto-refresh page after break ends via cross-CRM sync
+        setTimeout(() => location.reload(), 500);
       } else if (remote.onBreak && onBreak) {
         totalBreakMsUsed = remote.totalBreakMs || totalBreakMsUsed;
         if (remote.breakStartedAt && Math.abs((breakStartedAt || 0) - remote.breakStartedAt) > 5000) {
