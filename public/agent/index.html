@@ -2967,6 +2967,10 @@ function showScriptPopup() {
 function closeScriptPopup() {
   document.getElementById('scriptPopupModal').classList.remove('active');
   scriptPopupShown = false;
+  // Reveal disposition panel now that agent has read the script
+  if (currentNumberId) {
+    document.getElementById('dispositionPanel').style.display = 'block';
+  }
 }
 
 // ── Script popup virtual scroll buttons (avoids native scroll fighting page scroll) ──
@@ -2998,12 +3002,13 @@ function closeScriptPopup() {
   window.updateScriptScrollBtns = updateBtnStates;
 })();
 
-// Override showNumber to also show script popup
+// Override showNumber to show script popup BEFORE disposition panel
 const _origShowNumber = showNumber;
 showNumber = function(numberId, phone, name, totalDialedToday, resumed) {
   _origShowNumber(numberId, phone, name, totalDialedToday, resumed);
-  // Show script popup on every new number
+  // Script popup must appear before agent can select disposition
   if (scriptContent) {
+    document.getElementById('dispositionPanel').style.display = 'none';
     showScriptPopup();
   }
 };
