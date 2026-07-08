@@ -499,6 +499,13 @@
   ::-webkit-scrollbar { width: 10px; height: 10px; }
   ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #FC8019, #e8720f); border-radius: 10px; }
   ::-webkit-scrollbar-track { background: #e6eef8; }
+
+  /* ── Script: right-side slide panel; Current Lead panel stays fully visible ── */
+  #scriptPopupModal { background:transparent !important; justify-content:flex-end !important; align-items:stretch !important; transition:none !important; }
+  #scriptPopupModal.active { pointer-events:none !important; opacity:1 !important; }
+  #scriptPopupModal > .modal-box { pointer-events:all; width:52vw !important; max-width:720px !important; height:100vh !important; max-height:100vh !important; border-radius:18px 0 0 18px !important; border-left:2px solid var(--border); box-shadow:-8px 0 40px rgba(0,0,0,.22); transform:translateX(110%); transition:transform .28s cubic-bezier(.4,0,.2,1) !important; padding:28px 32px !important; display:flex !important; flex-direction:column !important; }
+  #scriptPopupModal.active > .modal-box { transform:translateX(0); }
+  @media (max-width:768px) { #scriptPopupModal > .modal-box { width:88vw !important; } }
 </style>
 </head>
 <body>
