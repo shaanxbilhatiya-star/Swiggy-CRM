@@ -2958,7 +2958,18 @@ async function loadScript() {
     const d = await r.json();
     scriptContent = d.script;
     scriptLoaded = true;
-  } catch(e) { scriptContent = null; scriptLoaded = true; }
+    // Number may have arrived while script was still fetching — handle it now
+    if (scriptContent && currentNumberId && !scriptPopupShown) {
+      document.getElementById('dispositionPanel').style.display = 'none';
+      showScriptPopup();
+    } else if (!scriptContent && currentNumberId) {
+      // No script configured — unlock disposition immediately
+      document.getElementById('dispositionPanel').style.display = 'block';
+    }
+  } catch(e) {
+    scriptContent = null; scriptLoaded = true;
+    if (currentNumberId) document.getElementById('dispositionPanel').style.display = 'block';
+  }
 }
 loadScript();
 
@@ -3013,11 +3024,16 @@ function closeScriptPopup() {
 const _origShowNumber = showNumber;
 showNumber = function(numberId, phone, name, totalDialedToday, resumed) {
   _origShowNumber(numberId, phone, name, totalDialedToday, resumed);
-  // Script popup must appear before agent can select disposition
-  if (scriptContent) {
-    document.getElementById('dispositionPanel').style.display = 'none';
+  // Always lock disposition when a new number arrives
+  document.getElementById('dispositionPanel').style.display = 'none';
+  if (scriptLoaded && scriptContent) {
+    // Script ready — show immediately
     showScriptPopup();
+  } else if (scriptLoaded && !scriptContent) {
+    // No script configured — unlock disposition right away
+    document.getElementById('dispositionPanel').style.display = 'block';
   }
+  // If !scriptLoaded: disposition stays hidden; loadScript() will handle when done
 };
 
 // ── DND Manual Management ─────────────────────────────────────────────────────
