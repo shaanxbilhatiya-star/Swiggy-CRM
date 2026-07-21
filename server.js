@@ -355,6 +355,134 @@ setInterval(() => {
   try { evaluateRecruitedRiders(appState); saveState(appState); } catch {}
 }, 60000);
 
+// ─── Google Sheet Lead Auto-Sync ───────────────────────────────────────────────
+// Pulls new rows from a Facebook Lead Ads Google Sheet, converts full_name +
+// phone_number into the CRM's number format, and drops them straight into the
+// dialing queue. Fires a 'new-lead' socket event so the admin panel can play a
+// loud alert sound the moment a fresh lead lands.
+const SHEET_ID = process.env.LEADS_SHEET_ID || '1RhOJJeaxyNo1v995JoeoeGba0AVTtTjFLDdHgbO2ggo';
+const SHEET_GID = process.env.LEADS_SHEET_GID || '0';
+const SHEET_SYNC_INTERVAL_MS = Number(process.env.LEADS_SHEET_SYNC_MS || 30000);
+const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+
+let sheetSyncStatus = { lastRunAt: null, lastSuccessAt: null, lastError: null, lastAddedCount: 0, totalSynced: 0 };
+
+// Minimal CSV parser that handles quoted fields containing commas/newlines.
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i + 1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(cell => cell !== ''));
+}
+
+// Facebook lead sheets prefix phone with "p:" and a country code, e.g. p:+916269577985.
+// Strip the prefix and any country code, keep the last 10 digits (Indian mobile format).
+function cleanSheetPhone(raw) {
+  if (!raw) return '';
+  let digits = String(raw).replace(/^p:/i, '').replace(/[^\d]/g, '');
+  if (digits.length > 10) digits = digits.slice(-10);
+  return digits;
+}
+
+async function syncLeadsFromSheet() {
+  sheetSyncStatus.lastRunAt = new Date().toISOString();
+  try {
+    const resp = await fetch(SHEET_CSV_URL);
+    if (!resp.ok) throw new Error(`Sheet fetch failed: HTTP ${resp.status}`);
+    const csvText = await resp.text();
+    if (/<html/i.test(csvText.slice(0, 200))) {
+      throw new Error('Sheet did not return CSV — check that sharing is set to "Anyone with the link can view"');
+    }
+    const rows = parseCSV(csvText);
+    if (!rows.length) return;
+
+    const header = rows[0].map(h => String(h || '').trim().toLowerCase());
+    const nameIdx = header.indexOf('full_name');
+    const phoneIdx = header.indexOf('phone_number');
+    const leadIdIdx = header.indexOf('id');
+    if (nameIdx === -1 || phoneIdx === -1) {
+      throw new Error(`Could not find full_name/phone_number columns in sheet header: ${header.join(', ')}`);
+    }
+
+    appState = checkDailyReset(appState);
+    const existingPhones = new Set(appState.numbers.map(n => n.phone));
+    const seenSheetLeadIds = new Set(appState.syncedSheetLeadIds || (appState.syncedSheetLeadIds = []));
+
+    const newEntries = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const leadId = leadIdIdx !== -1 ? String(r[leadIdIdx] || '').trim() : '';
+      const rawName = String(r[nameIdx] || '').trim();
+      const phone = cleanSheetPhone(r[phoneIdx]);
+      if (!phone || phone.length < 7) continue;
+      if (leadId && seenSheetLeadIds.has(leadId)) continue;
+      if (existingPhones.has(phone)) { if (leadId) seenSheetLeadIds.add(leadId); continue; }
+      // skip Facebook's placeholder/dummy test-lead rows
+      if (/^<test lead/i.test(rawName)) continue;
+
+      existingPhones.add(phone);
+      if (leadId) seenSheetLeadIds.add(leadId);
+      newEntries.push({
+        id: uuidv4(),
+        phone,
+        name: rawName,
+        file: 'google-sheet-sync',
+        assignedTo: null,
+        dialedBy: null,
+        dialedAt: null,
+        source: 'sheet-sync',
+        receivedAt: new Date().toISOString()
+      });
+    }
+
+    if (newEntries.length) {
+      appState.numbers.push(...newEntries);
+      appState.syncedSheetLeadIds = Array.from(seenSheetLeadIds).slice(-5000); // cap growth
+      saveState(appState);
+      broadcastAdminStats();
+      io.to('admin-room').emit('new-lead', {
+        count: newEntries.length,
+        leads: newEntries.map(e => ({ name: e.name, phone: e.phone }))
+      });
+      console.log(`📥 Synced ${newEntries.length} new lead(s) from Google Sheet`);
+    }
+
+    sheetSyncStatus.lastSuccessAt = new Date().toISOString();
+    sheetSyncStatus.lastError = null;
+    sheetSyncStatus.lastAddedCount = newEntries.length;
+    sheetSyncStatus.totalSynced += newEntries.length;
+  } catch (e) {
+    sheetSyncStatus.lastError = e.message;
+    console.error('⚠️  Lead sheet sync failed:', e.message);
+  }
+}
+
+setInterval(() => { syncLeadsFromSheet(); }, SHEET_SYNC_INTERVAL_MS);
+setTimeout(() => { syncLeadsFromSheet(); }, 3000); // initial sync shortly after boot
+
+app.get('/api/admin/sheet-sync-status', (req, res) => {
+  res.json({ ...sheetSyncStatus, sheetId: SHEET_ID, intervalMs: SHEET_SYNC_INTERVAL_MS });
+});
+
+app.post('/api/admin/sheet-sync-now', async (req, res) => {
+  await syncLeadsFromSheet();
+  res.json({ success: true, ...sheetSyncStatus });
+});
+
 // ─── Number helpers ───────────────────────────────────────────────────────────
 function getNextNumber(agentId) {
   appState = checkDailyReset(appState);
