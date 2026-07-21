@@ -2969,9 +2969,10 @@ function registerReport(entry) {
   return entry;
 }
 
-// Builds one PDF for the given IST date string (YYYY-MM-DD) summarizing daily
-// disposition stats + admin/lead stats, saves it to disk, and registers it in
-// the permanent report archive. Used by the automatic 6:30 PM IST scheduler.
+// Builds one beautifully styled PDF for the given IST date string (YYYY-MM-DD)
+// summarizing daily disposition stats + admin/lead stats, matching the sample
+// report design with KPI cards, tables, and professional formatting. Saves to
+// disk and registers in the permanent report archive.
 function generateDailyReport(dateStr) {
   return new Promise((resolve, reject) => {
     try {
@@ -2979,36 +2980,249 @@ function generateDailyReport(dateStr) {
       const stats = getAdminStats();
       const fileName = uuidv4() + '.pdf';
       const filePath = path.join(REPORTS_DIR, fileName);
-      const doc = new PDFDocument({ margin: 50 });
+      
+      // Use A4 with smaller margins for better layout
+      const doc = new PDFDocument({ 
+        size: 'A4', 
+        margin: 40,
+        bufferPages: true 
+      });
       const writeStream = fs.createWriteStream(filePath);
       doc.pipe(writeStream);
 
-      doc.fontSize(18).fillColor('#fc8019').text('Swiggy Rider Recruitment CRM — Daily Report', { align: 'left' });
-      doc.moveDown(0.3);
-      doc.fontSize(11).fillColor('#12293f').text('Date: ' + dateStr + '  (Auto-generated at 6:30 PM IST)');
-      doc.moveDown(1);
+      const SWIGGY = '#FC8019';
+      const SWIGGY_DARK = '#E8720F';
+      const INK = '#12293F';
+      const MUTED = '#64748B';
+      const GREEN = '#10B981';
+      const BLUE = '#3B82F6';
+      const PINK = '#EC4899';
+      const pageWidth = doc.page.width;
+      const contentWidth = pageWidth - 80;
 
-      doc.fontSize(13).fillColor('#fc8019').text('Rider Recruitment Overview');
-      doc.moveDown(0.3);
-      doc.fontSize(11).fillColor('#12293f');
-      doc.text('Total Numbers Uploaded: ' + (stats.total || 0));
-      doc.text('Remaining To Dial: ' + (stats.remaining || 0));
-      doc.text('Recruited Riders (Active): ' + (stats.recruitedCount || 0));
-      doc.text('Delivery Completed: ' + (stats.deliveryCompletedCount || 0));
-      doc.text('Delivery Failed (7d expired): ' + (stats.deliveryFailedCount || 0));
-      doc.text('Overdue Riders: ' + (stats.overdueRecruitedCount || 0));
-      doc.text('Followups Pending: ' + (stats.followupCount || 0));
-      doc.text('Redialing Tomorrow: ' + (stats.comingBackTomorrow || 0));
-      doc.text('DND Numbers: ' + (stats.dndCount || 0));
-      doc.moveDown(1);
+      // ===== HEADER WITH GRADIENT EFFECT =====
+      doc.rect(0, 0, pageWidth, 120).fill(SWIGGY);
+      doc.rect(0, 120, pageWidth, 4).fill('#FACC15'); // Amber accent line
 
-      doc.fontSize(13).fillColor('#fc8019').text('Disposition Breakdown (Today)');
-      doc.moveDown(0.3);
-      doc.fontSize(11).fillColor('#12293f');
-      doc.text('Total Calls: ' + (dispo.totalCalls || 0));
-      Object.keys(DISPO_LABELS).forEach(key => {
-        doc.text(DISPO_LABELS[key] + ': ' + (dispo[key] || 0));
+      doc.fillColor('#FFFFFF')
+         .fontSize(24)
+         .font('Helvetica-Bold')
+         .text('SWIGGY RIDER RECRUITMENT', 40, 40);
+      
+      doc.fillColor('#FFECCC')
+         .fontSize(13)
+         .font('Helvetica')
+         .text('CRM', 40, 70);
+
+      doc.fillColor('#FFFFFF')
+         .fontSize(12)
+         .font('Helvetica-Bold')
+         .text('DAILY AGENT REPORT', pageWidth - 200, 40, { width: 160, align: 'right' });
+
+      doc.fillColor('#FFECCC')
+         .fontSize(10)
+         .font('Helvetica')
+         .text(dateStr, pageWidth - 200, 60, { width: 160, align: 'right' })
+         .text('Auto-generated 6:30 PM IST', pageWidth - 200, 75, { width: 160, align: 'right' });
+
+      // AUTO-GENERATED badge
+      doc.roundedRect(pageWidth - 170, 95, 130, 20, 5)
+         .fill('#FACC15');
+      doc.fillColor(SWIGGY_DARK)
+         .fontSize(9)
+         .font('Helvetica-Bold')
+         .text('AUTO-GENERATED REPORT', pageWidth - 165, 102, { width: 120, align: 'center' });
+
+      // ===== KPI CARDS =====
+      let y = 145;
+      const totalDialed = dispo.totalCalls || 0;
+      const interested = dispo.interested || 0;
+      const followup = dispo.followup || 0;
+      const recruited = stats.recruitedCount || 0;
+      const delivered = stats.deliveryCompletedCount || 0;
+
+      const kpis = [
+        { label: 'TOTAL DIALED', value: totalDialed, color: SWIGGY },
+        { label: 'INTERESTED', value: interested, color: GREEN },
+        { label: 'FOLLOW-UPS', value: followup, color: BLUE },
+        { label: 'RECRUITED', value: recruited, color: PINK },
+        { label: 'DELIVERED', value: delivered, color: '#16A34A' }
+      ];
+
+      const cardWidth = (contentWidth - 40) / 5;
+      const cardHeight = 70;
+      
+      kpis.forEach((kpi, i) => {
+        const x = 40 + i * (cardWidth + 10);
+        
+        // Card background
+        doc.roundedRect(x, y, cardWidth, cardHeight, 8)
+           .lineWidth(1)
+           .stroke('#E2E8F0')
+           .fill('#FFFFFF');
+        
+        // Top color bar
+        doc.roundedRect(x, y, cardWidth, 6, 4)
+           .fill(kpi.color);
+        
+        // Value
+        doc.fillColor(kpi.color)
+           .fontSize(22)
+           .font('Helvetica-Bold')
+           .text(String(kpi.value), x, y + 25, { width: cardWidth, align: 'center' });
+        
+        // Label
+        doc.fillColor(MUTED)
+           .fontSize(8)
+           .font('Helvetica-Bold')
+           .text(kpi.label, x, y + 55, { width: cardWidth, align: 'center' });
       });
+
+      y += cardHeight + 20;
+
+      // ===== CONVERSION RATE STRIP =====
+      const convRate = totalDialed ? Math.round((recruited / totalDialed) * 100) : 0;
+      const intRate = totalDialed ? Math.round((interested / totalDialed) * 100) : 0;
+      const contactRate = totalDialed ? Math.round(((interested + followup) / totalDialed) * 100) : 0;
+
+      doc.roundedRect(40, y, contentWidth, 30, 6)
+         .fill('#FFF4E5');
+      
+      doc.fillColor(SWIGGY_DARK)
+         .fontSize(11)
+         .font('Helvetica-Bold')
+         .text(`Recruitment Rate: ${convRate}%`, 60, y + 12)
+         .text(`Interested Rate: ${intRate}%`, 250, y + 12)
+         .text(`Contactable: ${contactRate}%`, 430, y + 12);
+
+      y += 50;
+
+      // ===== DISPOSITION BREAKDOWN SECTION =====
+      doc.fillColor(SWIGGY)
+         .fontSize(16)
+         .font('Helvetica-Bold')
+         .text('Call Disposition Breakdown', 40, y);
+      
+      doc.rect(40, y + 20, 10, 3).fill(SWIGGY);
+      
+      y += 35;
+
+      // Disposition stats with colored bars
+      const dispoColors = {
+        interested: GREEN,
+        followup: BLUE,
+        notInterested: '#94A3B8',
+        cnr: '#F59E0B',
+        switchOff: '#F97316',
+        cncDead: '#EF4444',
+        dnd: '#BE185D'
+      };
+
+      Object.keys(DISPO_LABELS).forEach(key => {
+        const count = dispo[key] || 0;
+        const pct = totalDialed ? Math.round((count / totalDialed) * 100) : 0;
+        const color = dispoColors[key] || MUTED;
+        
+        // Color indicator
+        doc.roundedRect(40, y, 10, 10, 2).fill(color);
+        
+        // Label
+        doc.fillColor(INK)
+           .fontSize(10)
+           .font('Helvetica-Bold')
+           .text(DISPO_LABELS[key], 58, y + 2);
+        
+        // Count and percentage
+        doc.fillColor(MUTED)
+           .fontSize(10)
+           .font('Helvetica')
+           .text(`${count} (${pct}%)`, pageWidth - 120, y + 2, { width: 80, align: 'right' });
+        
+        // Progress bar background
+        doc.roundedRect(270, y + 2, 250, 8, 4).fill('#E9ECF2');
+        
+        // Progress bar fill
+        const barWidth = Math.max(3, 250 * (pct / 100));
+        doc.roundedRect(270, y + 2, barWidth, 8, 4).fill(color);
+        
+        y += 18;
+      });
+
+      y += 20;
+
+      // ===== DETAILED STATS SECTION =====
+      if (y > 650) {
+        doc.addPage();
+        y = 60;
+      }
+
+      doc.fillColor(SWIGGY)
+         .fontSize(16)
+         .font('Helvetica-Bold')
+         .text('System Overview', 40, y);
+      
+      doc.rect(40, y + 20, 10, 3).fill(SWIGGY);
+      
+      y += 40;
+
+      // Two-column layout for stats
+      const statsList = [
+        ['Total Numbers Uploaded', stats.total || 0],
+        ['Remaining To Dial', stats.remaining || 0],
+        ['Recruited Riders (Active)', stats.recruitedCount || 0],
+        ['Delivery Completed', stats.deliveryCompletedCount || 0],
+        ['Delivery Failed (7d expired)', stats.deliveryFailedCount || 0],
+        ['Overdue Riders', stats.overdueRecruitedCount || 0],
+        ['Followups Pending', stats.followupCount || 0],
+        ['Redialing Tomorrow', stats.comingBackTomorrow || 0],
+        ['DND Numbers', stats.dndCount || 0]
+      ];
+
+      // Create a styled table for stats
+      const tableTop = y;
+      const rowHeight = 30;
+      
+      statsList.forEach((stat, i) => {
+        const rowY = tableTop + (i * rowHeight);
+        
+        // Alternating row background
+        if (i % 2 === 0) {
+          doc.rect(40, rowY, contentWidth, rowHeight).fill('#F8FAFC');
+        }
+        
+        doc.fillColor(INK)
+           .fontSize(11)
+           .font('Helvetica')
+           .text(stat[0], 50, rowY + 10, { width: 350 });
+        
+        doc.fillColor(SWIGGY)
+           .fontSize(13)
+           .font('Helvetica-Bold')
+           .text(String(stat[1]), pageWidth - 150, rowY + 8, { width: 100, align: 'right' });
+      });
+
+      y = tableTop + (statsList.length * rowHeight) + 30;
+
+      // ===== FOOTER =====
+      const addFooter = () => {
+        const bottomY = doc.page.height - 40;
+        doc.moveTo(40, bottomY).lineTo(pageWidth - 40, bottomY).stroke('#E2E8F0');
+        
+        doc.fillColor(MUTED)
+           .fontSize(8)
+           .font('Helvetica')
+           .text('Swiggy Rider Recruitment CRM  |  Daily Agent Report', 40, bottomY + 10);
+        
+        const pageNum = doc.bufferedPageRange().count;
+        doc.text(`Page ${pageNum}`, pageWidth - 100, bottomY + 10, { width: 60, align: 'right' });
+      };
+
+      // Add footer to all pages
+      const pageCount = doc.bufferedPageRange().count;
+      for (let i = 0; i < pageCount; i++) {
+        doc.switchToPage(i);
+        addFooter();
+      }
 
       doc.end();
       writeStream.on('finish', () => {
@@ -3024,6 +3238,7 @@ function generateDailyReport(dateStr) {
           uploadedAt: new Date().toISOString(),
           sizeBytes
         });
+        console.log('✅ Generated styled daily report:', entry.originalName);
         resolve(entry);
       });
       writeStream.on('error', reject);
