@@ -930,14 +930,33 @@ socket.on('force-stop', () => showToast('All agents stopped', 'warn'));
 
 // ─── New Lead Alert (loud sound) ──────────────────────────────────────────
 let __newLeadAudioCtx = null;
+let __newLeadAudioUnlocked = false;
 function __unlockNewLeadAudio() {
   if (!__newLeadAudioCtx) {
     try { __newLeadAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   }
   if (__newLeadAudioCtx && __newLeadAudioCtx.state === 'suspended') __newLeadAudioCtx.resume();
+  if (__newLeadAudioCtx && __newLeadAudioCtx.state === 'running') {
+    __newLeadAudioUnlocked = true;
+    const banner = document.getElementById('enableSoundBanner');
+    if (banner) banner.remove();
+  }
 }
-document.addEventListener('click', __unlockNewLeadAudio, { once: true });
-document.addEventListener('keydown', __unlockNewLeadAudio, { once: true });
+document.addEventListener('click', __unlockNewLeadAudio);
+document.addEventListener('keydown', __unlockNewLeadAudio);
+
+// Browsers block sound until a real click/keypress happens on the page.
+// Agents click buttons constantly so their alert unlocks itself — admins
+// often just sit watching the dashboard, so show an explicit prompt here.
+(function showEnableSoundBanner() {
+  if (document.getElementById('enableSoundBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'enableSoundBanner';
+  b.textContent = '🔔 Click anywhere to enable New Lead alert sound';
+  b.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:9999;background:var(--accent,#FC8019);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.2);cursor:pointer';
+  b.onclick = __unlockNewLeadAudio;
+  document.body.appendChild(b);
+})();
 
 function playNewLeadSound() {
   __unlockNewLeadAudio();
