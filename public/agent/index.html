@@ -676,51 +676,6 @@
           <span style="font-size:11px;color:var(--muted)" id="dialerPanelSubtitle">Active Dialer</span>
         </div>
 
-        <!-- Recording Upload Section (visible after 5:45 PM IST) -->
-        <div id="recordingUploadSection" style="display:none;">
-          <div style="padding: 30px 20px; text-align: center;">
-            <div style="font-size: 48px; margin-bottom: 12px;">🎙️</div>
-            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--accent);">
-              Upload Call Recordings
-            </h3>
-            <p style="font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;">
-              कृपया आज की सभी कॉल रिकॉर्डिंग अपलोड करें। Multiple files select कर सकते हैं।
-            </p>
-            
-            <div id="recordingDropZone" style="border: 2px dashed var(--border-strong); border-radius: 12px; padding: 40px 20px; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; background: var(--surface2);"
-                 onclick="document.getElementById('recordingFileInput').click()"
-                 ondragover="event.preventDefault(); this.style.borderColor='var(--accent)'; this.style.background='var(--accent-glow)'"
-                 ondragleave="this.style.borderColor='var(--border-strong)'; this.style.background='var(--surface2)'"
-                 ondrop="handleRecordingDrop(event)">
-              <div style="font-size: 40px; margin-bottom: 10px;">🎵</div>
-              <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">Click or drag & drop audio files</div>
-              <div style="font-size: 12px; color: var(--muted);">All audio formats accepted · Multiple files · Max 50MB per file</div>
-            </div>
-            
-            <input type="file" id="recordingFileInput" accept="audio/*,.mp3,.wav,.ogg,.webm,.aac,.m4a,.flac,.amr,.3gp" multiple style="display: none" onchange="handleRecordingSelect(event)">
-            
-            <div id="recordingSelectedFiles" style="display: none; margin-bottom: 20px;">
-              <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; text-align: left;">Selected Files:</div>
-              <div id="recordingFileList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;"></div>
-            </div>
-            
-            <div id="recordingUploadProgress" style="display: none; margin-bottom: 20px;">
-              <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;" id="recordingProgressText">Uploading...</div>
-              <div style="background: var(--surface2); border-radius: 100px; height: 10px; overflow: hidden;">
-                <div id="recordingProgressBar" style="height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; border-radius: 100px;"></div>
-              </div>
-            </div>
-            
-            <button id="btnUploadRecordings" onclick="submitRecordings()" class="action-btn" style="background: var(--accent); color: #fff; width: 100%; max-width: 400px;">
-              📤 Upload Recordings
-            </button>
-            
-            <div style="margin-top: 16px; padding: 12px; background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px; font-size: 12px; color: var(--text);">
-              ⚠️ Note: Dialing will resume tomorrow. Recordings will be auto-deleted after 7 days.
-            </div>
-          </div>
-        </div>
-
         <div id="resumeToast">⚡ Session resumed — continuing from where you left off</div>
 
         <div id="numberDisplay" style="display:none">
@@ -3159,38 +3114,111 @@ function checkTimeRestriction() {
   const hours = istTime.getHours();
   const minutes = istTime.getMinutes();
   
-  // Check if it's 5:45 PM (17:45) - only at that specific time (5:45 PM - 5:59 PM)
-  // NOT after 6 PM, because by then agents should have finished their day
-  if (hours === 17 && minutes >= 45) {
-    if (!dialingRestricted) {
-      dialingRestricted = true;
-      restrictDialingShowRecordingUpload();
-    }
+  // Restrict dialing from 5:45 PM (17:45) until 2:00 AM (02:00) next day
+  const isRestricted = (hours === 17 && minutes >= 45) || hours >= 18 || hours < 2;
+  
+  if (isRestricted && !dialingRestricted) {
+    dialingRestricted = true;
+    restrictDialingShowRecordingUpload();
+  } else if (!isRestricted && dialingRestricted) {
+    // Auto-resume at 2:00 AM IST
+    dialingRestricted = false;
+    resumeDialingAfterRestriction();
   }
 }
 
 function restrictDialingShowRecordingUpload() {
-  // Hide dialer sections
-  document.getElementById('numberDisplay').style.display = 'none';
-  document.getElementById('idleOverlay').style.display = 'none';
-  document.getElementById('noNumbers').style.display = 'none';
-  document.getElementById('dispositionPanel').style.display = 'none';
-  document.getElementById('breakCard').style.display = 'none';
-  document.getElementById('washroomCard').style.display = 'none';
-  document.getElementById('meetingCard').style.display = 'none';
+  // COMPLETELY HIDE the entire dialer panel (📞 Current Lead section)
+  const dialerPanel = document.querySelector('.panel.dialer-panel');
+  if (dialerPanel) dialerPanel.style.display = 'none';
   
-  // Hide action buttons
-  const btnRow = document.querySelector('.btn-row');
-  if (btnRow) btnRow.style.display = 'none';
+  // COMPLETELY HIDE the stats panel (📊 My Disposition Stats)
+  const statsPanel = document.querySelectorAll('.grid-2 > .panel')[1]; // Second panel in grid-2
+  if (statsPanel) statsPanel.style.display = 'none';
   
-  // Update panel header
-  document.getElementById('dialerPanelTitle').textContent = '🎙️ Upload Recordings';
-  document.getElementById('dialerPanelSubtitle').textContent = 'Dialing Restricted After 5:45 PM';
+  // Create standalone recording upload panel (replaces the entire grid-2)
+  const grid2 = document.querySelector('.grid-2');
+  if (grid2 && !document.getElementById('standaloneRecordingPanel')) {
+    const recordingPanel = document.createElement('div');
+    recordingPanel.id = 'standaloneRecordingPanel';
+    recordingPanel.className = 'panel';
+    recordingPanel.style.cssText = 'grid-column: 1 / -1; border: 2px solid var(--accent);';
+    recordingPanel.innerHTML = `
+      <div class="panel-header accent-h">
+        <h2>🎙️ Upload Call Recordings</h2>
+        <span style="font-size:11px;color:var(--muted)">Dialing Restricted: 5:45 PM - 2:00 AM IST</span>
+      </div>
+      <div class="panel-body" style="padding: 30px 20px; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🎙️</div>
+        <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--accent);">
+          Upload Call Recordings
+        </h3>
+        <p style="font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;">
+          कृपया आज की सभी कॉल रिकॉर्डिंग अपलोड करें। Multiple files select कर सकते हैं।
+        </p>
+        
+        <div id="recordingDropZone" style="border: 2px dashed var(--border-strong); border-radius: 12px; padding: 40px 20px; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; background: var(--surface2);"
+             onclick="document.getElementById('recordingFileInput').click()"
+             ondragover="event.preventDefault(); this.style.borderColor='var(--accent)'; this.style.background='var(--accent-glow)'"
+             ondragleave="this.style.borderColor='var(--border-strong)'; this.style.background='var(--surface2)'"
+             ondrop="handleRecordingDrop(event)">
+          <div style="font-size: 40px; margin-bottom: 10px;">🎵</div>
+          <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">Click or drag & drop audio files</div>
+          <div style="font-size: 12px; color: var(--muted);">All audio formats accepted · Multiple files · Max 50MB per file</div>
+        </div>
+        
+        <input type="file" id="recordingFileInput" accept="audio/*,.mp3,.wav,.ogg,.webm,.aac,.m4a,.flac,.amr,.3gp" multiple style="display: none" onchange="handleRecordingSelect(event)">
+        
+        <div id="recordingSelectedFiles" style="display: none; margin-bottom: 20px;">
+          <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; text-align: left;">Selected Files:</div>
+          <div id="recordingFileList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;"></div>
+        </div>
+        
+        <div id="recordingUploadProgress" style="display: none; margin-bottom: 20px;">
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;" id="recordingProgressText">Uploading...</div>
+          <div style="background: var(--surface2); border-radius: 100px; height: 10px; overflow: hidden;">
+            <div id="recordingProgressBar" style="height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; border-radius: 100px;"></div>
+          </div>
+        </div>
+        
+        <button id="btnUploadRecordings" onclick="submitRecordings()" class="action-btn" style="background: var(--accent); color: #fff; width: 100%; max-width: 400px;">
+          📤 Upload Recordings
+        </button>
+        
+        <div style="margin-top: 16px; padding: 14px; background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px; font-size: 13px; color: var(--text);">
+          ⚠️ <strong>Note:</strong> Dialing will automatically resume at 2:00 AM IST. Recordings will be auto-deleted after 7 days.
+        </div>
+        
+        <div style="margin-top: 12px; padding: 12px; background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 8px; font-size: 12px; color: var(--green);">
+          ✅ After uploading, you can logout. The system will be ready for dialing tomorrow at 2:00 AM IST.
+        </div>
+      </div>
+    `;
+    grid2.appendChild(recordingPanel);
+  }
   
-  // Show recording upload section
-  document.getElementById('recordingUploadSection').style.display = 'block';
+  showToast('⏰ Dialing restricted (5:45 PM - 2:00 AM IST). Please upload today\'s recordings and logout.', 'warn');
+}
+
+function resumeDialingAfterRestriction() {
+  // Remove standalone recording panel
+  const recordingPanel = document.getElementById('standaloneRecordingPanel');
+  if (recordingPanel) recordingPanel.remove();
   
-  showToast('⏰ Dialing restricted after 5:45 PM IST. Please upload today\'s call recordings.', 'warn');
+  // Show dialer panel again
+  const dialerPanel = document.querySelector('.panel.dialer-panel');
+  if (dialerPanel) dialerPanel.style.display = 'block';
+  
+  // Show stats panel again
+  const statsPanel = document.querySelectorAll('.grid-2 > .panel')[1];
+  if (statsPanel) statsPanel.style.display = 'block';
+  
+  // Reset state
+  selectedRecordingFiles = [];
+  showToast('✅ Dialing resumed! System is ready for today\'s calls.', 'success');
+  
+  // Reload page to ensure clean state
+  setTimeout(() => location.reload(), 1500);
 }
 
 function handleRecordingDrop(event) {
