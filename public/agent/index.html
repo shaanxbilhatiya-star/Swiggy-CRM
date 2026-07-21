@@ -1179,34 +1179,19 @@ socket.on('reconnect_failed', () => {
   showBanner('disconnected', '❌ Could not reconnect. Please refresh the page.');
 });
 
-// ─── New Lead Alert (loud sound) ──────────────────────────────────────────
-let __newLeadAudioCtx = null;
-function __unlockNewLeadAudio() {
-  if (!__newLeadAudioCtx) {
-    try { __newLeadAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
-  }
-  if (__newLeadAudioCtx && __newLeadAudioCtx.state === 'suspended') __newLeadAudioCtx.resume();
-}
+// ─── New Lead Alert (custom audio, played twice) ──────────────────────────
+let __newLeadAudioUnlocked = false;
+function __unlockNewLeadAudio() { __newLeadAudioUnlocked = true; }
 document.addEventListener('click', __unlockNewLeadAudio, { once: true });
 document.addEventListener('keydown', __unlockNewLeadAudio, { once: true });
 
 function playNewLeadSound() {
-  __unlockNewLeadAudio();
-  if (!__newLeadAudioCtx) return;
-  const ctx = __newLeadAudioCtx;
-  const beepTimes = [0, 0.35, 0.7];
-  beepTimes.forEach(startAt => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime + startAt);
-    gain.gain.exponentialRampToValueAtTime(1, ctx.currentTime + startAt + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + startAt + 0.3);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(ctx.currentTime + startAt);
-    osc.stop(ctx.currentTime + startAt + 0.32);
-  });
+  const audio = new Audio('/shared/sounds/new-lead-alert.mp3');
+  audio.play().catch(() => {});
+  audio.addEventListener('ended', () => {
+    const audio2 = new Audio('/shared/sounds/new-lead-alert.mp3');
+    audio2.play().catch(() => {});
+  }, { once: true });
 }
 
 socket.on('new-lead', (data) => {
