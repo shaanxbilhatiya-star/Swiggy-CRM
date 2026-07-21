@@ -2395,7 +2395,7 @@ async function loadAdminRecordings() {
   
   try {
     let url = '/api/recordings?';
-    if (agent && agent !== 'all') url += 'agent=' + encapeURIComponent(agent) + '&';
+    if (agent && agent !== 'all') url += 'agent=' + encodeURIComponent(agent) + '&';
     if (date) url += 'date=' + encodeURIComponent(date) + '&';
     if (important) url += 'important=true&';
     
@@ -2528,6 +2528,17 @@ function formatBytes(bytes) {
 
 // Load recordings on page load
 loadAdminRecordings();
+
+// Limit date picker to last 7 days (recordings auto-delete after 7 days)
+(function setAdminRecDateLimits() {
+  const dateInput = document.getElementById('adminRecDateFilter');
+  if (!dateInput) return;
+  const today = new Date();
+  const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const toISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  dateInput.max = toISO(today);
+  dateInput.min = toISO(sevenDaysAgo);
+})();
 
 // ── Script Upload ─────────────────────────────────────────────────────────────
 (function initScriptUpload() {
