@@ -2972,6 +2972,8 @@ function registerReport(entry) {
 // Builds one PDF for the given IST date string (YYYY-MM-DD) summarizing daily
 // disposition stats + admin/lead stats, saves it to disk, and registers it in
 // the permanent report archive. Used by the automatic 6:30 PM IST scheduler.
+// ─── Styled like the Sample Report: gradient header, KPI cards, disposition
+// breakdown table, rider tables, DND list — matching the gorgeous demo PDF ─────
 function generateDailyReport(dateStr) {
   return new Promise((resolve, reject) => {
     try {
@@ -2979,36 +2981,293 @@ function generateDailyReport(dateStr) {
       const stats = getAdminStats();
       const fileName = uuidv4() + '.pdf';
       const filePath = path.join(REPORTS_DIR, fileName);
-      const doc = new PDFDocument({ margin: 50 });
+      const doc = new PDFDocument({ margin: 40, size: 'A4' });
       const writeStream = fs.createWriteStream(filePath);
       doc.pipe(writeStream);
 
-      doc.fontSize(18).fillColor('#fc8019').text('Swiggy Rider Recruitment CRM — Daily Report', { align: 'left' });
-      doc.moveDown(0.3);
-      doc.fontSize(11).fillColor('#12293f').text('Date: ' + dateStr + '  (Auto-generated at 6:30 PM IST)');
-      doc.moveDown(1);
+      // ── Brand colors ──
+      const SWIGGY = '#FC8019';
+      const SWIGGY_DARK = '#E8720F';
+      const SWIGGY_DEEP = '#C15806';
+      const INK = '#12293F';
+      const MUTED = '#64748B';
+      const GREEN = '#10B981';
+      const AMBER = '#F59E0B';
+      const PINK = '#EC4899';
 
-      doc.fontSize(13).fillColor('#fc8019').text('Rider Recruitment Overview');
-      doc.moveDown(0.3);
-      doc.fontSize(11).fillColor('#12293f');
-      doc.text('Total Numbers Uploaded: ' + (stats.total || 0));
-      doc.text('Remaining To Dial: ' + (stats.remaining || 0));
-      doc.text('Recruited Riders (Active): ' + (stats.recruitedCount || 0));
-      doc.text('Delivery Completed: ' + (stats.deliveryCompletedCount || 0));
-      doc.text('Delivery Failed (7d expired): ' + (stats.deliveryFailedCount || 0));
-      doc.text('Overdue Riders: ' + (stats.overdueRecruitedCount || 0));
-      doc.text('Followups Pending: ' + (stats.followupCount || 0));
-      doc.text('Redialing Tomorrow: ' + (stats.comingBackTomorrow || 0));
-      doc.text('DND Numbers: ' + (stats.dndCount || 0));
-      doc.moveDown(1);
+      const pageW = 595.28; // A4 width in points
+      const marginL = 40;
+      const marginR = 40;
+      const contentW = pageW - marginL - marginR;
 
-      doc.fontSize(13).fillColor('#fc8019').text('Disposition Breakdown (Today)');
-      doc.moveDown(0.3);
-      doc.fontSize(11).fillColor('#12293f');
-      doc.text('Total Calls: ' + (dispo.totalCalls || 0));
-      Object.keys(DISPO_LABELS).forEach(key => {
-        doc.text(DISPO_LABELS[key] + ': ' + (dispo[key] || 0));
+      // ── Gradient Header (Swiggy orange) ──
+      const headerH = 120;
+      const gradSteps = 60;
+      const stepW = pageW / gradSteps;
+      for (let i = 0; i < gradSteps; i++) {
+        const t = i / (gradSteps - 1);
+        const r = Math.round(252 + (193 - 252) * t);
+        const g = Math.round(128 + (88 - 128) * t);
+        const b = Math.round(25 + (6 - 25) * t);
+        doc.rect(i * stepW, 0, stepW + 1, headerH).fill(`rgb(${r},${g},${b})`);
+      }
+      // Amber accent line
+      doc.rect(0, headerH, pageW, 4).fill('#FACC15');
+
+      // Header text
+      doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF');
+      doc.text('SWIGGY RIDER RECRUITMENT', marginL, 25, { continued: false });
+      doc.font('Helvetica').fontSize(11).fillColor('#FFECD6');
+      doc.text('CRM', marginL, 52);
+
+      doc.font('Helvetica-Bold').fontSize(10).fillColor('#FFFFFF');
+      doc.text('DAILY REPORT', pageW - marginR - 120, 25, { width: 120, align: 'right' });
+      doc.font('Helvetica').fontSize(9).fillColor('#FFECD6');
+      doc.text(dateStr, pageW - marginR - 120, 40, { width: 120, align: 'right' });
+      doc.text('Auto-generated 6:30 PM IST', pageW - marginR - 120, 52, { width: 120, align: 'right' });
+
+      // Badge
+      doc.roundedRect(pageW - marginR - 105, 70, 100, 18, 4).fill('#FACC15');
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor(SWIGGY_DEEP);
+      doc.text('FULL DAILY SUMMARY', pageW - marginR - 100, 76, { width: 90, align: 'center' });
+
+      let y = headerH + 20;
+
+      // ── KPI Cards Row ──
+      const totalDialed = dispo.totalCalls || 0;
+      const interestedN = dispo.interested || 0;
+      const followupN = dispo.followup || 0;
+      const recruitedCount = stats.recruitedCount || 0;
+      const completedCount = stats.deliveryCompletedCount || 0;
+
+      const kpis = [
+        { label: 'TOTAL DIALED', value: String(totalDialed), color: SWIGGY },
+        { label: 'RECRUITED', value: String(interestedN), color: GREEN },
+        { label: 'FOLLOW-UPS', value: String(followupN), color: '#3B82F6' },
+        { label: 'ONBOARDED', value: String(completedCount), color: PINK },
+        { label: 'DELIVERIES', value: String(completedCount), color: '#16A34A' }
+      ];
+      const cardGap = 8;
+      const cardW = (contentW - cardGap * 4) / 5;
+      const cardH = 58;
+
+      kpis.forEach((kpi, i) => {
+        const cx = marginL + i * (cardW + cardGap);
+        // Card background
+        doc.roundedRect(cx, y, cardW, cardH, 5).lineWidth(0.5).strokeColor('#FFE0C2').fillAndStroke('#FFFFFF', '#FFE0C2');
+        // Top color bar
+        doc.roundedRect(cx, y, cardW, 5, 2).fill(kpi.color);
+        // Value
+        doc.font('Helvetica-Bold').fontSize(16).fillColor(kpi.color);
+        doc.text(kpi.value, cx + 4, y + 18, { width: cardW - 8, align: 'center' });
+        // Label
+        doc.font('Helvetica-Bold').fontSize(7).fillColor(MUTED);
+        doc.text(kpi.label, cx + 4, y + cardH - 16, { width: cardW - 8, align: 'center' });
       });
+
+      y += cardH + 14;
+
+      // ── Onboarding Rate Strip ──
+      const convRate = totalDialed ? Math.round((completedCount / totalDialed) * 100) : 0;
+      const intRate = totalDialed ? Math.round((interestedN / totalDialed) * 100) : 0;
+      const contactable = totalDialed ? Math.round(((interestedN + followupN) / totalDialed) * 100) : 0;
+
+      doc.roundedRect(marginL, y, contentW, 22, 4).fill('#FFF4E9');
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(SWIGGY_DARK);
+      doc.text('Onboarding Rate: ' + convRate + '%', marginL + 10, y + 7);
+      doc.text('Interested Rate: ' + intRate + '%', marginL + 170, y + 7);
+      doc.text('Contactable: ' + contactable + '%', marginL + 330, y + 7);
+      y += 32;
+
+      // ── Disposition Breakdown Section ──
+      doc.roundedRect(marginL, y - 3, 5, 12, 2).fill(SWIGGY);
+      doc.font('Helvetica-Bold').fontSize(13).fillColor(SWIGGY);
+      doc.text('Call Disposition Breakdown', marginL + 10, y);
+      y += 20;
+
+      const dispoData = [
+        { key: 'interested', label: 'Recruited', color: GREEN },
+        { key: 'followup', label: 'Follow-up', color: '#3B82F6' },
+        { key: 'not_interested', label: 'Not Interested', color: '#94A3B8' },
+        { key: 'dead', label: 'CNC (Dead)', color: '#EF4444' },
+        { key: 'not_received', label: 'CNR (Not Received)', color: AMBER },
+        { key: 'switch_off', label: 'Switch Off', color: '#F97316' },
+        { key: 'dnd', label: 'DND', color: '#BE185D' },
+        { key: 'discard', label: 'Not-Eligible', color: '#6B7280' }
+      ];
+
+      // Table header
+      const colX = [marginL, marginL + 180, marginL + 260, marginL + 340];
+      doc.rect(marginL, y, contentW, 18).fill('#FFF8F2');
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(MUTED);
+      doc.text('DISPOSITION', colX[0] + 10, y + 5);
+      doc.text('COUNT', colX[1], y + 5, { width: 60, align: 'center' });
+      doc.text('PERCENTAGE', colX[2], y + 5, { width: 80, align: 'center' });
+      doc.text('BAR', colX[3], y + 5, { width: 100, align: 'center' });
+      y += 20;
+
+      dispoData.forEach(d => {
+        const count = dispo[d.key] || 0;
+        const pct = totalDialed ? Math.round((count / totalDialed) * 100) : 0;
+        // Color dot
+        doc.circle(marginL + 12, y + 7, 4).fill(d.color);
+        // Label
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(INK);
+        doc.text(d.label, marginL + 22, y + 3);
+        // Count
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(d.color);
+        doc.text(String(count), colX[1], y + 3, { width: 60, align: 'center' });
+        // Percentage
+        doc.font('Helvetica').fontSize(9).fillColor(MUTED);
+        doc.text(pct + '%', colX[2], y + 3, { width: 80, align: 'center' });
+        // Progress bar
+        const barX = colX[3] + 10;
+        const barW = 90;
+        doc.roundedRect(barX, y + 4, barW, 6, 3).fill('#E9ECF2');
+        if (pct > 0) doc.roundedRect(barX, y + 4, Math.max(4, barW * pct / 100), 6, 3).fill(d.color);
+        y += 18;
+      });
+
+      // Total row
+      doc.rect(marginL, y, contentW, 18).fill('#FFF8F2');
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(SWIGGY);
+      doc.text('TOTAL CALLS', marginL + 22, y + 5);
+      doc.text(String(totalDialed), colX[1], y + 5, { width: 60, align: 'center' });
+      y += 30;
+
+      // ── Rider Recruitment Overview Section ──
+      doc.roundedRect(marginL, y - 3, 5, 12, 2).fill(SWIGGY_DARK);
+      doc.font('Helvetica-Bold').fontSize(13).fillColor(SWIGGY_DARK);
+      doc.text('Rider Recruitment Overview', marginL + 10, y);
+      y += 20;
+
+      const overviewItems = [
+        ['Total Numbers Uploaded', String(stats.total || 0)],
+        ['Remaining To Dial', String(stats.remaining || 0)],
+        ['Recruited Riders (Active)', String(stats.recruitedCount || 0)],
+        ['Delivery Completed (31/31)', String(stats.deliveryCompletedCount || 0)],
+        ['Delivery Failed (7d expired)', String(stats.deliveryFailedCount || 0)],
+        ['Overdue Riders', String(stats.overdueRecruitedCount || 0)],
+        ['Followups Pending', String(stats.followupCount || 0)],
+        ['Redialing Tomorrow', String(stats.comingBackTomorrow || 0)],
+        ['DND Numbers', String(stats.dndCount || 0)]
+      ];
+
+      overviewItems.forEach((item, i) => {
+        const bg = i % 2 === 0 ? '#FFFFFF' : '#FFF8F2';
+        doc.rect(marginL, y, contentW, 16).fill(bg);
+        doc.font('Helvetica').fontSize(10).fillColor(INK);
+        doc.text(item[0], marginL + 10, y + 4);
+        doc.font('Helvetica-Bold').fontSize(10).fillColor(SWIGGY);
+        doc.text(item[1], marginL + contentW - 100, y + 4, { width: 90, align: 'right' });
+        y += 16;
+      });
+      y += 14;
+
+      // ── Recruited Riders Table ──
+      const intLeads = appState.numbers.filter(n => n.disposition === 'interested');
+      if (intLeads.length > 0) {
+        if (y > 650) { doc.addPage(); y = 40; }
+        doc.roundedRect(marginL, y - 3, 5, 12, 2).fill(GREEN);
+        doc.font('Helvetica-Bold').fontSize(13).fillColor(GREEN);
+        doc.text('Recruited Riders (' + intLeads.length + ')', marginL + 10, y);
+        y += 18;
+
+        // Table header
+        doc.rect(marginL, y, contentW, 16).fill(GREEN);
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#FFFFFF');
+        doc.text('PHONE', marginL + 8, y + 5);
+        doc.text('RIDER NAME', marginL + 100, y + 5);
+        doc.text('VEHICLE', marginL + 220, y + 5);
+        doc.text('AREA', marginL + 310, y + 5);
+        doc.text('AGENT', marginL + 420, y + 5);
+        y += 16;
+
+        intLeads.slice(0, 30).forEach((l, i) => {
+          if (y > 740) { doc.addPage(); y = 40; }
+          const bg = i % 2 === 0 ? '#ECFDF5' : '#FFFFFF';
+          doc.rect(marginL, y, contentW, 14).fill(bg);
+          doc.font('Helvetica').fontSize(8.5).fillColor(INK);
+          doc.text(String(l.phone || ''), marginL + 8, y + 4);
+          doc.text(String(l.riderName || l.name || '—'), marginL + 100, y + 4);
+          doc.text(String(l.vehicleType || l.loanType || '—'), marginL + 220, y + 4);
+          doc.text(String(l.area || '—'), marginL + 310, y + 4);
+          doc.text(String(l.interestedBy || '—'), marginL + 420, y + 4);
+          y += 14;
+        });
+        y += 10;
+      }
+
+      // ── Followups Table ──
+      const fuLeads = appState.numbers.filter(n => n.disposition === 'followup');
+      if (fuLeads.length > 0) {
+        if (y > 650) { doc.addPage(); y = 40; }
+        doc.roundedRect(marginL, y - 3, 5, 12, 2).fill('#3B82F6');
+        doc.font('Helvetica-Bold').fontSize(13).fillColor('#3B82F6');
+        doc.text('Follow-ups (' + fuLeads.length + ')', marginL + 10, y);
+        y += 18;
+
+        doc.rect(marginL, y, contentW, 16).fill('#3B82F6');
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#FFFFFF');
+        doc.text('PHONE', marginL + 8, y + 5);
+        doc.text('NAME', marginL + 110, y + 5);
+        doc.text('DATE', marginL + 250, y + 5);
+        doc.text('TIME', marginL + 350, y + 5);
+        doc.text('AGENT', marginL + 430, y + 5);
+        y += 16;
+
+        fuLeads.slice(0, 30).forEach((l, i) => {
+          if (y > 740) { doc.addPage(); y = 40; }
+          const bg = i % 2 === 0 ? '#EFF6FF' : '#FFFFFF';
+          doc.rect(marginL, y, contentW, 14).fill(bg);
+          doc.font('Helvetica').fontSize(8.5).fillColor(INK);
+          doc.text(String(l.phone || ''), marginL + 8, y + 4);
+          doc.text(String(l.followupName || l.name || '—'), marginL + 110, y + 4);
+          doc.text(String(l.followupDate || '—'), marginL + 250, y + 4);
+          doc.text(String(l.followupTime || '—'), marginL + 350, y + 4);
+          doc.text(String(l.followupLockedBy || '—'), marginL + 430, y + 4);
+          y += 14;
+        });
+        y += 10;
+      }
+
+      // ── DND Table ──
+      const dndNums = appState.dndNumbers || [];
+      if (dndNums.length > 0) {
+        if (y > 650) { doc.addPage(); y = 40; }
+        doc.roundedRect(marginL, y - 3, 5, 12, 2).fill('#BE185D');
+        doc.font('Helvetica-Bold').fontSize(13).fillColor('#BE185D');
+        doc.text('DND Numbers (' + dndNums.length + ')', marginL + 10, y);
+        y += 18;
+
+        doc.rect(marginL, y, contentW, 16).fill('#BE185D');
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#FFFFFF');
+        doc.text('#', marginL + 8, y + 5);
+        doc.text('PHONE NUMBER', marginL + 40, y + 5);
+        y += 16;
+
+        dndNums.slice(0, 40).forEach((d, i) => {
+          if (y > 740) { doc.addPage(); y = 40; }
+          const bg = i % 2 === 0 ? '#FDF2F8' : '#FFFFFF';
+          doc.rect(marginL, y, contentW, 14).fill(bg);
+          doc.font('Helvetica').fontSize(8.5).fillColor(INK);
+          doc.text(String(i + 1), marginL + 8, y + 4);
+          doc.text(String(d.phone || ''), marginL + 40, y + 4);
+          y += 14;
+        });
+      }
+
+      // ── Footer on all pages ──
+      const totalPages = doc.bufferedPageRange().count || 1;
+      for (let p = 0; p < totalPages; p++) {
+        doc.switchToPage(p);
+        doc.save();
+        doc.moveTo(marginL, 800).lineTo(pageW - marginR, 800).strokeColor('#E2E8F0').lineWidth(0.5).stroke();
+        doc.font('Helvetica').fontSize(7.5).fillColor(MUTED);
+        doc.text('Swiggy Rider Recruitment CRM  |  Daily Report  |  ' + dateStr, marginL, 805);
+        doc.text('Page ' + (p + 1) + ' of ' + totalPages, pageW - marginR - 60, 805, { width: 60, align: 'right' });
+        doc.restore();
+      }
 
       doc.end();
       writeStream.on('finish', () => {
@@ -3017,10 +3276,10 @@ function generateDailyReport(dateStr) {
           id: uuidv4(),
           fileName,
           originalName: dateStr + '_Swiggy_Rider_Recruitment_Daily_Report.pdf',
-          title: 'Daily Report',
+          title: 'Daily Report — ' + dateStr,
           reportDate: dateStr,
           generatedBy: 'system-auto-6:30pm-IST',
-          scope: 'general',
+          scope: 'Daily calling summary with charts & KPIs',
           uploadedAt: new Date().toISOString(),
           sizeBytes
         });
