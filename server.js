@@ -3627,6 +3627,165 @@ app.get('/client', (req, res) => res.sendFile(path.join(__dirname, 'public/clien
 // Backward-compatible alias for old bookmarks/links pointing at the previous TL panel URL.
 app.get('/tl', (req, res) => res.redirect(301, '/client'));
 
+// ─── Recording Management APIs ────────────────────────────────────────────────
+let recordings = [];
+
+// Configure multer for recording uploads
+const recordingStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(DATA_ROOT, 'uploads', 'recordings');
+    ensureDir(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${timestamp}_${sanitizedName}`);
+  }
+});
+
+const uploadRecording = multer({
+  storage: recordingStorage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  fileFilter: (req, file, cb) => {
+    // Accept all audio formats
+    const allowedMimes = [
+      'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav',
+      'audio/ogg', 'audio/webm', 'audio/aac', 'audio/m4a', 'audio/x-m4a',
+      'audio/flac', 'audio/x-flac', 'audio/amr', 'audio/3gpp', 'audio/3gpp2'
+    ];
+    
+    if (allowedMimes.includes(file.mimetype) || file.originalname.match(/\.(mp3|wav|ogg|webm|aac|m4a|flac|amr|3gp)$/i)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
+    }
+  }
+});
+
+// Auto-delete recordings older than 7 days
+async function cleanupOldRecordings() {
+  try {
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const recordingsDir = path.join(DATA_ROOT, 'uploads', 'recordings');
+    
+    if (!fs.existsSync(recordingsDir)) return;
+    
+    // Filter out old recordings
+    const oldRecordings = recordings.filter(rec => rec.uploadDate < sevenDaysAgo);
+    
+    // Delete files and remove from array
+    for (const recording of oldRecordings) {
+      try {
+        const filePath = path.join(recordingsDir, recording.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`Deleted old recording: ${recording.filename}`);
+        }
+      } catch (error) {
+        console.error(`Error deleting file ${recording.filename}:`, error);
+      }
+    }
+    
+    // Remove from recordings array
+    recordings = recordings.filter(rec => rec.uploadDate >= sevenDaysAgo);
+    
+    if (oldRecordings.length > 0) {
+      console.log(`Cleanup complete: Removed ${oldRecordings.length} old recordings`);
+    }
+  } catch (error) {
+    console.error('Error during cleanup:', error);
+  }
+}
+
+// Run cleanup every hour
+setInterval(cleanupOldRecordings, 60 * 60 * 1000);
+// Run cleanup on startup (after a short delay)
+setTimeout(cleanupOldRecordings, 10000);
+
+// Serve uploaded recordings
+app.use('/uploads/recordings', express.static(path.join(DATA_ROOT, 'uploads', 'recordings')));
+
+// Recording upload endpoint
+app.post('/api/recordings/upload', uploadRecording.array('recordings', 10), (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const { agentName, agentEmail, leadPhone, leadName } = req.body;
+    
+    const uploadedRecordings = req.files.map(file => ({
+      id: Date.now() + Math.random().toString(36).substr(2, 9),
+      filename: file.filename,
+      originalName: file.originalname,
+      agentName: agentName || 'Unknown',
+      agentEmail: agentEmail || '',
+      leadPhone: leadPhone || '',
+      leadName: leadName || '',
+      uploadDate: Date.now(),
+      fileSize: file.size,
+      important: false,
+      path: file.path
+    }));
+
+    recordings.push(...uploadedRecordings);
+
+    res.json({
+      success: true,
+      recordings: uploadedRecordings,
+      message: `${uploadedRecordings.length} recording(s) uploaded successfully`
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Failed to upload recordings' });
+  }
+});
+
+// Get recordings with filters
+app.get('/api/recordings', (req, res) => {
+  const { agent, date, important } = req.query;
+  let filteredRecordings = [...recordings];
+
+  // Filter by agent
+  if (agent && agent !== 'all') {
+    filteredRecordings = filteredRecordings.filter(rec => 
+      rec.agentName.toLowerCase().includes(agent.toLowerCase()) ||
+      rec.agentEmail.toLowerCase().includes(agent.toLowerCase())
+    );
+  }
+
+  // Filter by date
+  if (date) {
+    const targetDate = new Date(date).setHours(0, 0, 0, 0);
+    filteredRecordings = filteredRecordings.filter(rec => {
+      const recDate = new Date(rec.uploadDate).setHours(0, 0, 0, 0);
+      return recDate === targetDate;
+    });
+  }
+
+  // Filter by important flag
+  if (important === 'true') {
+    filteredRecordings = filteredRecordings.filter(rec => rec.important);
+  }
+
+  res.json({ recordings: filteredRecordings });
+});
+
+// Toggle important flag
+app.patch('/api/recordings/:id/important', (req, res) => {
+  const { id } = req.params;
+  const { important } = req.body;
+  
+  const recording = recordings.find(rec => rec.id === id);
+  if (recording) {
+    recording.important = important;
+    res.json({ success: true, recording });
+  } else {
+    res.status(404).json({ error: 'Recording not found' });
+  }
+});
+
 // ─── Start ─────────────────────────────────────────────────────────────────────
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n✅  Swiggy Rider Recruitment CRM running on http://0.0.0.0:${PORT}`);
