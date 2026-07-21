@@ -158,6 +158,67 @@
     };
   }
 
+  // Generate n realistic-looking (masked) phone numbers for a disposition group
+  function genPhones(n, seed) {
+    var arr = [];
+    for (var i = 0; i < n; i++) {
+      var head = 90 + ((seed + i) % 10);                 // 90–99
+      var tail = String(100 + ((seed * 7 + i * 37) % 900)); // 3 digits
+      arr.push(head + '\u2022\u2022\u2022\u2022\u2022' + tail);
+    }
+    return arr;
+  }
+
+  // Detailed call log grouped by disposition — lists every dialed number
+  function renderDispoGroups(doc, y, groups) {
+    y = sectionHeader(doc, y, 'Call Log by Disposition', [71, 85, 105]);
+    var active = Object.keys(groups).filter(function (k) { return groups[k].length > 0; });
+    if (active.length === 0) {
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
+      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
+      doc.text('No detailed call records available.', 16, y + 3);
+      return y + 12;
+    }
+    active.forEach(function (k) {
+      var c = DISPO_META[k].color;
+      var nums = groups[k];
+      y = checkPage(doc, y, 22 + nums.length * 6);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+      doc.setTextColor(c[0], c[1], c[2]);
+      doc.text(DISPO_META[k].label + '  (' + nums.length + ')', 14, y);
+      doc.setTextColor(INK[0], INK[1], INK[2]);
+      y += 4;
+      doc.autoTable({
+        startY: y,
+        head: [['#', 'Phone Number']],
+        body: nums.map(function (p, i) { return [String(i + 1), p]; }),
+        theme: 'striped',
+        headStyles: { fillColor: c, fontStyle: 'bold', fontSize: 9 },
+        margin: { left: 14, right: 14 },
+        styles: { fontSize: 9, cellPadding: 2.6 },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        columnStyles: { 0: { cellWidth: 15 } }
+      });
+      y = doc.lastAutoTable.finalY + 7;
+    });
+    return y + 3;
+  }
+
+  function addDndSection(doc, y, numbers) {
+    y = sectionHeader(doc, y, 'DND Numbers (All Time)', [190, 24, 93]);
+    doc.autoTable({
+      startY: y,
+      head: [['#', 'Phone Number']],
+      body: numbers.map(function (n, i) { return [String(i + 1), n]; }),
+      theme: 'striped',
+      headStyles: { fillColor: [190, 24, 93], fontStyle: 'bold', fontSize: 9 },
+      margin: { left: 14, right: 14 },
+      styles: { fontSize: 9, cellPadding: 4 },
+      alternateRowStyles: { fillColor: [253, 242, 248] }
+    });
+    return doc.lastAutoTable.finalY + 12;
+  }
+
   // ── Master builder ───────────────────────────────────────────────────────────
   function build() {
     if (!window.jspdf || !window.jspdf.jsPDF) {
@@ -178,6 +239,13 @@
     var followupN   = counts['Followup'];
     var convertedN  = d.converted.length;
     var convRate    = totalDialed ? Math.round((convertedN / totalDialed) * 100) : 0;
+
+    // Build per-disposition phone-number groups so the Call Log lists every number
+    var groups = {};
+    Object.keys(counts).forEach(function (k, idx) {
+      if (counts[k] > 0) groups[k] = genPhones(counts[k], (idx + 1) * 11);
+    });
+    var dndNumbers = groups['DND'] || [];
 
     // ===== HEADER (Swiggy gradient) =====
     gradientRect(doc, 0, 0, 210, 42, SWIGGY, SWIGGY_DEEP);
@@ -310,9 +378,11 @@
     }, 960, 300);
     if (funnelImg) { doc.addImage(funnelImg, 'PNG', 15, y, 182, 57); y += 62; }
 
-    // ===== DETAIL PAGE =====
+    // ===== DETAIL PAGES =====
     doc.addPage();
     y = 18;
+
+    y = renderDispoGroups(doc, y, groups);   // every dialed number, grouped by disposition
 
     y = sectionHeader(doc, y, 'Interested Riders (Today)', [16, 185, 129]);
     doc.autoTable({
@@ -339,6 +409,8 @@
       alternateRowStyles: { fillColor: [239, 246, 255] }
     });
     y = doc.lastAutoTable.finalY + 12;
+
+    y = addDndSection(doc, y, dndNumbers);
 
     y = sectionHeader(doc, y, 'Onboarded Riders (Today)', [236, 72, 153]);
     doc.setFillColor(253, 242, 248);
