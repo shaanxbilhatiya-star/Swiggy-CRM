@@ -3224,6 +3224,233 @@ function generateDailyReport(dateStr) {
         addFooter();
       }
 
+      // ===== PAGE 2: DETAILED CALL LOGS AND TABLES =====
+      doc.addPage();
+      y = 60;
+
+      // Helper function to draw a table
+      const drawTable = (startY, headers, rows, headerColor, altRowColor) => {
+        let tableY = startY;
+        const colWidths = headers.map(() => contentWidth / headers.length);
+        const rowHeight = 25;
+        const cellPadding = 5;
+
+        // Draw header
+        doc.rect(40, tableY, contentWidth, rowHeight).fill(headerColor);
+        doc.fillColor('#FFFFFF')
+           .fontSize(9)
+           .font('Helvetica-Bold');
+        
+        headers.forEach((h, i) => {
+          const colX = 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+          doc.text(h, colX + cellPadding, tableY + 8, { width: colWidths[i] - cellPadding * 2, align: 'left' });
+        });
+        
+        tableY += rowHeight;
+
+        // Draw rows
+        rows.forEach((row, rowIdx) => {
+          if (tableY > 750) {
+            doc.addPage();
+            tableY = 60;
+          }
+
+          if (rowIdx % 2 === 0) {
+            doc.rect(40, tableY, contentWidth, rowHeight).fill(altRowColor);
+          }
+          
+          doc.fillColor(INK)
+             .fontSize(9)
+             .font('Helvetica');
+          
+          row.forEach((cell, i) => {
+            const colX = 40 + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+            doc.text(String(cell), colX + cellPadding, tableY + 8, { width: colWidths[i] - cellPadding * 2, align: 'left' });
+          });
+          
+          tableY += rowHeight;
+        });
+
+        return tableY + 10;
+      };
+
+      // Get today's call data
+      const todayNumbers = appState.numbers.filter(n => {
+        if (!n.dialedAt) return false;
+        const callDate = n.dialedAt.slice(0, 10);
+        return callDate === dateStr;
+      });
+
+      // Group by disposition
+      const dispoGroups = {};
+      const dispoKeys = Object.keys(DISPO_LABELS);
+      dispoKeys.forEach(key => { dispoGroups[key] = []; });
+
+      todayNumbers.forEach(n => {
+        const dispo = n.disposition || 'unknown';
+        if (dispoGroups[dispo]) {
+          dispoGroups[dispo].push(n.phone || 'Unknown');
+        }
+      });
+
+      // Section: Call Log by Disposition
+      doc.fillColor('#475569')
+         .fontSize(16)
+         .font('Helvetica-Bold')
+         .text('Call Log by Disposition', 40, y);
+      doc.rect(40, y + 20, 10, 3).fill('#475569');
+      y += 35;
+
+      const activeDispos = dispoKeys.filter(key => dispoGroups[key].length > 0);
+      if (activeDispos.length === 0) {
+        doc.fillColor(MUTED)
+           .fontSize(10)
+           .font('Helvetica')
+           .text('No calls recorded for this date.', 40, y);
+        y += 30;
+      } else {
+        activeDispos.forEach(key => {
+          if (y > 700) { doc.addPage(); y = 60; }
+
+          const dispoColorMap = {
+            interested: '#10B981',
+            followup: '#3B82F6',
+            not_interested: '#94A3B8',
+            dead: '#EF4444',
+            not_received: '#F59E0B',
+            switch_off: '#F97316',
+            dnd: '#BE185D',
+            discard: '#6B7280'
+          };
+          const color = dispoColorMap[key] || MUTED;
+          const phones = dispoGroups[key];
+
+          doc.fillColor(color)
+             .fontSize(11)
+             .font('Helvetica-Bold')
+             .text(`${DISPO_LABELS[key]} (${phones.length})`, 40, y);
+          y += 18;
+
+          // Draw table with phone numbers
+          const rows = phones.slice(0, 20).map((p, i) => [String(i + 1), p]); // Limit to 20 to avoid overflow
+          y = drawTable(y, ['#', 'Phone Number'], rows, color, '#F8FAFC');
+          y += 5;
+        });
+      }
+
+      // Section: Interested Riders (Today)
+      const interestedRiders = appState.numbers.filter(n => 
+        n.disposition === 'interested' && n.dialedAt && n.dialedAt.slice(0, 10) === dateStr
+      );
+
+      if (interestedRiders.length > 0) {
+        if (y > 650) { doc.addPage(); y = 60; }
+        
+        doc.fillColor(GREEN)
+           .fontSize(16)
+           .font('Helvetica-Bold')
+           .text('Interested Riders (Today)', 40, y);
+        doc.rect(40, y + 20, 10, 3).fill(GREEN);
+        y += 30;
+
+        const intRows = interestedRiders.slice(0, 15).map(n => [
+          (n.phone || 'N/A').slice(0, 10),
+          (n.name || 'N/A').slice(0, 15),
+          (n.riderCategory || 'N/A').slice(0, 12),
+          (n.area || 'N/A').slice(0, 15)
+        ]);
+
+        y = drawTable(y, ['Phone', 'Name', 'Vehicle', 'Area'], intRows, GREEN, '#ECFDF5');
+      }
+
+      // Section: Follow-ups (Scheduled)
+      const followupRiders = appState.numbers.filter(n => n.disposition === 'followup' && n.followupDate);
+
+      if (followupRiders.length > 0) {
+        if (y > 650) { doc.addPage(); y = 60; }
+        
+        doc.fillColor(BLUE)
+           .fontSize(16)
+           .font('Helvetica-Bold')
+           .text('Follow-ups (Scheduled)', 40, y);
+        doc.rect(40, y + 20, 10, 3).fill(BLUE);
+        y += 30;
+
+        const fuRows = followupRiders.slice(0, 15).map(n => [
+          (n.phone || 'N/A').slice(0, 10),
+          (n.name || 'N/A').slice(0, 15),
+          (n.riderCategory || 'N/A').slice(0, 12),
+          (n.followupDate || 'N/A').slice(0, 10),
+          (n.followupTime || 'N/A').slice(0, 8)
+        ]);
+
+        y = drawTable(y, ['Phone', 'Name', 'Vehicle', 'Date', 'Time'], fuRows, BLUE, '#EFF6FF');
+      }
+
+      // Section: DND Numbers (All Time)
+      const dndNumbers = appState.numbers.filter(n => n.disposition === 'dnd');
+
+      if (dndNumbers.length > 0) {
+        if (y > 650) { doc.addPage(); y = 60; }
+        
+        doc.fillColor('#BE185D')
+           .fontSize(16)
+           .font('Helvetica-Bold')
+           .text('DND Numbers (All Time)', 40, y);
+        doc.rect(40, y + 20, 10, 3).fill('#BE185D');
+        y += 30;
+
+        const dndRows = dndNumbers.slice(0, 20).map((n, i) => [String(i + 1), n.phone || 'N/A']);
+
+        y = drawTable(y, ['#', 'Phone Number'], dndRows, '#BE185D', '#FDF2F8');
+      }
+
+      // Section: Onboarded Riders (Today)
+      const onboardedToday = appState.numbers.filter(n => 
+        n.disposition === 'interested' && n.recruitedAt && n.recruitedAt.slice(0, 10) === dateStr
+      );
+
+      if (onboardedToday.length > 0) {
+        if (y > 650) { doc.addPage(); y = 60; }
+        
+        doc.fillColor(PINK)
+           .fontSize(16)
+           .font('Helvetica-Bold')
+           .text('Onboarded Riders (Today)', 40, y);
+        doc.rect(40, y + 20, 10, 3).fill(PINK);
+        y += 30;
+
+        doc.roundedRect(40, y, contentWidth, 25, 6).fill('#FDF2F8');
+        doc.fillColor('#BE185D')
+           .fontSize(11)
+           .font('Helvetica-Bold')
+           .text(`Total Riders Onboarded: ${onboardedToday.length}`, 50, y + 10);
+        y += 32;
+
+        const onbRows = onboardedToday.slice(0, 15).map(n => [
+          (n.phone || 'N/A').slice(0, 10),
+          (n.name || 'N/A').slice(0, 15),
+          (n.riderCategory || 'N/A').slice(0, 12),
+          (n.area || 'N/A').slice(0, 15),
+          n.recruitedAt ? n.recruitedAt.slice(0, 10) : 'N/A'
+        ]);
+
+        y = drawTable(y, ['Phone', 'Name', 'Vehicle', 'Area', 'Date'], onbRows, PINK, '#FDF2F8');
+      }
+
+      // Update footer for all pages
+      const totalPages = doc.bufferedPageRange().count;
+      for (let i = 0; i < totalPages; i++) {
+        doc.switchToPage(i);
+        const bottomY = doc.page.height - 40;
+        doc.moveTo(40, bottomY).lineTo(pageWidth - 40, bottomY).stroke('#E2E8F0');
+        doc.fillColor(MUTED)
+           .fontSize(8)
+           .font('Helvetica')
+           .text('Swiggy Rider Recruitment CRM  |  Daily Agent Report', 40, bottomY + 10);
+        doc.text(`Page ${i + 1} of ${totalPages}`, pageWidth - 100, bottomY + 10, { width: 60, align: 'right' });
+      }
+
       doc.end();
       writeStream.on('finish', () => {
         const sizeBytes = fs.statSync(filePath).size;
@@ -3238,7 +3465,7 @@ function generateDailyReport(dateStr) {
           uploadedAt: new Date().toISOString(),
           sizeBytes
         });
-        console.log('✅ Generated styled daily report:', entry.originalName);
+        console.log('✅ Generated comprehensive styled daily report:', entry.originalName);
         resolve(entry);
       });
       writeStream.on('error', reject);
