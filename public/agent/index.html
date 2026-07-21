@@ -2997,6 +2997,8 @@ async function loadScript() {
 loadScript();
 
 function showScriptPopup() {
+  // Don't show script popup during restriction time
+  if (dialingRestricted) return;
   if (!scriptContent) return; // No script uploaded
   var el = document.getElementById('scriptContent');
   el.textContent = scriptContent;
@@ -3046,6 +3048,12 @@ function closeScriptPopup() {
 // Override showNumber to show script popup BEFORE disposition panel
 const _origShowNumber = showNumber;
 showNumber = function(numberId, phone, name, totalDialedToday, resumed) {
+  // Don't allow showing numbers during restriction time
+  if (dialingRestricted) {
+    showToast('⏰ Dialing is restricted. Please upload recordings and logout.', 'error');
+    return;
+  }
+  
   _origShowNumber(numberId, phone, name, totalDialedToday, resumed);
   // Always lock disposition when a new number arrives
   document.getElementById('dispositionPanel').style.display = 'none';
@@ -3128,6 +3136,19 @@ function checkTimeRestriction() {
 }
 
 function restrictDialingShowRecordingUpload() {
+  // Stop all dialing activities
+  if (currentNumberId) {
+    socket.emit('agent-disposition', { agentId, numberId: currentNumberId, disposition: 'system_paused' });
+    currentNumberId = null;
+  }
+  
+  // Close script popup if open
+  const scriptModal = document.getElementById('scriptPopupModal');
+  if (scriptModal) {
+    scriptModal.classList.remove('active');
+    scriptPopupShown = false;
+  }
+  
   // COMPLETELY HIDE the entire dialer panel (📞 Current Lead section)
   const dialerPanel = document.querySelector('.panel.dialer-panel');
   if (dialerPanel) dialerPanel.style.display = 'none';
