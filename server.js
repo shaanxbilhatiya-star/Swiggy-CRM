@@ -157,7 +157,8 @@ function createFreshState(preserveAllowedEids) {
     lastReset: getTodayStr(),
     allowedEids: eids,
     reports: [],
-    clientLogs: []
+    clientLogs: [],
+    recordings: []
   };
 }
 
@@ -298,6 +299,10 @@ if (!appState.dndNumbers) {
 }
 if (!appState.clientLogs) {
   appState.clientLogs = [];
+}
+// Recordings metadata — recordings files are stored on disk, this array indexes them
+if (!appState.recordings) {
+  appState.recordings = [];
 }
 // PDF report archive metadata — reports themselves are kept on disk forever;
 // this array just indexes them so they can be searched/downloaded by date.
@@ -3628,7 +3633,7 @@ app.get('/client', (req, res) => res.sendFile(path.join(__dirname, 'public/clien
 app.get('/tl', (req, res) => res.redirect(301, '/client'));
 
 // ─── Recording Management APIs ────────────────────────────────────────────────
-let recordings = [];
+// Recordings are now persisted in state.recordings instead of a separate array
 
 // Configure multer for recording uploads
 const recordingStorage = multer.diskStorage({
@@ -3672,7 +3677,7 @@ async function cleanupOldRecordings() {
     if (!fs.existsSync(recordingsDir)) return;
     
     // Filter out old recordings
-    const oldRecordings = recordings.filter(rec => rec.uploadDate < sevenDaysAgo);
+    const oldRecordings = appState.recordings.filter(rec => rec.uploadDate < sevenDaysAgo);
     
     // Delete files and remove from array
     for (const recording of oldRecordings) {
@@ -3687,8 +3692,9 @@ async function cleanupOldRecordings() {
       }
     }
     
-    // Remove from recordings array
-    recordings = recordings.filter(rec => rec.uploadDate >= sevenDaysAgo);
+    // Remove from recordings array and save state
+    appState.recordings = appState.recordings.filter(rec => rec.uploadDate >= sevenDaysAgo);
+    saveState(appState);
     
     if (oldRecordings.length > 0) {
       console.log(`Cleanup complete: Removed ${oldRecordings.length} old recordings`);
@@ -3729,7 +3735,8 @@ app.post('/api/recordings/upload', uploadRecording.array('recordings', 10), (req
       path: file.path
     }));
 
-    recordings.push(...uploadedRecordings);
+    appState.recordings.push(...uploadedRecordings);
+    saveState(appState);
 
     res.json({
       success: true,
@@ -3745,7 +3752,7 @@ app.post('/api/recordings/upload', uploadRecording.array('recordings', 10), (req
 // Get recordings with filters
 app.get('/api/recordings', (req, res) => {
   const { agent, date, important } = req.query;
-  let filteredRecordings = [...recordings];
+  let filteredRecordings = [...appState.recordings];
 
   // Filter by agent
   if (agent && agent !== 'all') {
@@ -3777,10 +3784,11 @@ app.patch('/api/recordings/:id/important', (req, res) => {
   const { id } = req.params;
   const { important } = req.body;
   
-  const recording = recordings.find(rec => rec.id === id);
+  const recording = appState.recordings.find(rec => rec.id === id);
   if (recording) {
-    recording.important = important;
-    res.json({ success: true, recording });
+    recording.important = important !== undefined ? important : !recording.important;
+    saveState(appState);
+    res.json({ success: true, recording, important: recording.important });
   } else {
     res.status(404).json({ error: 'Recording not found' });
   }
