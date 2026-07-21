@@ -452,6 +452,17 @@ async function syncLeadsFromSheet() {
     if (newEntries.length) {
       appState.numbers.push(...newEntries);
       appState.syncedSheetLeadIds = Array.from(seenSheetLeadIds).slice(-5000); // cap growth
+
+      // Show these under "Number Files" just like an xlsx upload, instead of
+      // leaving them invisible / lumped in with manual entries.
+      let sheetFile = appState.uploadedFiles.find(f => f.id === 'google-sheet-sync');
+      if (!sheetFile) {
+        sheetFile = { id: 'google-sheet-sync', name: 'Swiggy_Leads (Google Sheet auto-sync)', uploadedAt: new Date().toISOString(), total: 0, hasOriginal: false };
+        appState.uploadedFiles.push(sheetFile);
+      }
+      sheetFile.total = appState.numbers.filter(n => n.file === 'google-sheet-sync').length;
+      sheetFile.lastSyncAt = new Date().toISOString();
+
       saveState(appState);
       broadcastAdminStats();
       io.to('admin-room').emit('new-lead', {
