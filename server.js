@@ -471,7 +471,7 @@ async function syncLeadsFromSheet() {
     if (newEntries.length) {
       saveState(appState);
       broadcastAdminStats();
-      io.to('admin-room').emit('new-lead', {
+      io.emit('new-lead', {
         count: newEntries.length,
         leads: newEntries.map(e => ({ name: e.name, phone: e.phone }))
       });
