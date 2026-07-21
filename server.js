@@ -452,17 +452,23 @@ async function syncLeadsFromSheet() {
     if (newEntries.length) {
       appState.numbers.push(...newEntries);
       appState.syncedSheetLeadIds = Array.from(seenSheetLeadIds).slice(-5000); // cap growth
+    }
 
-      // Show these under "Number Files" just like an xlsx upload, instead of
-      // leaving them invisible / lumped in with manual entries.
+    // Keep the "Number Files" card in sync every run — not just when new leads
+    // arrive — so leads synced before this existed (or on a fresh deploy) still
+    // show up under Number Files instead of being invisible.
+    const sheetLeadCount = appState.numbers.filter(n => n.file === 'google-sheet-sync').length;
+    if (sheetLeadCount > 0) {
       let sheetFile = appState.uploadedFiles.find(f => f.id === 'google-sheet-sync');
       if (!sheetFile) {
         sheetFile = { id: 'google-sheet-sync', name: 'Swiggy_Leads (Google Sheet auto-sync)', uploadedAt: new Date().toISOString(), total: 0, hasOriginal: false };
         appState.uploadedFiles.push(sheetFile);
       }
-      sheetFile.total = appState.numbers.filter(n => n.file === 'google-sheet-sync').length;
+      sheetFile.total = sheetLeadCount;
       sheetFile.lastSyncAt = new Date().toISOString();
+    }
 
+    if (newEntries.length) {
       saveState(appState);
       broadcastAdminStats();
       io.to('admin-room').emit('new-lead', {
@@ -470,6 +476,8 @@ async function syncLeadsFromSheet() {
         leads: newEntries.map(e => ({ name: e.name, phone: e.phone }))
       });
       console.log(`📥 Synced ${newEntries.length} new lead(s) from Google Sheet`);
+    } else if (sheetLeadCount > 0) {
+      saveState(appState); // still persist the backfilled file entry / lastSyncAt
     }
 
     sheetSyncStatus.lastSuccessAt = new Date().toISOString();
