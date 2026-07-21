@@ -2395,7 +2395,7 @@ async function loadAdminRecordings() {
   
   try {
     let url = '/api/recordings?';
-    if (agent && agent !== 'all') url += 'agent=' + encapeURIComponent(agent) + '&';
+    if (agent && agent !== 'all') url += 'agent=' + encodeURIComponent(agent) + '&';
     if (date) url += 'date=' + encodeURIComponent(date) + '&';
     if (important) url += 'important=true&';
     
