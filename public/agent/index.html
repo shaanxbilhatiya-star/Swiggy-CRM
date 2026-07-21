@@ -3159,8 +3159,9 @@ function checkTimeRestriction() {
   const hours = istTime.getHours();
   const minutes = istTime.getMinutes();
   
-  // Check if it's 5:45 PM (17:45) or later
-  if (hours > 17 || (hours === 17 && minutes >= 45)) {
+  // Check if it's 5:45 PM (17:45) - only at that specific time (5:45 PM - 5:59 PM)
+  // NOT after 6 PM, because by then agents should have finished their day
+  if (hours === 17 && minutes >= 45) {
     if (!dialingRestricted) {
       dialingRestricted = true;
       restrictDialingShowRecordingUpload();
