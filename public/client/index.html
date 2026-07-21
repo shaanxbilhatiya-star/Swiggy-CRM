@@ -439,6 +439,94 @@
     </div>
   </div>
 
+  <!-- GENERATED REPORTS ARCHIVE (Swiggy graphical, permanent PDF storage) -->
+  <style>
+    .arc-banner{position:relative;overflow:hidden;border-radius:16px 16px 0 0;
+      background:linear-gradient(120deg,#FC8019 0%,#f2690b 55%,#c15806 100%);color:#fff;padding:22px 24px}
+    .arc-banner::before{content:"";position:absolute;right:-50px;top:-60px;width:190px;height:190px;border-radius:50%;
+      background:radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)}
+    .arc-banner::after{content:"";position:absolute;left:30%;bottom:-90px;width:160px;height:160px;border-radius:50%;
+      background:radial-gradient(circle,rgba(255,209,102,.35),transparent 70%)}
+    .arc-banner-row{display:flex;align-items:center;gap:15px;position:relative;z-index:1;flex-wrap:wrap}
+    .arc-icon{width:52px;height:52px;flex:none;border-radius:14px;display:grid;place-items:center;font-size:26px;
+      background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(4px)}
+    .arc-banner h2{font-size:19px;font-weight:700;margin:0;color:#fff;text-transform:none;letter-spacing:.2px}
+    .arc-banner p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.9)}
+    .arc-auto-pill{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
+      background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:7px 14px}
+    .arc-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface2);
+      border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:18px}
+    .arc-toolbar label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+    .arc-toolbar input{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;color:var(--text);font-family:var(--mono);font-size:13px;outline:none}
+    .arc-toolbar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(252,128,25,.15)}
+    .arc-btn{border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;padding:9px 18px;transition:transform .12s,box-shadow .12s}
+    .arc-btn:hover{transform:translateY(-1px)}
+    .arc-btn-primary{background:linear-gradient(135deg,#FC8019,#e8720f);color:#fff;box-shadow:0 6px 16px -6px rgba(252,128,25,.7)}
+    .arc-btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--border)}
+    .arc-btn-sample{margin-left:auto;background:rgba(252,128,25,.1);color:var(--accent);border:1px dashed rgba(252,128,25,.5)}
+    .arc-card{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);
+      border-radius:12px;padding:12px 16px;transition:transform .12s,box-shadow .12s,border-color .12s}
+    .arc-card:hover{transform:translateX(3px);box-shadow:0 8px 22px -12px rgba(252,128,25,.6);border-color:rgba(252,128,25,.5)}
+    .arc-pdf{width:44px;height:44px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;
+      background:linear-gradient(135deg,#FC8019,#c15806);box-shadow:0 4px 10px -3px rgba(252,128,25,.7)}
+    .arc-date{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px}
+    .arc-title{font-size:13px;font-weight:600;color:var(--text)}
+    .arc-meta{font-size:11px;color:var(--muted)}
+    .arc-dl{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:12px;font-weight:700;
+      text-decoration:none;color:#fff;background:linear-gradient(135deg,#FC8019,#e8720f);box-shadow:0 5px 14px -6px rgba(252,128,25,.8);transition:transform .12s}
+    .arc-dl:hover{transform:scale(1.05)}
+    .arc-empty{text-align:center;padding:34px 20px;border:2px dashed var(--border);border-radius:14px;background:var(--surface2)}
+    .arc-empty-icon{font-size:46px;line-height:1;margin-bottom:6px}
+    .arc-empty h3{font-size:16px;font-weight:700;color:var(--text);margin:8px 0 4px}
+    .arc-empty p{font-size:12.5px;color:var(--muted);margin:0 auto 16px;max-width:380px;line-height:1.6}
+    .arc-empty-btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:11px;cursor:pointer;
+      font-size:14px;font-weight:700;padding:12px 24px;color:#fff;background:linear-gradient(135deg,#FC8019,#e8720f);
+      box-shadow:0 10px 24px -8px rgba(252,128,25,.75);transition:transform .15s,box-shadow .15s}
+    .arc-empty-btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px rgba(252,128,25,.85)}
+  </style>
+  <div class="panel">
+    <div class="arc-banner">
+      <div class="arc-banner-row">
+        <div class="arc-icon">&#128196;</div>
+        <div>
+          <h2>Generated Reports Archive</h2>
+          <p>हर दिन की कॉलिंग का पूरा सारांश — हमेशा सुरक्षित, तारीख से खोजें और एक क्लिक में डाउनलोड करें।</p>
+        </div>
+        <span class="arc-auto-pill">&#9203; रोज़ 6:30 PM IST auto</span>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="arc-toolbar">
+        <label>From</label>
+        <input type="date" id="reportFromDate">
+        <label>To</label>
+        <input type="date" id="reportToDate">
+        <button class="arc-btn arc-btn-primary" onclick="searchReports()">&#128269; Search</button>
+        <button class="arc-btn arc-btn-ghost" onclick="clearReportSearch()">Clear</button>
+        <button class="arc-btn arc-btn-sample" onclick="SwiggyReport.downloadDemo()">&#10024; Sample Report</button>
+      </div>
+      <div id="reportsList" style="display:flex;flex-direction:column;gap:10px;max-height:360px;overflow-y:auto">
+        <div class="empty">Loading reports&hellip;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DND NUMBERS -->
+  <div class="panel">
+    <div class="panel-header" style="background:rgba(198,40,40,.06)">
+      <h2 style="color:#c62828">&#128277; DND (Do Not Disturb) Numbers</h2>
+      <span style="font-size:12px;color:var(--muted)" id="dndCountBadge">0 numbers</span>
+    </div>
+    <div class="panel-body">
+      <p style="margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.6">
+        जिन नंबरों ने कॉल न करने के लिए मना किया है, उनकी लिस्ट — इन नंबरों पर दोबारा कॉल नहीं की जाती।
+      </p>
+      <div id="dndList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">
+        <div class="empty">No DND numbers</div>
+      </div>
+    </div>
+  </div>
+
   <!-- RECORDINGS SECTION -->
   <style>
     .filters-container {
@@ -528,6 +616,17 @@
     .btn-download:hover {
       background: #2980b9;
     }
+    .btn-important {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px 8px;
+      transition: transform 0.2s;
+    }
+    .btn-important:hover {
+      transform: scale(1.2);
+    }
     .important-badge {
       display: inline-block;
       background: #e74c3c;
@@ -598,101 +697,14 @@
               <th>Lead Info</th>
               <th>File Name</th>
               <th>Size</th>
+              <th>Important</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="recordingsTableBody">
-            <tr><td colspan="6" class="empty">Loading recordings...</td></tr>
+            <tr><td colspan="7" class="empty">Loading recordings...</td></tr>
           </tbody>
         </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- GENERATED REPORTS ARCHIVE (Swiggy graphical, permanent PDF storage) -->
-  <style>
-    .arc-banner{position:relative;overflow:hidden;border-radius:16px 16px 0 0;
-      background:linear-gradient(120deg,#FC8019 0%,#f2690b 55%,#c15806 100%);color:#fff;padding:22px 24px}
-    .arc-banner::before{content:"";position:absolute;right:-50px;top:-60px;width:190px;height:190px;border-radius:50%;
-      background:radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)}
-    .arc-banner::after{content:"";position:absolute;left:30%;bottom:-90px;width:160px;height:160px;border-radius:50%;
-      background:radial-gradient(circle,rgba(255,209,102,.35),transparent 70%)}
-    .arc-banner-row{display:flex;align-items:center;gap:15px;position:relative;z-index:1;flex-wrap:wrap}
-    .arc-icon{width:52px;height:52px;flex:none;border-radius:14px;display:grid;place-items:center;font-size:26px;
-      background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(4px)}
-    .arc-banner h2{font-size:19px;font-weight:700;margin:0;color:#fff;text-transform:none;letter-spacing:.2px}
-    .arc-banner p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.9)}
-    .arc-auto-pill{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;
-      background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:7px 14px}
-    .arc-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface2);
-      border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:18px}
-    .arc-toolbar label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
-    .arc-toolbar input{padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;color:var(--text);font-family:var(--mono);font-size:13px;outline:none}
-    .arc-toolbar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(252,128,25,.15)}
-    .arc-btn{border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;padding:9px 18px;transition:transform .12s,box-shadow .12s}
-    .arc-btn:hover{transform:translateY(-1px)}
-    .arc-btn-primary{background:linear-gradient(135deg,#FC8019,#e8720f);color:#fff;box-shadow:0 6px 16px -6px rgba(252,128,25,.7)}
-    .arc-btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--border)}
-    .arc-btn-sample{margin-left:auto;background:rgba(252,128,25,.1);color:var(--accent);border:1px dashed rgba(252,128,25,.5)}
-    .arc-card{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);
-      border-radius:12px;padding:12px 16px;transition:transform .12s,box-shadow .12s,border-color .12s}
-    .arc-card:hover{transform:translateX(3px);box-shadow:0 8px 22px -12px rgba(252,128,25,.6);border-color:rgba(252,128,25,.5)}
-    .arc-pdf{width:44px;height:44px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;
-      background:linear-gradient(135deg,#FC8019,#c15806);box-shadow:0 4px 10px -3px rgba(252,128,25,.7)}
-    .arc-date{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px}
-    .arc-title{font-size:13px;font-weight:600;color:var(--text)}
-    .arc-meta{font-size:11px;color:var(--muted)}
-    .arc-dl{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:12px;font-weight:700;
-      text-decoration:none;color:#fff;background:linear-gradient(135deg,#FC8019,#e8720f);box-shadow:0 5px 14px -6px rgba(252,128,25,.8);transition:transform .12s}
-    .arc-dl:hover{transform:scale(1.05)}
-    .arc-empty{text-align:center;padding:34px 20px;border:2px dashed var(--border);border-radius:14px;background:var(--surface2)}
-    .arc-empty-icon{font-size:46px;line-height:1;margin-bottom:6px}
-    .arc-empty h3{font-size:16px;font-weight:700;color:var(--text);margin:8px 0 4px}
-    .arc-empty p{font-size:12.5px;color:var(--muted);margin:0 auto 16px;max-width:380px;line-height:1.6}
-    .arc-empty-btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:11px;cursor:pointer;
-      font-size:14px;font-weight:700;padding:12px 24px;color:#fff;background:linear-gradient(135deg,#FC8019,#e8720f);
-      box-shadow:0 10px 24px -8px rgba(252,128,25,.75);transition:transform .15s,box-shadow .15s}
-    .arc-empty-btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px -8px rgba(252,128,25,.85)}
-  </style>
-  <div class="panel">
-    <div class="arc-banner">
-      <div class="arc-banner-row">
-        <div class="arc-icon">&#128196;</div>
-        <div>
-          <h2>Generated Reports Archive</h2>
-          <p>हर दिन की कॉलिंग का पूरा सारांश — हमेशा सुरक्षित, तारीख से खोजें और एक क्लिक में डाउनलोड करें।</p>
-        </div>
-        <span class="arc-auto-pill">&#9203; रोज़ 6:30 PM IST auto</span>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div class="arc-toolbar">
-        <label>From</label>
-        <input type="date" id="reportFromDate">
-        <label>To</label>
-        <input type="date" id="reportToDate">
-        <button class="arc-btn arc-btn-primary" onclick="searchReports()">&#128269; Search</button>
-        <button class="arc-btn arc-btn-ghost" onclick="clearReportSearch()">Clear</button>
-        <button class="arc-btn arc-btn-sample" onclick="SwiggyReport.downloadDemo()">&#10024; Sample Report</button>
-      </div>
-      <div id="reportsList" style="display:flex;flex-direction:column;gap:10px;max-height:360px;overflow-y:auto">
-        <div class="empty">Loading reports&hellip;</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DND NUMBERS -->
-  <div class="panel">
-    <div class="panel-header" style="background:rgba(198,40,40,.06)">
-      <h2 style="color:#c62828">&#128277; DND (Do Not Disturb) Numbers</h2>
-      <span style="font-size:12px;color:var(--muted)" id="dndCountBadge">0 numbers</span>
-    </div>
-    <div class="panel-body">
-      <p style="margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.6">
-        जिन नंबरों ने कॉल न करने के लिए मना किया है, उनकी लिस्ट — इन नंबरों पर दोबारा कॉल नहीं की जाती।
-      </p>
-      <div id="dndList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;">
-        <div class="empty">No DND numbers</div>
       </div>
     </div>
   </div>
@@ -1232,7 +1244,7 @@ function displayClientRecordings(recordings) {
   badge.textContent = recordings.length + ' recording' + (recordings.length !== 1 ? 's' : '');
   
   if (recordings.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">No recordings found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No recordings found</td></tr>';
     return;
   }
 
@@ -1242,18 +1254,24 @@ function displayClientRecordings(recordings) {
     const formattedTime = date.toLocaleTimeString('en-IN');
     const fileSize = (rec.fileSize / (1024 * 1024)).toFixed(2) + ' MB';
     const leadInfo = rec.leadName ? `${rec.leadName}<br><small>${rec.leadPhone}</small>` : rec.leadPhone || 'N/A';
+    const starIcon = rec.important ? '⭐' : '☆';
+    const starTitle = rec.important ? 'Remove from Important' : 'Mark as Important';
     
     return `
       <tr>
         <td>
           <strong>${formattedDate}</strong><br>
           <small style="font-size: 11px;">${formattedTime}</small>
-          ${rec.important ? '<span class="important-badge">⭐ Important</span>' : ''}
         </td>
         <td style="font-weight: 500;">${escapeHtml(rec.agentName)}${rec.agentEmail ? '<br><small style="font-size: 11px;">' + escapeHtml(rec.agentEmail) + '</small>' : ''}</td>
         <td>${leadInfo}</td>
         <td><small style="font-size: 11px;">${escapeHtml(rec.originalName)}</small></td>
         <td style="font-family: var(--mono); font-size: 12px;">${fileSize}</td>
+        <td style="text-align: center;">
+          <button class="btn-important" onclick="toggleClientRecordingImportant('${rec.id}')" title="${starTitle}">
+            ${starIcon}
+          </button>
+        </td>
         <td>
           <div class="recording-actions">
             <button class="btn-play" onclick="playClientRecording('${rec.filename}', '${rec.originalName.replace(/'/g, "\\'")}')">▶️ Play</button>
@@ -1338,6 +1356,26 @@ function downloadClientRecording(filename, originalName) {
   link.href = `/uploads/recordings/${filename}`;
   link.download = originalName;
   link.click();
+}
+
+async function toggleClientRecordingImportant(recordingId) {
+  try {
+    const response = await fetch(`/api/recordings/${recordingId}/important`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to toggle important status');
+    }
+    
+    const data = await response.json();
+    showToast(data.important ? '⭐ Marked as Important' : 'Removed from Important', 'success');
+    loadClientRecordings();
+  } catch (error) {
+    console.error('Error toggling important:', error);
+    showToast('Failed to update recording status', 'error');
+  }
 }
 
 </script>
