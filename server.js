@@ -3657,10 +3657,12 @@ const uploadRecording = multer({
     const allowedMimes = [
       'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/wave', 'audio/x-wav',
       'audio/ogg', 'audio/webm', 'audio/aac', 'audio/m4a', 'audio/x-m4a',
-      'audio/flac', 'audio/x-flac', 'audio/amr', 'audio/3gpp', 'audio/3gpp2'
+      'audio/flac', 'audio/x-flac', 'audio/amr', 'audio/3gpp', 'audio/3gpp2',
+      'audio/mp4', 'audio/opus', 'audio/x-ms-wma', 'audio/aiff', 'audio/x-aiff',
+      'audio/basic', 'audio/x-caf', 'application/octet-stream'
     ];
     
-    if (allowedMimes.includes(file.mimetype) || file.originalname.match(/\.(mp3|wav|ogg|webm|aac|m4a|flac|amr|3gp)$/i)) {
+    if (allowedMimes.includes(file.mimetype) || file.originalname.match(/\.(mp3|wav|ogg|webm|aac|m4a|flac|amr|3gp|opus|wma|aiff|caf|pcm)$/i)) {
       cb(null, true);
     } else {
       cb(new Error('Invalid file type. Only audio files are allowed.'));
@@ -3752,13 +3754,13 @@ app.post('/api/recordings/upload', uploadRecording.array('recordings', 10), (req
 // Get recordings with filters
 app.get('/api/recordings', (req, res) => {
   const { agent, date, important } = req.query;
-  let filteredRecordings = [...appState.recordings];
+  let filteredRecordings = [...(appState.recordings || [])];
 
   // Filter by agent
   if (agent && agent !== 'all') {
     filteredRecordings = filteredRecordings.filter(rec => 
-      rec.agentName.toLowerCase().includes(agent.toLowerCase()) ||
-      rec.agentEmail.toLowerCase().includes(agent.toLowerCase())
+      (rec.agentName || '').toLowerCase().includes(agent.toLowerCase()) ||
+      (rec.agentEmail || '').toLowerCase().includes(agent.toLowerCase())
     );
   }
 
@@ -3766,7 +3768,9 @@ app.get('/api/recordings', (req, res) => {
   if (date) {
     const targetDate = new Date(date).setHours(0, 0, 0, 0);
     filteredRecordings = filteredRecordings.filter(rec => {
-      const recDate = new Date(rec.uploadDate).setHours(0, 0, 0, 0);
+      const uploadTs = rec.uploadDate || rec.uploadedAt || 0;
+      const recMs = typeof uploadTs === 'number' ? uploadTs : Date.parse(uploadTs);
+      const recDate = new Date(recMs).setHours(0, 0, 0, 0);
       return recDate === targetDate;
     });
   }
@@ -3776,7 +3780,32 @@ app.get('/api/recordings', (req, res) => {
     filteredRecordings = filteredRecordings.filter(rec => rec.important);
   }
 
-  res.json({ recordings: filteredRecordings });
+  // Sort by most recent first
+  filteredRecordings.sort((a, b) => {
+    const tsA = typeof a.uploadDate === 'number' ? a.uploadDate : Date.parse(a.uploadDate || a.uploadedAt || 0);
+    const tsB = typeof b.uploadDate === 'number' ? b.uploadDate : Date.parse(b.uploadDate || b.uploadedAt || 0);
+    return tsB - tsA;
+  });
+
+  // Compute stats
+  const allRecordings = appState.recordings || [];
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayMs = todayStart.getTime();
+  const todayCount = allRecordings.filter(rec => {
+    const ts = typeof rec.uploadDate === 'number' ? rec.uploadDate : Date.parse(rec.uploadDate || rec.uploadedAt || 0);
+    return ts >= todayMs;
+  }).length;
+  const importantCount = allRecordings.filter(rec => rec.important).length;
+
+  res.json({ 
+    recordings: filteredRecordings,
+    stats: {
+      total: allRecordings.length,
+      today: todayCount,
+      important: importantCount
+    }
+  });
 });
 
 // Toggle important flag
@@ -3792,6 +3821,23 @@ app.patch('/api/recordings/:id/important', (req, res) => {
   } else {
     res.status(404).json({ error: 'Recording not found' });
   }
+});
+
+// Download a specific recording by ID
+app.get('/api/recordings/:id/download', (req, res) => {
+  const { id } = req.params;
+  const recording = appState.recordings.find(rec => rec.id == id);
+  if (!recording) {
+    return res.status(404).json({ error: 'Recording not found' });
+  }
+  const filePath = path.join(DATA_ROOT, 'uploads', 'recordings', recording.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Recording file not found on disk' });
+  }
+  const downloadName = recording.originalName || recording.filename;
+  res.setHeader('Content-Disposition', 'attachment; filename="' + downloadName.replace(/"/g, '') + '"');
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.sendFile(filePath);
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────────

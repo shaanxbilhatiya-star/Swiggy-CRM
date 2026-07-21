@@ -1249,45 +1249,85 @@ function displayClientRecordings(recordings) {
   }
 
   tbody.innerHTML = recordings.map(rec => {
-    const date = new Date(rec.uploadDate);
-    const formattedDate = date.toLocaleDateString('en-IN');
-    const formattedTime = date.toLocaleTimeString('en-IN');
-    const fileSize = (rec.fileSize / (1024 * 1024)).toFixed(2) + ' MB';
-    const leadInfo = rec.leadName ? `${rec.leadName}<br><small>${rec.leadPhone}</small>` : rec.leadPhone || 'N/A';
-    const starIcon = rec.important ? '⭐' : '☆';
-    const starTitle = rec.important ? 'Remove from Important' : 'Mark as Important';
+    // Auto-fill Date & Time
+    const uploadTs = rec.uploadDate || rec.uploadedAt || Date.now();
+    const date = new Date(typeof uploadTs === 'number' ? uploadTs : Date.parse(uploadTs));
+    const formattedDate = date.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    const formattedTime = date.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
     
-    return `
-      <tr>
-        <td>
-          <strong>${formattedDate}</strong><br>
-          <small style="font-size: 11px;">${formattedTime}</small>
-        </td>
-        <td style="font-weight: 500;">${escapeHtml(rec.agentName)}${rec.agentEmail ? '<br><small style="font-size: 11px;">' + escapeHtml(rec.agentEmail) + '</small>' : ''}</td>
-        <td>${leadInfo}</td>
-        <td><small style="font-size: 11px;">${escapeHtml(rec.originalName)}</small></td>
-        <td style="font-family: var(--mono); font-size: 12px;">${fileSize}</td>
-        <td style="text-align: center;">
-          <button class="btn-important" onclick="toggleClientRecordingImportant('${rec.id}')" title="${starTitle}">
-            ${starIcon}
-          </button>
-        </td>
-        <td>
-          <div class="recording-actions">
-            <button class="btn-play" onclick="playClientRecording('${rec.filename}', '${rec.originalName.replace(/'/g, "\\'")}')">▶️ Play</button>
-            <button class="btn-download" onclick="downloadClientRecording('${rec.filename}', '${rec.originalName.replace(/'/g, "\\'")}')">⬇️ Download</button>
-          </div>
-        </td>
-      </tr>
-    `;
+    // Auto-fill Agent info
+    const agentDisplay = rec.agentName || rec.agentEmail || 'Unknown Agent';
+    const agentSub = rec.agentEmail && rec.agentName ? rec.agentEmail : '';
+    
+    // Auto-fill Lead Info
+    const leadPhone = rec.leadPhone ? formatPhone(rec.leadPhone) : '';
+    const leadName = rec.leadName || '';
+    const leadInfo = leadName 
+      ? escapeHtml(leadName) + (leadPhone ? '<br><small style="font-size:11px;color:var(--muted)">' + escapeHtml(leadPhone) + '</small>' : '')
+      : (leadPhone ? escapeHtml(leadPhone) : '<span style="color:var(--muted)">—</span>');
+    
+    // Auto-fill File Name
+    const fileName = rec.originalName || rec.filename || 'Unknown';
+    const fileExt = fileName.split('.').pop().toUpperCase();
+    
+    // Auto-fill Size
+    const rawSize = rec.fileSize || rec.size || 0;
+    let fileSize = '—';
+    if (rawSize > 0) {
+      if (rawSize < 1024) fileSize = rawSize + ' B';
+      else if (rawSize < 1024 * 1024) fileSize = (rawSize / 1024).toFixed(1) + ' KB';
+      else fileSize = (rawSize / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+    
+    // Important indicator
+    const starIcon = rec.important ? '&#11088;' : '&#9734;';
+    const starTitle = rec.important ? 'Remove from Important' : 'Mark as Important';
+    const starColor = rec.important ? '#f59e0b' : '#d1d5db';
+    
+    // Safe strings for onclick handlers
+    const safeFilename = escapeHtml(rec.filename || '');
+    const safeOriginalName = escapeHtml(fileName.replace(/'/g, "\\'"));
+    const recId = escapeHtml(rec.id || '');
+    
+    return `<tr${rec.important ? ' style="background:rgba(245,158,11,.04)"' : ''}>
+      <td>
+        <strong style="font-size:13px;">${formattedDate}</strong><br>
+        <small style="font-size:11px;color:var(--muted);font-family:var(--mono)">${formattedTime}</small>
+      </td>
+      <td style="font-weight:600;font-size:13px;">
+        ${escapeHtml(agentDisplay)}
+        ${agentSub ? '<br><small style="font-size:11px;color:var(--muted)">' + escapeHtml(agentSub) + '</small>' : ''}
+      </td>
+      <td>${leadInfo}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(fileName)}">
+        <span style="font-size:12px;">${escapeHtml(fileName)}</span>
+        <br><span style="font-size:10px;font-weight:700;color:var(--accent);background:rgba(252,128,25,.08);padding:1px 5px;border-radius:3px;">${escapeHtml(fileExt)}</span>
+      </td>
+      <td style="font-family:var(--mono);font-size:12px;white-space:nowrap;">${fileSize}</td>
+      <td style="text-align:center;">
+        <button onclick="toggleClientRecordingImportant('${recId}')" title="${starTitle}" style="background:none;border:none;font-size:20px;cursor:pointer;color:${starColor};transition:transform .2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+          ${starIcon}
+        </button>
+      </td>
+      <td>
+        <div class="recording-actions">
+          <button class="btn-play" onclick="playClientRecording('${safeFilename}', '${safeOriginalName}')">&#9654; Play</button>
+          <button class="btn-download" onclick="downloadClientRecording('${safeFilename}', '${safeOriginalName}')">&#11015; Download</button>
+        </div>
+      </td>
+    </tr>`;
   }).join('');
 }
 
 function updateClientRecordingStats(recordings) {
-  const today = new Date().setHours(0, 0, 0, 0);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayMs = todayStart.getTime();
+  
   const todayRecordings = recordings.filter(rec => {
-    const recDate = new Date(rec.uploadDate).setHours(0, 0, 0, 0);
-    return recDate === today;
+    const uploadTs = rec.uploadDate || rec.uploadedAt || 0;
+    const recMs = typeof uploadTs === 'number' ? uploadTs : Date.parse(uploadTs);
+    return recMs >= todayMs;
   });
   const importantRecordings = recordings.filter(rec => rec.important);
 
@@ -1320,42 +1360,88 @@ function clearClientRecordingFilters() {
   loadClientRecordings();
 }
 
+function getAudioMimeType(filename) {
+  const ext = (filename || '').split('.').pop().toLowerCase();
+  const mimeMap = {
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'webm': 'audio/webm',
+    'aac': 'audio/aac',
+    'm4a': 'audio/mp4',
+    'flac': 'audio/flac',
+    'amr': 'audio/amr',
+    '3gp': 'audio/3gpp',
+    'wma': 'audio/x-ms-wma',
+    'opus': 'audio/opus'
+  };
+  return mimeMap[ext] || 'audio/mpeg';
+}
+
 function playClientRecording(filename, originalName) {
+  // Remove any existing audio modal
+  const existingModal = document.getElementById('audioPlayerModal');
+  if (existingModal) existingModal.remove();
+
+  const mimeType = getAudioMimeType(originalName || filename);
+  const audioSrc = '/uploads/recordings/' + encodeURIComponent(filename);
+
   // Create modal for playing audio
   const modal = document.createElement('div');
-  modal.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-  `;
+  modal.id = 'audioPlayerModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(4px);';
   
   modal.innerHTML = `
-    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%;">
-      <h3 style="margin-top: 0; font-family: var(--sans);">🎧 ${escapeHtml(originalName)}</h3>
-      <audio controls autoplay style="width: 100%; margin: 20px 0;">
-        <source src="/uploads/recordings/${filename}" type="audio/mpeg">
+    <div style="background:white;padding:30px;border-radius:16px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h3 style="margin:0;font-family:var(--sans);font-size:16px;color:var(--text);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:22px;">&#127911;</span> Now Playing
+        </h3>
+        <button onclick="document.getElementById('audioPlayerModal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:4px;">&#10005;</button>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+        <p style="margin:0;font-size:13px;font-weight:600;color:var(--text);word-break:break-all;">${escapeHtml(originalName)}</p>
+        <p style="margin:4px 0 0;font-size:11px;color:var(--muted);">Format: ${escapeHtml(mimeType)}</p>
+      </div>
+      <audio id="audioPlayerElement" controls autoplay style="width:100%;margin:0 0 16px;border-radius:8px;">
+        <source src="${audioSrc}" type="${mimeType}">
+        <source src="${audioSrc}" type="audio/mpeg">
+        <source src="${audioSrc}" type="audio/wav">
+        <source src="${audioSrc}" type="audio/ogg">
+        <source src="${audioSrc}" type="audio/webm">
         Your browser does not support the audio element.
       </audio>
-      <button onclick="this.parentElement.parentElement.remove()" class="btn-primary" style="width: 100%;">Close</button>
+      <div id="audioPlayerError" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+        <p style="margin:0;font-size:12px;color:#ef4444;font-weight:600;">&#9888; Unable to play this audio format in browser. Please download the file instead.</p>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="downloadClientRecording('${escapeHtml(filename)}', '${escapeHtml(originalName)}')" style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;">&#11015; Download</button>
+        <button onclick="document.getElementById('audioPlayerModal').remove()" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--muted);font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;">Close</button>
+      </div>
     </div>
   `;
   
   document.body.appendChild(modal);
+
+  // Handle audio error - show error message and suggest download
+  const audioEl = document.getElementById('audioPlayerElement');
+  audioEl.addEventListener('error', function() {
+    document.getElementById('audioPlayerError').style.display = 'block';
+  });
+
+  // Close on backdrop click
   modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
 }
 
 function downloadClientRecording(filename, originalName) {
   const link = document.createElement('a');
-  link.href = `/uploads/recordings/${filename}`;
-  link.download = originalName;
+  link.href = '/uploads/recordings/' + encodeURIComponent(filename);
+  link.download = originalName || filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
   link.click();
+  setTimeout(() => link.remove(), 100);
+  showToast('⬇️ Download started: ' + (originalName || filename), 'success');
 }
 
 async function toggleClientRecordingImportant(recordingId) {
