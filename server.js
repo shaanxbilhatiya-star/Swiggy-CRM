@@ -3527,6 +3527,54 @@ app.get('/api/reports/:id/download', (req, res) => {
   res.download(filePath, entry.originalName || (entry.title + '.pdf'));
 });
 
+// Regenerate all old reports with new styled format (Admin only)
+app.post('/api/admin/regenerate-reports', async (req, res) => {
+  try {
+    const oldReports = (appState.reports || []).filter(r => r.generatedBy === 'system-auto-6:30pm-IST');
+    const reportDates = [...new Set(oldReports.map(r => r.reportDate))];
+    
+    console.log(`🔄 Regenerating ${reportDates.length} reports with new styled format...`);
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const dateStr of reportDates) {
+      try {
+        // Delete old report file
+        const oldReport = oldReports.find(r => r.reportDate === dateStr);
+        if (oldReport && oldReport.fileName) {
+          const oldPath = path.join(REPORTS_DIR, oldReport.fileName);
+          if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath);
+          }
+        }
+        
+        // Remove old entry from state
+        appState.reports = appState.reports.filter(r => !(r.reportDate === dateStr && r.generatedBy === 'system-auto-6:30pm-IST'));
+        
+        // Generate new styled report
+        await generateDailyReport(dateStr);
+        successCount++;
+        console.log(`✅ Regenerated report for ${dateStr}`);
+      } catch (e) {
+        console.error(`❌ Failed to regenerate report for ${dateStr}:`, e.message);
+        failCount++;
+      }
+    }
+    
+    saveState(appState);
+    res.json({ 
+      success: true, 
+      message: `Regenerated ${successCount} reports successfully, ${failCount} failed.`,
+      successCount,
+      failCount 
+    });
+  } catch (e) {
+    console.error('Report regeneration failed:', e);
+    res.status(500).json({ error: 'Failed to regenerate reports: ' + e.message });
+  }
+});
+
 // ─── Client Panel Session Tracking ────────────────────────────────────────────
 // Records each client panel login/logout so admin can see daily usage logs.
 
