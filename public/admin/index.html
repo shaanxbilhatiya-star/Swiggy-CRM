@@ -2431,7 +2431,7 @@ function renderAdminRecordings(recordings, stats) {
     const agentName = rec.agentName || rec.agentEmail || 'Unknown';
     const leadInfo = rec.leadPhone ? formatPhone(rec.leadPhone) : '—';
     const fileName = rec.originalName || rec.filename || '—';
-    const fileSize = rec.size ? formatBytes(rec.size) : '—';
+    const fileSize = (rec.fileSize || rec.size) ? formatBytes(rec.fileSize || rec.size) : '—';
     
     // Important star toggle
     const starIcon = rec.important ? '&#11088;' : '&#9734;';
@@ -2448,7 +2448,7 @@ function renderAdminRecordings(recordings, stats) {
       <td style="font-family:var(--mono);font-size:12px;color:var(--muted)">${fileSize}</td>
       <td style="text-align:center">${starBtn}</td>
       <td style="white-space:nowrap">
-        <button onclick="playRecording('${escapeHtml(rec.path)}')" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--accent);background:rgba(252,128,25,.1);color:var(--accent);font-family:var(--sans)">&#9654; Play</button>
+        <button onclick="playRecording('/uploads/recordings/${escapeHtml(rec.filename)}')" style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--accent);background:rgba(252,128,25,.1);color:var(--accent);font-family:var(--sans)">&#9654; Play</button>
         <a href="/api/recordings/${escapeHtml(rec.id)}/download" download style="display:inline-block;margin-left:4px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;text-decoration:none;border:1px solid var(--green);background:rgba(16,185,129,.1);color:var(--green);font-family:var(--sans)">&#128229; Download</a>
         <button class="btn-del" onclick="deleteRecording('${escapeHtml(rec.id)}')" style="margin-left:4px;padding:4px 10px">Delete</button>
       </td>
@@ -2472,9 +2472,48 @@ async function toggleRecordingImportant(id, important) {
   }
 }
 
-function playRecording(path) {
-  const audio = new Audio(path);
-  audio.play().catch(e => showToast('Failed to play recording', 'error'));
+function playRecording(url) {
+  // Stop any currently playing audio
+  if (window._currentAudioPlayer) {
+    window._currentAudioPlayer.pause();
+    window._currentAudioPlayer.remove();
+    window._currentAudioPlayer = null;
+  }
+  // Remove existing floating player
+  const existingPlayer = document.getElementById('floatingAudioPlayer');
+  if (existingPlayer) existingPlayer.remove();
+
+  // Create a floating audio player UI
+  const playerDiv = document.createElement('div');
+  playerDiv.id = 'floatingAudioPlayer';
+  playerDiv.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#fff;border:2px solid var(--accent,#fc8019);border-radius:14px;padding:14px 20px;box-shadow:0 8px 40px rgba(0,0,0,.2);z-index:9999;display:flex;align-items:center;gap:12px;max-width:90vw;';
+  playerDiv.innerHTML = `
+    <span style="font-size:20px">🎵</span>
+    <audio controls autoplay style="height:36px;min-width:250px;max-width:400px;"></audio>
+    <button onclick="closeAudioPlayer()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#dc2626;padding:4px 8px;">✕</button>
+  `;
+  document.body.appendChild(playerDiv);
+
+  const audioEl = playerDiv.querySelector('audio');
+  audioEl.src = url;
+  window._currentAudioPlayer = audioEl;
+
+  audioEl.onerror = function() {
+    showToast('Failed to play recording — file may not exist or format unsupported', 'error');
+    closeAudioPlayer();
+  };
+  audioEl.onended = function() {
+    setTimeout(closeAudioPlayer, 2000);
+  };
+}
+
+function closeAudioPlayer() {
+  if (window._currentAudioPlayer) {
+    window._currentAudioPlayer.pause();
+    window._currentAudioPlayer = null;
+  }
+  const player = document.getElementById('floatingAudioPlayer');
+  if (player) player.remove();
 }
 
 async function deleteRecording(id) {

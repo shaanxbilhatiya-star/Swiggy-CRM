@@ -3715,7 +3715,7 @@ setTimeout(cleanupOldRecordings, 10000);
 app.use('/uploads/recordings', express.static(path.join(DATA_ROOT, 'uploads', 'recordings')));
 
 // Recording upload endpoint
-app.post('/api/recordings/upload', uploadRecording.array('recordings', 10), (req, res) => {
+app.post('/api/recordings/upload', uploadRecording.array('recordings', 200), (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No files uploaded' });
@@ -3813,7 +3813,7 @@ app.patch('/api/recordings/:id/important', (req, res) => {
   const { id } = req.params;
   const { important } = req.body;
   
-  const recording = appState.recordings.find(rec => rec.id === id);
+  const recording = appState.recordings.find(rec => String(rec.id) === String(id));
   if (recording) {
     recording.important = important !== undefined ? important : !recording.important;
     saveState(appState);
@@ -3826,7 +3826,7 @@ app.patch('/api/recordings/:id/important', (req, res) => {
 // Download a specific recording by ID
 app.get('/api/recordings/:id/download', (req, res) => {
   const { id } = req.params;
-  const recording = appState.recordings.find(rec => rec.id == id);
+  const recording = appState.recordings.find(rec => String(rec.id) === String(id));
   if (!recording) {
     return res.status(404).json({ error: 'Recording not found' });
   }
@@ -3838,6 +3838,20 @@ app.get('/api/recordings/:id/download', (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="' + downloadName.replace(/"/g, '') + '"');
   res.setHeader('Content-Type', 'application/octet-stream');
   res.sendFile(filePath);
+});
+
+// Delete a recording
+app.delete('/api/recordings/:id', (req, res) => {
+  const { id } = req.params;
+  if (!appState.recordings) return res.status(404).json({ error: 'Recording not found' });
+  const idx = appState.recordings.findIndex(rec => String(rec.id) === String(id));
+  if (idx === -1) return res.status(404).json({ error: 'Recording not found' });
+  const recording = appState.recordings[idx];
+  const filePath = path.join(DATA_ROOT, 'uploads', 'recordings', recording.filename);
+  try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) {}
+  appState.recordings.splice(idx, 1);
+  saveState(appState);
+  res.json({ success: true });
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────────
